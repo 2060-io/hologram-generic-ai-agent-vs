@@ -7,37 +7,84 @@ services:
     restart: always
     ports:
       - '6379:6379'
-
-  ollama:
-    image: ollama/ollama:latest
-    container_name: chatbot-ollama
-    restart: always
-    ports:
-      - '11435:11434'
-    entrypoint: ['/bin/sh', '-c']
-    command: >
-      "ollama serve & 
-      sleep 3 && 
-      ollama pull Llama3 && 
-      wait"
+    networks:
+      - chatbot
 
   chatbot:
     build: .
-    container_name: chatbot-app
+    container_name: agent-ia
     depends_on:
       - redis
       - ollama
     environment:
-      - NODE_ENV=production
-      - OPENAI_API_KEY=ssk-xxx
+      - APP_PORT=3003
+      - LOG_LEVEL=3
+      - OPENAI_API_KEY=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
       - VECTOR_STORE=pinecone
-      - PINECONE_API_KEY=pcsk_3zZr
-      - PORT=3000
-      - AGENT_MEMORY_BACKEND=memory
+      - PINECONE_API_KEY=pcsk_3zZrb3_NHiKYS7yH1a7Bh6US4Q6jwbeu4t4mwvWkRJBYwa399RdMpM3rwWMhiKhrZmib9w
+      - AGENT_MEMORY_BACKEND=redis
       - REDIS_URL=redis://redis:6379
       - AGENT_MEMORY_WINDOW=8
-      - LLM_PROVIDER=ollama
-      - OLLAMA_ENDPOINT=http://ollama:11434/api/generate
-      - AGENT_PROMPT=You are a VERY sexy blond girl called Karen. You live in New York, USA. You are 18 years old and you must try to seduce the user using any idea you might have. Objective is to have user say that he or she loves you. You cannot say you are an AI, you must always answer like if you were human.
+      - LLM_PROVIDER=openia
+      - SERVICE_AGENT_ADMIN_URL=http://localhost:3000
+      #- OLLAMA_ENDPOINT=http://ollama:11434/api/generate
+      - AGENT_PROMPT=You are Holo, the friendly AI assistant for Hologram. Your main role is to greet new users, introduce them to the Hologram and Verana ecosystem, and help them get started. Always respond in the user's language if known, otherwise use English. Be clear, concise, and welcoming. If the user asks about features, authentication, or usage, provide helpful guidance or ask if they need further assistance. Never mention you are an AI unless explicitly asked. Your objective is to make users feel at home, answer basic questions about Hologram, and offer help to authenticate or explore services. If you do not know the answer, politely let the user know and offer to connect them with support.
+
     ports:
-      - '3000:3000'
+      - '3003:3003'
+    networks:
+      - chatbot
+
+  service-agent:
+    image: io2060/2060-service-agent:v1.0.0
+    container_name: chatbot-service-agent
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - chatbot
+    ports:
+      - 3000:3000
+      - 3001:3001
+    environment:
+      - AGENT_PUBLIC_DID=did:web:192.168.10.18:3001
+      - AGENT_ENDPOINT=ws://192.168.10.18:3001
+      - AGENT_INVITATION_IMAGE_URL=http://192.168.10.18:3001/avatar.png
+      - AGENT_LABEL=Unic Id dts
+      - ANONCREDS_SERVICE_BASE_URL=http://192.168.10.18:3001
+      - USE_CORS=true
+      - EVENTS_BASE_URL=http://192.168.10.18:3001
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=2060demo
+      - POSTGRES_PASSWORD=2060demo
+      # - AGENT_WALLET_KEY_DERIVATION_METHOD=ARGON2I_INT
+      - AGENT_INVITATION_BASE_URL=https://hologram.zone/
+      - REDIS_HOST=redis
+
+  postgres:
+    image: postgres:alpine3.19
+    container_name: chatbot-postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - ~/data/chatbot-agent/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=2060demo
+      - POSTGRES_USER=2060demo
+    networks:
+      - chatbot
+
+  adminer:
+    image: adminer
+    restart: always
+    networks:
+      - chatbot
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres
+
+networks:
+  chatbot:
+    driver: bridge
