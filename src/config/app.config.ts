@@ -87,4 +87,36 @@ export default registerAs('appConfig', () => ({
    * Default: redis://localhost:6379
    */
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+
+  /**
+   * Hostname or IP address for the PostgreSQL database.
+   * Defaults 'postgres' string if POSTGRES_HOST is not set in the environment variables.
+   * @type {string}
+   */
+  postgresHost: process.env.POSTGRES_HOST || 'postgres',
+
+  /**
+   * Username for the PostgreSQL database.
+   * Defaults 'unicid' string if POSTGRES_USER is not set in the environment variables.
+   * @type {string}
+   */
+  postgresUser: process.env.POSTGRES_USER || '2060demo',
+
+  /**
+   * Name for the PostgreSQL database.
+   * Defaults 'unicid' string if POSTGRES_DB_NAME is not set in the environment variables.
+   * @type {string}
+   */
+  postgresDbName: process.env.POSTGRES_DB_NAME || 'test-service-agent',
+
+  /**
+   * Password for the PostgreSQL database.
+   * Defaults 'demo' string if POSTGRES_PASSWORD is not set in the environment variables.
+   * @type {string}
+   */
+  postgresPassword: process.env.POSTGRES_PASSWORD || '2060demo',
+
+  credentialDefinitionId: process.env.CREDENTIAL_DEFINITION_ID || 'http://localhost:3000',
+
+  serviceAgentAdminUrl: process.env.SERVICE_AGENT_ADMIN_URL,
 }))

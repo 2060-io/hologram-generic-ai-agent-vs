@@ -20,7 +20,11 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@2060.io/service-agent-client": "1.1.0-dev.41",
+    "@2060.io/service-agent-model": "1.1.0-dev.41",
+    "@2060.io/service-agent-nestjs-client": "1.1.1-dev.1",
     "@anthropic-ai/sdk": "^0.51.0",
+    "@credo-ts/core": "^0.5.11",
     "@langchain/community": "^0.3.43",
     "@langchain/core": "^0.3.56",
     "@langchain/openai": "^0.5.10",
@@ -30,6 +34,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.0",
+    "@nestjs/typeorm": "^11.0.0",
     "@pinecone-database/pinecone": "^6.0.0",
     "@types/langdetect": "^0.2.2",
     "axios": "^1.9.0",
@@ -39,9 +44,12 @@
     "langchain": "^0.3.26",
     "langdetect": "^0.2.1",
     "openai": "^4.100.0",
+    "pg": "^8.16.0",
+    "postgres": "^3.4.7",
     "redis": "^5.1.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "typeorm": "^0.3.24"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
