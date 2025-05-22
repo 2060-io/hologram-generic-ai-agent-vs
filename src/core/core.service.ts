@@ -6,9 +6,11 @@ import {
   ContextualMenuUpdateMessage,
   CredentialReceptionMessage,
   CredentialRequestMessage,
+  IdentityProofRequestMessage,
   MediaMessage,
   ProfileMessage,
   TextMessage,
+  VerifiableCredentialRequestedProofItem,
 } from '@2060.io/service-agent-model'
 import { ApiClient, ApiVersion } from '@2060.io/service-agent-client'
 import { EventHandler } from '@2060.io/service-agent-nestjs-client'
@@ -17,10 +19,13 @@ import { SessionEntity } from './models'
 import { JsonTransformer } from '@credo-ts/core'
 import { Cmd } from './common'
 import { Repository } from 'typeorm'
-import { InjectRepository } from '@nestjs/typeorm'
-import { LlmService } from '../llm/llm.service'
+import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm'
 import { ConfigService } from '@nestjs/config'
 import { StateStep } from './common/enums/state-step.enum'
+import { CHATBOT_WELCOME_TEMPLATES } from '../common/prompts/chatbot.welcome'
+import { ChatbotService } from '../chatbot/chatbot.service'
+import { TRANSLATIONS } from './common/i18n/i18n'
+import { text } from 'stream/consumers'
 
 @Injectable()
 export class CoreService implements EventHandler, OnModuleInit {
@@ -31,7 +36,7 @@ export class CoreService implements EventHandler, OnModuleInit {
     @InjectRepository(SessionEntity)
     private readonly sessionRepository: Repository<SessionEntity>,
     private readonly configService: ConfigService,
-    private readonly llmService: LlmService,
+    private readonly chatBotService: ChatbotService,
   ) {
     const baseUrl = configService.get<string>('appConfig.serviceAgentAdminUrl') || 'http://localhost:3001'
     this.apiClient = new ApiClient(baseUrl, ApiVersion.V1)
@@ -127,9 +132,11 @@ export class CoreService implements EventHandler, OnModuleInit {
   }
 
   private async welcomeMessage(connectionId: string) {
-    const lang = (await this.handleSession(connectionId)).lang
-    //TODO: Define Welcome Message similar pronmpt chatbot
-    await this.sendText(connectionId, 'WELCOME', lang)
+    const userLang = (await this.handleSession(connectionId)).lang
+
+    const welcomeMessage = CHATBOT_WELCOME_TEMPLATES[userLang]?.() ?? CHATBOT_WELCOME_TEMPLATES['en']()
+    this.logger.debug(`LLM generated answer: "${welcomeMessage}"`)
+    this.sendText(connectionId, welcomeMessage, userLang)
   }
 
   /**
@@ -154,9 +161,9 @@ export class CoreService implements EventHandler, OnModuleInit {
    * @param text - The key for the desired text.
    * @param lang - The language of the text.
    */
-  private getText(text: string, lang: string): string {
-    //TODO: Return string traduced
-    return ''
+  private getText(key: string, lang: string): string {
+    const messages = TRANSLATIONS[lang] || TRANSLATIONS['en']
+    return messages[key] || key
   }
 
   /**
@@ -167,10 +174,12 @@ export class CoreService implements EventHandler, OnModuleInit {
    * @param session - The current session associated with the message.
    */
   private async handleContextualAction(selectionId: string, session: SessionEntity): Promise<SessionEntity> {
+    const { connectionId } = session
     switch (session.state) {
       case StateStep.CHAT:
         if (selectionId === Cmd.LOGOUT) {
           //Clear Sessions
+          this.closeConnection(connectionId)
         }
         break
       default:
@@ -191,9 +200,14 @@ export class CoreService implements EventHandler, OnModuleInit {
     try {
       //TODO: use chatbot servide
       switch (session.state) {
+        case StateStep.START:
+          await this.sendText(connectionId, this.getText('LOGIN_REQUIRED', userLang), userLang)
+          await this.sendContextualMenu(session)
+          session.state = StateStep.AUTH
         case StateStep.CHAT:
           // Call LLM to get response
-          const answer = await this.llmService.generate(content, { userLang })
+          this.logger.debug(`New Message ${content}`)
+          const answer = await this.chatBotService.chat({ content, connectionId, userLang })
           this.logger.debug(`LLM generated answer: "${answer}"`)
           this.sendText(connectionId, answer, userLang)
           break
@@ -205,14 +219,27 @@ export class CoreService implements EventHandler, OnModuleInit {
             throw new Error('Missing config: appConfig.credentialDefinitionId')
           }
 
-          await this.apiClient.messages.send(
-            new CredentialRequestMessage({
-              connectionId: connectionId,
-              credentialDefinitionId,
-              claims: [],
-            }),
-          )
+          const body = new IdentityProofRequestMessage({
+            connectionId,
+            requestedProofItems: [],
+          })
+          const requestedProofItem = new VerifiableCredentialRequestedProofItem({
+            id: '1',
+            type: 'verifiable-credential',
+            credentialDefinitionId,
+          })
+          body.requestedProofItems.push(requestedProofItem)
+          await this.apiClient.messages.send(body)
 
+          if (content.type === CredentialReceptionMessage.type) {
+            content.state === 'done' &&
+              (await this.sendText(
+                connectionId,
+                `For revocation, please provide the thread ID: ${content.threadId}`,
+                userLang,
+              ))
+            session.state = StateStep.CHAT
+          }
           break
         default:
           break
@@ -274,11 +301,17 @@ export class CoreService implements EventHandler, OnModuleInit {
   private async sendContextualMenu(session: SessionEntity): Promise<SessionEntity> {
     const item: ContextualMenuItem[] = []
     switch (session.state) {
+      case StateStep.START:
+        new ContextualMenuItem({
+          id: Cmd.AUTHENTICATE,
+          title: this.getText('CREDENTIAL', session.lang),
+        })
+        break
       case StateStep.CHAT:
         item.push(
           new ContextualMenuItem({
             id: Cmd.LOGOUT,
-            title: this.getText('CMD.CREDENTIAL', session.lang),
+            title: this.getText('LOGOUT', session.lang),
           }),
         )
         break

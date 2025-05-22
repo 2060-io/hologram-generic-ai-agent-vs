@@ -5,6 +5,7 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm'
 import { ConnectionEntity, CredentialEntity, RevocationRegistryEntity } from '@2060.io/service-agent-nestjs-client'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { LlmModule } from 'src/llm/llm.module'
+import { ChatbotModule } from 'src/chatbot/chatbot.module'
 
 @Global()
 @Module({
@@ -28,7 +29,7 @@ import { LlmModule } from 'src/llm/llm.module'
       }),
       inject: [ConfigService],
     }),
-    LlmModule,
+    ChatbotModule,
   ],
   controllers: [],
   providers: [CoreService],

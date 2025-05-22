@@ -9,5 +9,6 @@ import { MemoryModule } from '../memory/memory.module'
   imports: [RagModule, LlmModule, MemoryModule],
   providers: [ChatbotService],
   controllers: [ChatbotController],
+  exports: [ChatbotService],
 })
 export class ChatbotModule {}

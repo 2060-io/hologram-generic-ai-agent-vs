@@ -10,7 +10,8 @@ export class ChatbotController {
 
   @Post('ask')
   async ask(@Body() askDto: AskDto) {
-    const answer = await this.chatbotService.chat(askDto.question, askDto.connectionId)
+    const { content, connectionId } = askDto
+    const answer = await this.chatbotService.chat({ content, connectionId })
     return { answer }
   }
 }

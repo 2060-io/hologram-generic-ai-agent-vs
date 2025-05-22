@@ -32,7 +32,7 @@ import { CoreModule } from './core/core.module'
       options: {
         eventHandler: CoreService,
         url: process.env.SERVICE_AGENT_ADMIN_URL,
-        imports: [LlmModule],
+        imports: [ChatbotModule],
       },
     }),
   ],

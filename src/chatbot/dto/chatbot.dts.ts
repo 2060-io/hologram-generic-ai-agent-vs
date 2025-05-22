@@ -10,7 +10,7 @@ export class AskDto {
    * @example "What is the weather like today?"
    */
   @IsString()
-  question: string
+  content: string
 
   /**
    * Unique identifier for the current chat session or user connection.

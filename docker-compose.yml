@@ -12,7 +12,7 @@ services:
 
   chatbot:
     build: .
-    container_name: agent-ia
+    container_name: hologram-welcome-ai-agent-vs_chatbot
     depends_on:
       - redis
       - ollama
@@ -22,21 +22,21 @@ services:
       - OPENAI_API_KEY=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
       - VECTOR_STORE=pinecone
       - PINECONE_API_KEY=pcsk_3zZrb3_NHiKYS7yH1a7Bh6US4Q6jwbeu4t4mwvWkRJBYwa399RdMpM3rwWMhiKhrZmib9w
-      - AGENT_MEMORY_BACKEND=redis
+      - AGENT_MEMORY_BACKEND=memory
       - REDIS_URL=redis://redis:6379
       - AGENT_MEMORY_WINDOW=8
-      - LLM_PROVIDER=openia
-      - SERVICE_AGENT_ADMIN_URL=http://localhost:3000
-      #- OLLAMA_ENDPOINT=http://ollama:11434/api/generate
+      - LLM_PROVIDER=ollama
+      - OLLAMA_MODEL=llama3
+      - SERVICE_AGENT_ADMIN_URL=http://service-agent:3000
+      - OLLAMA_ENDPOINT=http://192.168.10.18:11434/api/generate
       - AGENT_PROMPT=You are Holo, the friendly AI assistant for Hologram. Your main role is to greet new users, introduce them to the Hologram and Verana ecosystem, and help them get started. Always respond in the user's language if known, otherwise use English. Be clear, concise, and welcoming. If the user asks about features, authentication, or usage, provide helpful guidance or ask if they need further assistance. Never mention you are an AI unless explicitly asked. Your objective is to make users feel at home, answer basic questions about Hologram, and offer help to authenticate or explore services. If you do not know the answer, politely let the user know and offer to connect them with support.
-
     ports:
       - '3003:3003'
     networks:
       - chatbot
 
   service-agent:
-    image: io2060/2060-service-agent:v1.0.0
+    image: io2060/2060-service-agent:v1.1.0
     container_name: chatbot-service-agent
     restart: always
     depends_on:
@@ -48,19 +48,20 @@ services:
       - 3000:3000
       - 3001:3001
     environment:
-      - AGENT_PUBLIC_DID=did:web:192.168.10.18:3001
+      #- AGENT_PUBLIC_DID=did:web:192.168.10.18%3A3001
       - AGENT_ENDPOINT=ws://192.168.10.18:3001
       - AGENT_INVITATION_IMAGE_URL=http://192.168.10.18:3001/avatar.png
-      - AGENT_LABEL=Unic Id dts
+      - AGENT_LABEL=Welcome AI Agent
       - ANONCREDS_SERVICE_BASE_URL=http://192.168.10.18:3001
       - USE_CORS=true
-      - EVENTS_BASE_URL=http://192.168.10.18:3001
+      - EVENTS_BASE_URL=http://192.168.10.18:3003
       - POSTGRES_HOST=postgres
       - POSTGRES_USER=2060demo
       - POSTGRES_PASSWORD=2060demo
-      # - AGENT_WALLET_KEY_DERIVATION_METHOD=ARGON2I_INT
+      #- AGENT_WALLET_KEY_DERIVATION_METHOD=ARGON2I_INT
       - AGENT_INVITATION_BASE_URL=https://hologram.zone/
       - REDIS_HOST=redis
+      #- PUBLIC_API_BASE_URL=http://192.168.10.18:3001
 
   postgres:
     image: postgres:alpine3.19

@@ -10,7 +10,7 @@ export class SessionEntity {
   @Column({ type: 'varchar', nullable: false })
   connectionId: string
 
-  @Column({ type: 'varchar', length: 10, nullable: false })
+  @Column({ type: 'varchar', length: 10, nullable: true })
   lang: string
 
   @Column({
