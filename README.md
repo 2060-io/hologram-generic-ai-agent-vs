@@ -108,3 +108,7 @@ Response:
 
 - The agent will respond in the detected language (English, Spanish, or French) automatically.
 - Session memory ensures that the context of the conversation is maintained.
+
+## 📥 Ollama & Llama3 Installation
+
+Full setup instructions for local LLMs (Ollama + Llama3) are provided in [How to use Ollama](./docs/how-to-use-ollama.md).
