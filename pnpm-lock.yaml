@@ -35,6 +35,9 @@ importers:
       '@langchain/pinecone':
         specifier: ^0.2.0
         version: 0.2.0(@langchain/core@0.3.56(openai@4.100.0(ws@8.18.2)(zod@3.25.3)))(@pinecone-database/pinecone@6.0.0)
+      '@langchain/redis':
+        specifier: ^0.1.1
+        version: 0.1.1(@langchain/core@0.3.56(openai@4.100.0(ws@8.18.2)(zod@3.25.3)))
       '@nestjs/common':
         specifier: ^11.0.1
         version: 11.1.1(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -56,6 +59,9 @@ importers:
       '@pinecone-database/pinecone':
         specifier: ^6.0.0
         version: 6.0.0
+      '@redis/client':
+        specifier: ^5.1.0
+        version: 5.1.0
       '@types/langdetect':
         specifier: ^0.2.2
         version: 0.2.2
@@ -207,6 +213,11 @@ packages:
 
   '@2060.io/service-agent-model@1.1.1-dev.1':
     resolution: {integrity: sha512-/eEqukHuoyueqhTFwaLY2LTtTkGMdvd/d8vy4ECFyBweWPtdXmwtPY4a51PWo0nR0zatWIiGxc2pgkjre75M+w==}
+    peerDependencies:
+      '@credo-ts/core': ^0.5.11
+
+  '@2060.io/service-agent-model@1.2.0':
+    resolution: {integrity: sha512-5g5ztBT7D1EGEYOAPLWrvEGOCDn82ixFbAR+0So2yVSyxOBrScSizk8N71eg61PgJdh506JKGcEV3hQcYDs8DA==}
     peerDependencies:
       '@credo-ts/core': ^0.5.11
 
@@ -1813,6 +1824,12 @@ packages:
       '@langchain/core': '>=0.2.21 <0.4.0'
       '@pinecone-database/pinecone': ^5.0.2
 
+  '@langchain/redis@0.1.1':
+    resolution: {integrity: sha512-vI2fvOdCuvTSrtJ4SJpGP4wmV8slqIwwVe2uUN8vMIc2n1ZuaFUr4PYKhqHYAAYkuKNGguC7kNNasiHuN10mpw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@langchain/core': '>=0.2.21 <0.4.0'
+
   '@langchain/textsplitters@0.1.0':
     resolution: {integrity: sha512-djI4uw9rlkAb5iMhtLED+xJebDdAG935AdP4eRTB02R7OB/act55Bj9wsskhZsvuyQRpO4O1wQOp85s6T6GWmw==}
     engines: {node: '>=18'}
@@ -2207,15 +2224,34 @@ packages:
       '@types/react':
         optional: true
 
+  '@redis/bloom@1.2.0':
+    resolution: {integrity: sha512-HG2DFjYKbpNmVXsa0keLHp/3leGJz1mjh09f2RLGGLQZzSHpkmZWuwJbAvo3QcRY8p80m5+ZdXZdYOSBLlp7Cg==}
+    peerDependencies:
+      '@redis/client': ^1.0.0
+
   '@redis/bloom@5.1.0':
     resolution: {integrity: sha512-Gp5RWvVKbvItMU2sd848yhY/BnigToz8H4PYcvlBBSP5cQ3lVP1LMh5Kx2CYBNzCdDabVicwBKNvaoLBqPNqIg==}
     engines: {node: '>= 18'}
     peerDependencies:
       '@redis/client': ^5.1.0
 
+  '@redis/client@1.6.1':
+    resolution: {integrity: sha512-/KCsg3xSlR+nCK8/8ZYSknYxvXHwubJrU82F3Lm1Fp6789VQ0/3RJKfsmRXjqfaTA++23CvC3hqmqe/2GEt6Kw==}
+    engines: {node: '>=14'}
+
   '@redis/client@5.1.0':
     resolution: {integrity: sha512-FMD35y2KgCWTBLOfF0MhwDSaIVcu5mOUuTV9Kw3JOWHMgON3+ulht31cjTB/gph0BfD1vzUvCeROeRaf/d+35w==}
     engines: {node: '>= 18'}
+
+  '@redis/graph@1.1.1':
+    resolution: {integrity: sha512-FEMTcTHZozZciLRl6GiiIB4zGm5z5F3F6a6FZCyrfxdKOhFlGkiAqlexWMBzCi4DcRoyiOsuLfW+cjlGWyExOw==}
+    peerDependencies:
+      '@redis/client': ^1.0.0
+
+  '@redis/json@1.0.7':
+    resolution: {integrity: sha512-6UyXfjVaTBTJtKNG4/9Z8PSpKE6XgSyEb8iwaqDcy+uKrd/DGYHTWkUdnQDyzm727V7p21WUMhsqz5oy65kPcQ==}
+    peerDependencies:
+      '@redis/client': ^1.0.0
 
   '@redis/json@5.1.0':
     resolution: {integrity: sha512-laXZt1Rlimk3py5ZoABBnd4xn/8dWbLUWGvVS7avgMhdczS+eWtXpElilJbFpc+7ZpVlol4vaSGFuR8ThDcTFw==}
@@ -2223,11 +2259,21 @@ packages:
     peerDependencies:
       '@redis/client': ^5.1.0
 
+  '@redis/search@1.2.0':
+    resolution: {integrity: sha512-tYoDBbtqOVigEDMAcTGsRlMycIIjwMCgD8eR2t0NANeQmgK/lvxNAvYyb6bZDD4frHRhIHkJu2TBRvB0ERkOmw==}
+    peerDependencies:
+      '@redis/client': ^1.0.0
+
   '@redis/search@5.1.0':
     resolution: {integrity: sha512-afQYMeIdWGNPjr84GxxgJVkolxMW3BBrlNOwhRHPdzbdGh0rTUPjOJpGHBig34ostHX6AhZ6QwqceU1zLluDEg==}
     engines: {node: '>= 18'}
     peerDependencies:
       '@redis/client': ^5.1.0
+
+  '@redis/time-series@1.1.0':
+    resolution: {integrity: sha512-c1Q99M5ljsIuc4YdaCwfUEXsofakb9c8+Zse2qxTadu8TalLXuAESzLvFAvNVbkmSlvlzIQOLpBCmWI9wTOt+g==}
+    peerDependencies:
+      '@redis/client': ^1.0.0
 
   '@redis/time-series@5.1.0':
     resolution: {integrity: sha512-BjKndLXREPeb4ZtxrI6z1bz2FbzBj7LnWyyevNk6Wd7VRWQ3W10LSvJAJwguPD62mSqpTPhy0lMPqFJwo0gS7A==}
@@ -4034,6 +4080,10 @@ packages:
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
 
+  generic-pool@3.9.0:
+    resolution: {integrity: sha512-hymDOu5B53XvN4QT9dBmZxPX4CWhBPPLguTZ9MMFeFa/Kg0xWVfylOVNlJji/E7yTZWFd/q9GO5TxDLq156D7g==}
+    engines: {node: '>= 4'}
+
   gensync@1.0.0-beta.2:
     resolution: {integrity: sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==}
     engines: {node: '>=6.9.0'}
@@ -5676,6 +5726,9 @@ packages:
     resolution: {integrity: sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg==}
     engines: {node: '>= 14.18.0'}
 
+  redis@4.7.1:
+    resolution: {integrity: sha512-S1bJDnqLftzHXHP8JsT5II/CtHWQrASX5K96REjWjlmWKrviSOLWmM7QnRLstAWsu1VBBV1ffV6DzCvxNP0UJQ==}
+
   redis@5.1.0:
     resolution: {integrity: sha512-5G5k9sYo5H5L0kd7UETiJZFTkIClH31fSmaEk2eU8E7mrmF0J1t6RqmFXOCJmSRlNd3QyvDUK/AWL9psbKaN0Q==}
     engines: {node: '>= 18'}
@@ -6768,7 +6821,7 @@ snapshots:
 
   '@2060.io/service-agent-client@1.1.0-dev.41(@credo-ts/core@0.5.15(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(web-streams-polyfill@3.3.3))(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(typescript@5.8.3)(web-streams-polyfill@3.3.3)':
     dependencies:
-      '@2060.io/service-agent-model': 1.1.1-dev.1(@credo-ts/core@0.5.15(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(web-streams-polyfill@3.3.3))(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(typescript@5.8.3)(web-streams-polyfill@3.3.3)
+      '@2060.io/service-agent-model': 1.2.0(@credo-ts/core@0.5.15(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(web-streams-polyfill@3.3.3))(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(typescript@5.8.3)(web-streams-polyfill@3.3.3)
       '@credo-ts/core': 0.5.15(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(web-streams-polyfill@3.3.3)
       class-transformer: 0.5.1
       class-validator: 0.14.1
@@ -6818,6 +6871,23 @@ snapshots:
       - web-streams-polyfill
 
   '@2060.io/service-agent-model@1.1.1-dev.1(@credo-ts/core@0.5.15(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(web-streams-polyfill@3.3.3))(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(typescript@5.8.3)(web-streams-polyfill@3.3.3)':
+    dependencies:
+      '@2060.io/credo-ts-didcomm-mrtd': 0.0.12(@credo-ts/core@0.5.15(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(web-streams-polyfill@3.3.3))(typescript@5.8.3)
+      '@credo-ts/core': 0.5.15(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(web-streams-polyfill@3.3.3)
+      class-transformer: 0.5.1
+      class-validator: 0.14.1
+      credo-ts-receipts: 0.0.1-alpha.5(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(web-streams-polyfill@3.3.3)
+      mrz: 4.2.1
+    transitivePeerDependencies:
+      - domexception
+      - encoding
+      - expo
+      - react-native
+      - supports-color
+      - typescript
+      - web-streams-polyfill
+
+  '@2060.io/service-agent-model@1.2.0(@credo-ts/core@0.5.15(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(web-streams-polyfill@3.3.3))(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(typescript@5.8.3)(web-streams-polyfill@3.3.3)':
     dependencies:
       '@2060.io/credo-ts-didcomm-mrtd': 0.0.12(@credo-ts/core@0.5.15(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(web-streams-polyfill@3.3.3))(typescript@5.8.3)
       '@credo-ts/core': 0.5.15(expo@53.0.9(@babel/core@7.27.1)(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(react@19.1.0))(react-native@0.79.2(@babel/core@7.27.1)(react@19.1.0))(web-streams-polyfill@3.3.3)
@@ -8727,6 +8797,11 @@ snapshots:
       flat: 5.0.2
       uuid: 10.0.0
 
+  '@langchain/redis@0.1.1(@langchain/core@0.3.56(openai@4.100.0(ws@8.18.2)(zod@3.25.3)))':
+    dependencies:
+      '@langchain/core': 0.3.56(openai@4.100.0(ws@8.18.2)(zod@3.25.3))
+      redis: 4.7.1
+
   '@langchain/textsplitters@0.1.0(@langchain/core@0.3.56(openai@4.100.0(ws@8.18.2)(zod@3.25.3)))':
     dependencies:
       '@langchain/core': 0.3.56(openai@4.100.0(ws@8.18.2)(zod@3.25.3))
@@ -9231,21 +9306,47 @@ snapshots:
       react-native: 0.79.2(@babel/core@7.27.1)(react@19.1.0)
     optional: true
 
+  '@redis/bloom@1.2.0(@redis/client@1.6.1)':
+    dependencies:
+      '@redis/client': 1.6.1
+
   '@redis/bloom@5.1.0(@redis/client@5.1.0)':
     dependencies:
       '@redis/client': 5.1.0
+
+  '@redis/client@1.6.1':
+    dependencies:
+      cluster-key-slot: 1.1.2
+      generic-pool: 3.9.0
+      yallist: 4.0.0
 
   '@redis/client@5.1.0':
     dependencies:
       cluster-key-slot: 1.1.2
 
+  '@redis/graph@1.1.1(@redis/client@1.6.1)':
+    dependencies:
+      '@redis/client': 1.6.1
+
+  '@redis/json@1.0.7(@redis/client@1.6.1)':
+    dependencies:
+      '@redis/client': 1.6.1
+
   '@redis/json@5.1.0(@redis/client@5.1.0)':
     dependencies:
       '@redis/client': 5.1.0
 
+  '@redis/search@1.2.0(@redis/client@1.6.1)':
+    dependencies:
+      '@redis/client': 1.6.1
+
   '@redis/search@5.1.0(@redis/client@5.1.0)':
     dependencies:
       '@redis/client': 5.1.0
+
+  '@redis/time-series@1.1.0(@redis/client@1.6.1)':
+    dependencies:
+      '@redis/client': 1.6.1
 
   '@redis/time-series@5.1.0(@redis/client@5.1.0)':
     dependencies:
@@ -11394,6 +11495,8 @@ snapshots:
 
   function-bind@1.1.2: {}
 
+  generic-pool@3.9.0: {}
+
   gensync@1.0.0-beta.2: {}
 
   get-caller-file@2.0.5: {}
@@ -13325,6 +13428,15 @@ snapshots:
       readable-stream: 4.7.0
 
   readdirp@4.1.2: {}
+
+  redis@4.7.1:
+    dependencies:
+      '@redis/bloom': 1.2.0(@redis/client@1.6.1)
+      '@redis/client': 1.6.1
+      '@redis/graph': 1.1.1(@redis/client@1.6.1)
+      '@redis/json': 1.0.7(@redis/client@1.6.1)
+      '@redis/search': 1.2.0(@redis/client@1.6.1)
+      '@redis/time-series': 1.1.0(@redis/client@1.6.1)
 
   redis@5.1.0:
     dependencies:

@@ -1,86 +1,109 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { Pinecone } from '@pinecone-database/pinecone'
 import { PineconeStore } from '@langchain/pinecone'
+import { RedisVectorStore } from '@langchain/redis'
+import { createClient, RedisClientType } from 'redis'
 import { OpenAIEmbeddings, OpenAI } from '@langchain/openai'
-import { ConfigService } from '@nestjs/config'
-import { FakeEmbeddings } from 'src/rag/providers/fake-embeddings.provider'
+
+type SupportedStores = 'pinecone' | 'redis'
 
 /**
- * Service for managing Retrieval Augmented Generation (RAG) using Langchain and Pinecone.
- * Handles document ingestion and semantic retrieval for enhanced LLM responses.
+ * Service for modular Retrieval Augmented Generation (RAG) using LangChainJS.
+ * Supports multiple vector stores (Pinecone, Redis) via environment-based configuration.
+ * Handles document ingestion, similarity search, and LLM context generation.
  */
 @Injectable()
 export class LangchainRagService implements OnModuleInit {
-  private vectorStore: PineconeStore
+  private vectorStore: PineconeStore | RedisVectorStore
+  private redisClient: RedisClientType | undefined
   private llm: OpenAI
   private readonly logger = new Logger(LangchainRagService.name)
 
   /**
-   * Constructs the LangchainRagService.
-   * @param configService The NestJS ConfigService for environment/config access.
+   * Constructs the RAG service.
+   * @param configService - The NestJS ConfigService for environment/config access.
    */
   constructor(private configService: ConfigService) {}
 
   /**
-   * Initializes the vector store (Pinecone) and LLM (OpenAI).
-   * Uses a mock embedding generator by default; replace with OpenAIEmbeddings for real usage.
+   * Initializes the vector store (Pinecone or Redis) and LLM (OpenAI).
+   * Selection is dynamic based on VECTOR_STORE env/config.
+   * Logs each initialization step for observability.
    */
   async onModuleInit() {
-    this.logger.log('Initializing Pinecone vector store...')
-    const pinecone = new Pinecone({
-      apiKey: this.configService.get<string>('appConfig.pineconeApiKey')!,
-    })
-    const pineconeIndex = pinecone.index(process.env.PINECONE_INDEX_NAME!)
-    this.logger.debug('Pinecone index created.')
+    const vectorStoreProvider = this.configService.get<string>('appConfig.vectorStore') as SupportedStores
+    const openaiApiKey = this.configService.get<string>('appConfig.openaiApiKey') || process.env.OPENAI_API_KEY
+    const embeddings = new OpenAIEmbeddings({ openAIApiKey: openaiApiKey! })
 
-    // For development/testing, use FakeEmbeddings. Swap to OpenAIEmbeddings for production.
-    this.vectorStore = await PineconeStore.fromExistingIndex(
-      new FakeEmbeddings(),
-      // new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY! }),
-      { pineconeIndex },
-    )
-    this.logger.log('Vector store initialized.')
+    this.logger.log(`Initializing Vector Store: ${vectorStoreProvider}`)
 
-    this.llm = new OpenAI({ openAIApiKey: process.env.OPENAI_API_KEY! })
+    if (vectorStoreProvider === 'pinecone') {
+      // Initialize Pinecone vector store
+      this.logger.log('Connecting to Pinecone...')
+      const pinecone = new Pinecone({
+        apiKey: this.configService.get<string>('appConfig.pineconeApiKey')!,
+      })
+      const pineconeIndex = pinecone.index(
+        this.configService.get<string>('appConfig.vectorIndexName') || process.env.VECTOR_INDEX_NAME!,
+      )
+      this.logger.debug('Pinecone index instance created.')
+      this.vectorStore = await PineconeStore.fromExistingIndex(embeddings, { pineconeIndex })
+      this.logger.log('Pinecone vector store initialized.')
+    } else if (vectorStoreProvider === 'redis') {
+      // Initialize Redis vector store
+      const redisUrl = this.configService.get<string>('appConfig.redisUrl') || process.env.REDIS_URL
+      const redisIndexName =
+        this.configService.get<string>('appConfig.redisIndexName') || process.env.VECTOR_INDEX_NAME!
+      this.logger.log(`Connecting to Redis at ${redisUrl} with index ${redisIndexName}...`)
+      this.redisClient = createClient({ url: redisUrl }) as RedisClientType
+      await this.redisClient.connect()
+      this.logger.debug('Redis client connected.')
+      this.vectorStore = await RedisVectorStore.fromTexts([], [], embeddings, {
+        redisClient: this.redisClient as any,
+        indexName: redisIndexName,
+      })
+      this.logger.log('Redis vector store initialized.')
+    } else {
+      this.logger.error(`Unsupported VECTOR_STORE: ${vectorStoreProvider}`)
+      throw new Error(`Unsupported VECTOR_STORE: ${vectorStoreProvider}`)
+    }
+
+    this.llm = new OpenAI({ openAIApiKey: openaiApiKey! })
     this.logger.log('LLM (OpenAI) instance created.')
   }
 
   /**
    * Adds a document to the vector store for RAG-based retrieval.
-   * @param id Unique identifier for the document.
-   * @param text Content of the document to index.
+   * @param id - Unique identifier for the document.
+   * @param text - Content of the document to index.
    */
   async addDocument(id: string, text: string) {
     this.logger.debug(`Adding document to vector store | id: ${id}`)
     await this.vectorStore.addDocuments([{ pageContent: text, metadata: { id } }])
-    this.logger.verbose(`Document "${id}" added to Pinecone vector store.`)
+    this.logger.verbose(`Document "${id}" added to vector store.`)
   }
 
   /**
-   * Performs a RAG-augmented query to retrieve context and answer via LLM.
-   * @param question The user's question.
-   * @returns LLM-generated answer string.
+   * Retrieves relevant context documents from the vector store.
+   * @param query - User's question or query string.
+   * @returns Array of relevant context snippets.
    */
-  async askWithRag(question: string): Promise<string> {
-    this.logger.debug(`Performing RAG search for question: "${question}"`)
-    const results = await this.vectorStore.similaritySearch(question, 3)
-    const context = results.map((r) => r.pageContent).join('\n---\n')
-    this.logger.verbose(`Context for LLM: ${context ? context.slice(0, 200) + '...' : '[none]'}`)
-
-    // Template is Spanish here. Could be made multilanguage.
-    const prompt = `
-      Usa la siguiente información para responder la pregunta del usuario.
-      Contexto:
-      ${context}
-      Pregunta: ${question}
-      Responde de forma clara y breve.
-    `
-    this.logger.debug('Invoking LLM with constructed prompt.')
-    return this.llm.invoke(prompt)
+  async retrieveContext(query: string): Promise<string[]> {
+    this.logger.debug(`Retrieving context for query: "${query}"`)
+    const results = await this.vectorStore.similaritySearch(query, 3)
+    this.logger.verbose(`Context retrieved: ${results.length} result(s) for query "${query}".`)
+    return results.map((r) => r.pageContent)
   }
 
-  async retrieveContext(query: string): Promise<string[]> {
-    const results = await this.vectorStore.similaritySearch(query, 3)
-    return results.map((r) => r.pageContent)
+  /**
+   * Cleans up resources (closes Redis client if used) when the module is destroyed.
+   */
+  async onModuleDestroy() {
+    if (this.redisClient) {
+      this.logger.log('Disconnecting Redis client...')
+      this.redisClient.destroy()
+      this.logger.log('Redis client disconnected.')
+    }
   }
 }
