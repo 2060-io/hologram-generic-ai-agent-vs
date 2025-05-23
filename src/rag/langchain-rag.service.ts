@@ -3,7 +3,7 @@ import { Pinecone } from '@pinecone-database/pinecone'
 import { PineconeStore } from '@langchain/pinecone'
 import { OpenAIEmbeddings, OpenAI } from '@langchain/openai'
 import { ConfigService } from '@nestjs/config'
-import { FakeEmbeddings } from 'src/llm/providers/fake-embeddings.provider'
+import { FakeEmbeddings } from 'src/rag/providers/fake-embeddings.provider'
 
 /**
  * Service for managing Retrieval Augmented Generation (RAG) using Langchain and Pinecone.
@@ -77,5 +77,10 @@ export class LangchainRagService implements OnModuleInit {
     `
     this.logger.debug('Invoking LLM with constructed prompt.')
     return this.llm.invoke(prompt)
+  }
+
+  async retrieveContext(query: string): Promise<string[]> {
+    const results = await this.vectorStore.similaritySearch(query, 3)
+    return results.map((r) => r.pageContent)
   }
 }

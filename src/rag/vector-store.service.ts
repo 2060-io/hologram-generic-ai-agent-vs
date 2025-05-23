@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { OpenAI } from 'openai'
 
+import { IRagBackend } from './interfaces/rag-backend.interface'
+
 function cosineSimilarity(a: number[], b: number[]): number {
   const dot = a.reduce((sum, ai, i) => sum + ai * b[i], 0)
   const normA = Math.sqrt(a.reduce((sum, ai) => sum + ai * ai, 0))
@@ -10,7 +12,7 @@ function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 @Injectable()
-export class VectorStoreService {
+export class VectorStoreService implements IRagBackend {
   private openai: OpenAI
   private docs: { id: string; text: string; embedding: number[] }[] = []
   private llmProvider: string
@@ -53,5 +55,10 @@ export class VectorStoreService {
       .sort((a, b) => b.score - a.score)
       .slice(0, topK)
     return results
+  }
+
+  async retrieveContext(query: string): Promise<string[]> {
+    const results = await this.query(query, 3)
+    return results.map((r) => r.text)
   }
 }
