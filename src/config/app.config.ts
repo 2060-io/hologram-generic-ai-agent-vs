@@ -119,4 +119,6 @@ export default registerAs('appConfig', () => ({
   credentialDefinitionId: process.env.CREDENTIAL_DEFINITION_ID || 'http://localhost:3000',
 
   serviceAgentAdminUrl: process.env.SERVICE_AGENT_ADMIN_URL,
+
+  ragProvider: process.env.RAG_PROVIDER || 'vectorstore', // 'vectorstore' or 'langchain'
 }))
