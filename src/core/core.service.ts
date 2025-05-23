@@ -207,7 +207,8 @@ export class CoreService implements EventHandler, OnModuleInit {
         case StateStep.CHAT:
           // Call LLM to get response
           this.logger.debug(`New Message ${content}`)
-          const answer = await this.chatBotService.chat({ content, connectionId, userLang })
+          const userInput = content.content
+          const answer = await this.chatBotService.chat({ userInput, connectionId, userLang })
           this.logger.debug(`LLM generated answer: "${answer}"`)
           this.sendText(connectionId, answer, userLang)
           break
@@ -301,7 +302,7 @@ export class CoreService implements EventHandler, OnModuleInit {
   private async sendContextualMenu(session: SessionEntity): Promise<SessionEntity> {
     const item: ContextualMenuItem[] = []
     switch (session.state) {
-      case StateStep.START:
+      case StateStep.AUTH:
         new ContextualMenuItem({
           id: Cmd.AUTHENTICATE,
           title: this.getText('CREDENTIAL', session.lang),
