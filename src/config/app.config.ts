@@ -5,7 +5,9 @@ import { registerAs } from '@nestjs/config'
  * Organizes and documents all environment variables.
  */
 export default registerAs('appConfig', () => ({
+  
   // Application General Settings
+  
 
   /**
    * The port number where the application HTTP server runs.
@@ -19,7 +21,9 @@ export default registerAs('appConfig', () => ({
    */
   logLevel: parseInt(process.env.LOG_LEVEL || '1', 10),
 
+  
   // LLM & Agent Settings
+  
 
   /**
    * The default agent prompt to define the LLM's persona/role.
@@ -54,19 +58,38 @@ export default registerAs('appConfig', () => ({
    */
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
 
+  
   // RAG (Retrieval Augmented Generation) Settings
+  
 
   /**
-   * Vector store provider for RAG: "pinecone", etc.
+   * RAG provider selection. "vectorstore" (custom) or "langchain" (with supported vector stores).
+   * Default: "vectorstore"
    */
-  vectorStore: process.env.VECTOR_STORE || '',
+  ragProvider: process.env.RAG_PROVIDER || 'vectorstore',
+
+  /**
+   * Vector store provider for RAG: "pinecone","redis" etc.
+   * Used when RAG_PROVIDER = "langchain"
+   * Default: redis
+   */
+  vectorStore: process.env.VECTOR_STORE || 'redis',
+
+  /**
+   * Shared index name for all supported vector stores (e.g., Pinecone, Redis).
+   * Set as VECTOR_INDEX_NAME in your environment.
+   * Default: hologram-ia
+   */
+  vectorIndexName: process.env.VECTOR_INDEX_NAME || 'hologram-ia',
 
   /**
    * Pinecone API key (required if using Pinecone vector store).
    */
   pineconeApiKey: process.env.PINECONE_API_KEY || '',
 
+  
   // Memory/Session Settings
+  
 
   /**
    * Memory backend: "memory" for in-memory, "redis" for Redis.
@@ -80,7 +103,9 @@ export default registerAs('appConfig', () => ({
    */
   agentMemoryWindow: parseInt(process.env.AGENT_MEMORY_WINDOW || '8', 10),
 
+  
   // External Service URLs
+  
 
   /**
    * Redis database URL for persistent memory/session storage.
@@ -88,37 +113,46 @@ export default registerAs('appConfig', () => ({
    */
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
 
+  
+  // PostgreSQL Database Configuration
+  
+
   /**
    * Hostname or IP address for the PostgreSQL database.
-   * Defaults 'postgres' string if POSTGRES_HOST is not set in the environment variables.
-   * @type {string}
+   * Default: "postgres"
    */
   postgresHost: process.env.POSTGRES_HOST || 'postgres',
 
   /**
    * Username for the PostgreSQL database.
-   * Defaults 'unicid' string if POSTGRES_USER is not set in the environment variables.
-   * @type {string}
+   * Default: "2060demo"
    */
   postgresUser: process.env.POSTGRES_USER || '2060demo',
 
   /**
    * Name for the PostgreSQL database.
-   * Defaults 'unicid' string if POSTGRES_DB_NAME is not set in the environment variables.
-   * @type {string}
+   * Default: "test-service-agent"
    */
   postgresDbName: process.env.POSTGRES_DB_NAME || 'test-service-agent',
 
   /**
    * Password for the PostgreSQL database.
-   * Defaults 'demo' string if POSTGRES_PASSWORD is not set in the environment variables.
-   * @type {string}
+   * Default: "2060demo"
    */
   postgresPassword: process.env.POSTGRES_PASSWORD || '2060demo',
 
+  
+  // Other Service URLs / Settings
+  
+
+  /**
+   * Verifiable credential definition id or URL.
+   * Default: "http://localhost:3000"
+   */
   credentialDefinitionId: process.env.CREDENTIAL_DEFINITION_ID || 'http://localhost:3000',
 
+  /**
+   * Service Agent Admin API URL.
+   */
   serviceAgentAdminUrl: process.env.SERVICE_AGENT_ADMIN_URL,
-
-  ragProvider: process.env.RAG_PROVIDER || 'vectorstore', // 'vectorstore' or 'langchain'
 }))
