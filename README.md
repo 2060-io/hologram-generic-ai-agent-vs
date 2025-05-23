@@ -26,6 +26,7 @@ All configuration is managed via environment variables.
 | `AGENT_MEMORY_BACKEND` | Memory backend (`memory` or `redis`)                               | `redis`                  |
 | `REDIS_URL`            | Redis connection URL                                               | `redis://localhost:6379` |
 | `AGENT_MEMORY_WINDOW`  | Number of messages stored in chat memory window                    | `8`                      |
+| `RAG_PROVIDER`         | enable switching RAG backend (Langchain or VectorStore)            | `vectorstore`            |
 
 **Example `AGENT_PROMPT`:**
 
