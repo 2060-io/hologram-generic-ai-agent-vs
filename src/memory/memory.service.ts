@@ -65,8 +65,7 @@ class RedisMemoryBackend implements IMemoryBackend, OnModuleInit, OnModuleDestro
     const msg = JSON.stringify({ role, content })
     await this.redis.rPush(this.key(sessionId), msg)
     await this.redis.lTrim(this.key(sessionId), -this.windowSize, -1)
-    // Opcional: establece expiración para limpiar sesiones viejas
-    await this.redis.expire(this.key(sessionId), 60 * 60 * 4) // 4 horas
+    await this.redis.expire(this.key(sessionId), 60 * 60 * 4)
   }
 
   async clear(sessionId: string): Promise<void> {
