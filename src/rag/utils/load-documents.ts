@@ -1,9 +1,10 @@
 import { promises as fs } from 'fs'
 import * as path from 'path'
 import * as pdfParse from 'pdf-parse'
+import { parse as csvParse } from 'csv-parse/sync'
 
 /**
- * Loads all .txt and .pdf files from the given folder.
+ * Loads all .txt, .md, .pdf, and .csv files from the given folder.
  * If no valid documents are found, creates a sample file for testing.
  * Returns an array of objects: { id: fileName, content: extractedText }
  *
@@ -25,16 +26,23 @@ export async function loadDocuments(
       if (!stat.isFile()) continue
       const ext = path.extname(file).toLowerCase()
       try {
-        if (ext === '.txt') {
+        if (ext === '.txt' || ext === '.md') {
           const content = await fs.readFile(fullPath, 'utf-8')
           documents.push({ id: file, content })
-          logger?.log?.(`[RAG] Loaded TXT document "${file}"`)
+          logger?.log?.(`[RAG] Loaded ${ext.toUpperCase()} document "${file}"`)
           foundDocs = true
         } else if (ext === '.pdf') {
           const dataBuffer = await fs.readFile(fullPath)
           const pdfData = await pdfParse(dataBuffer)
           documents.push({ id: file, content: pdfData.text })
           logger?.log?.(`[RAG] Loaded PDF document "${file}"`)
+          foundDocs = true
+        } else if (ext === '.csv') {
+          const csvContent = await fs.readFile(fullPath, 'utf-8')
+          const rows: string[][] = csvParse(csvContent)
+          const content = rows.map((r) => r.join(', ')).join('\n')
+          documents.push({ id: file, content })
+          logger?.log?.(`[RAG] Loaded CSV document "${file}"`)
           foundDocs = true
         } else {
           logger?.debug?.(`[RAG] Ignored unsupported file: "${file}"`)
