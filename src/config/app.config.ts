@@ -5,9 +5,7 @@ import { registerAs } from '@nestjs/config'
  * Organizes and documents all environment variables.
  */
 export default registerAs('appConfig', () => ({
-  
   // Application General Settings
-  
 
   /**
    * The port number where the application HTTP server runs.
@@ -21,9 +19,7 @@ export default registerAs('appConfig', () => ({
    */
   logLevel: parseInt(process.env.LOG_LEVEL || '1', 10),
 
-  
   // LLM & Agent Settings
-  
 
   /**
    * The default agent prompt to define the LLM's persona/role.
@@ -58,9 +54,12 @@ export default registerAs('appConfig', () => ({
    */
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
 
-  
   // RAG (Retrieval Augmented Generation) Settings
-  
+
+  /**
+   * Directory path from which RAG loads .txt and .pdf documents for context retrieval.
+   */
+  ragDocsPath: process.env.RAG_DOCS_PATH || './docs',
 
   /**
    * RAG provider selection. "vectorstore" (custom) or "langchain" (with supported vector stores).
@@ -87,9 +86,7 @@ export default registerAs('appConfig', () => ({
    */
   pineconeApiKey: process.env.PINECONE_API_KEY || '',
 
-  
   // Memory/Session Settings
-  
 
   /**
    * Memory backend: "memory" for in-memory, "redis" for Redis.
@@ -103,9 +100,7 @@ export default registerAs('appConfig', () => ({
    */
   agentMemoryWindow: parseInt(process.env.AGENT_MEMORY_WINDOW || '8', 10),
 
-  
   // External Service URLs
-  
 
   /**
    * Redis database URL for persistent memory/session storage.
@@ -113,9 +108,7 @@ export default registerAs('appConfig', () => ({
    */
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
 
-  
   // PostgreSQL Database Configuration
-  
 
   /**
    * Hostname or IP address for the PostgreSQL database.
@@ -141,9 +134,7 @@ export default registerAs('appConfig', () => ({
    */
   postgresPassword: process.env.POSTGRES_PASSWORD || '2060demo',
 
-  
   // Other Service URLs / Settings
-  
 
   /**
    * Verifiable credential definition id or URL.

@@ -5,6 +5,7 @@ import { PineconeStore } from '@langchain/pinecone'
 import { RedisVectorStore } from '@langchain/redis'
 import { createClient, RedisClientType } from 'redis'
 import { OpenAIEmbeddings, OpenAI } from '@langchain/openai'
+import { loadDocuments } from './utils/load-documents'
 
 type SupportedStores = 'pinecone' | 'redis'
 
@@ -68,6 +69,14 @@ export class LangchainRagService implements OnModuleInit {
       this.logger.error(`Unsupported VECTOR_STORE: ${vectorStoreProvider}`)
       throw new Error(`Unsupported VECTOR_STORE: ${vectorStoreProvider}`)
     }
+
+    const docsPath = this.configService.get<string>('appConfig.ragDocsPath') || './docs'
+    this.logger.log(`[RAG] Loading documents from: ${docsPath}`)
+    const docs = await loadDocuments(docsPath, this.logger)
+    for (const doc of docs) {
+      await this.addDocument(doc.id, doc.content)
+    }
+    this.logger.log('Seeded vector store with initial document.')
 
     this.llm = new OpenAI({ openAIApiKey: openaiApiKey! })
     this.logger.log('LLM (OpenAI) instance created.')
