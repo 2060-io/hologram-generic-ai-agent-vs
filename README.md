@@ -10,29 +10,30 @@ All configuration is managed via environment variables.
 
 **Below is a summary of all supported environment variables and their purpose:**
 
-| Variable Name              | Description                                                        | Example Value / Default  |
-| -------------------------- | ------------------------------------------------------------------ | ------------------------ |
-| `APP_PORT`                 | Port on which the application runs                                 | `3000`                   |
-| `LOG_LEVEL`                | Log level (`1=error`, `2=warn`, `3=info`, `4=debug`)               | `3`                      |
-| `AGENT_PROMPT`             | Defines the agent's persona and instructions                       | See below for example    |
-| `LLM_PROVIDER`             | LLM backend: `openai`, `ollama`, `anthropic`, etc.                 | `ollama`                 |
-| `OPENAI_API_KEY`           | API key for OpenAI (required if using OpenAI)                      | `sk-xxx`                 |
-| `OLLAMA_ENDPOINT`          | Ollama endpoint (use container URL if running with Docker Compose) | `http://ollama:11435`    |
-| `OLLAMA_MODEL`             | Ollama model to use (`llama3`, etc.)                               | `llama3`                 |
-| `ANTHROPIC_API_KEY`        | API key for Anthropic (Claude)                                     |                          |
-| `RAG_PROVIDER`             | RAG backend orchestrator: `vectorstore` (custom) or `langchain`    | `vectorstore`            |
-| `VECTOR_STORE`             | Vector store provider for RAG: `pinecone`, `redis`                 | `redis`                  |
-| `VECTOR_INDEX_NAME`        | Index name for both Pinecone and Redis vector stores               | `hologram-ia`            |
-| `PINECONE_API_KEY`         | API key for Pinecone vector store                                  | `pcsk_xxx`               |
-| `AGENT_MEMORY_BACKEND`     | Memory backend for chat context: `memory` or `redis`               | `redis`                  |
-| `AGENT_MEMORY_WINDOW`      | Number of messages stored in chat memory window                    | `8`                      |
-| `REDIS_URL`                | Redis connection URL for vector store or memory backend            | `redis://localhost:6379` |
-| `POSTGRES_HOST`            | Hostname/IP for PostgreSQL database                                | `postgres`               |
-| `POSTGRES_USER`            | Username for PostgreSQL database                                   | `2060demo`               |
-| `POSTGRES_DB_NAME`         | Database name for PostgreSQL                                       | `test-service-agent`     |
-| `POSTGRES_PASSWORD`        | Password for PostgreSQL                                            | `2060demo`               |
-| `CREDENTIAL_DEFINITION_ID` | Verifiable credential definition ID or URL                         | `http://localhost:3000`  |
-| `SERVICE_AGENT_ADMIN_URL`  | Service Agent Admin API URL                                        |                          |
+| Variable Name              | Description                                                                                     | Example Value / Default  |
+| -------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------ |
+| `APP_PORT`                 | Port on which the application runs                                                              | `3000`                   |
+| `LOG_LEVEL`                | Log level (`1=error`, `2=warn`, `3=info`, `4=debug`)                                            | `3`                      |
+| `AGENT_PROMPT`             | Defines the agent's persona and instructions                                                    | See below for example    |
+| `LLM_PROVIDER`             | LLM backend: `openai`, `ollama`, `anthropic`, etc.                                              | `ollama`                 |
+| `OPENAI_API_KEY`           | API key for OpenAI (required if using OpenAI)                                                   | `sk-xxx`                 |
+| `OLLAMA_ENDPOINT`          | Ollama endpoint (use container URL if running with Docker Compose)                              | `http://ollama:11435`    |
+| `OLLAMA_MODEL`             | Ollama model to use (`llama3`, etc.)                                                            | `llama3`                 |
+| `ANTHROPIC_API_KEY`        | API key for Anthropic (Claude)                                                                  |                          |
+| `RAG_PROVIDER`             | RAG backend orchestrator: `vectorstore` (custom) or `langchain`                                 | `vectorstore`            |
+| `RAG_DOCS_PATH`            | Filesystem path to directory with context documents for RAG ingestion (`.txt` and `.pdf` only). | `/docs`                  |
+| `VECTOR_STORE`             | Vector store provider for RAG: `pinecone`, `redis`                                              | `redis`                  |
+| `VECTOR_INDEX_NAME`        | Index name for both Pinecone and Redis vector stores                                            | `hologram-ia`            |
+| `PINECONE_API_KEY`         | API key for Pinecone vector store                                                               | `pcsk_xxx`               |
+| `AGENT_MEMORY_BACKEND`     | Memory backend for chat context: `memory` or `redis`                                            | `redis`                  |
+| `AGENT_MEMORY_WINDOW`      | Number of messages stored in chat memory window                                                 | `8`                      |
+| `REDIS_URL`                | Redis connection URL for vector store or memory backend                                         | `redis://localhost:6379` |
+| `POSTGRES_HOST`            | Hostname/IP for PostgreSQL database                                                             | `postgres`               |
+| `POSTGRES_USER`            | Username for PostgreSQL database                                                                | `2060demo`               |
+| `POSTGRES_DB_NAME`         | Database name for PostgreSQL                                                                    | `test-service-agent`     |
+| `POSTGRES_PASSWORD`        | Password for PostgreSQL                                                                         | `2060demo`               |
+| `CREDENTIAL_DEFINITION_ID` | Verifiable credential definition ID or URL                                                      | `http://localhost:3000`  |
+| `SERVICE_AGENT_ADMIN_URL`  | Service Agent Admin API URL                                                                     |                          |
 
 **Example `AGENT_PROMPT`:**
 

@@ -12,6 +12,7 @@ The `RAG Service` is a modular Retrieval Augmented Generation (RAG) implementati
 - **Pluggable Vector Stores:** In LangChain mode, supports both Pinecone and Redis as backends for vector search.
 - **Real Embeddings:** Uses production-ready embeddings (e.g., OpenAI) for all backends.
 - **Extensible:** Architecture allows adding new providers or vector stores with minimal changes.
+- **Automatic Document Loading:** On startup, automatically loads `.txt` and `.pdf` files from a configurable directory (`RAG_DOCS_PATH`). If the directory is empty, a test document is created.
 
 ---
 
@@ -53,6 +54,16 @@ REDIS_URL=redis://localhost:6379
 VECTOR_INDEX_NAME=my-index
 ```
 
+> ⚠️ **Important:**  
+> If using Redis, you must use **Redis Stack** (with [RediSearch](https://redis.io/docs/interact/search-and-query/)), not just the default Redis image. For Docker Compose:
+>
+> ```yaml
+> redis:
+>   image: redis/redis-stack-server:latest
+>   ports:
+>     - '6379:6379'
+> ```
+
 ### For Direct Vector Store (Custom implementation)
 
 ```env
@@ -77,9 +88,8 @@ VECTOR_STORE=custom              # Example value, handled by your custom code
 
 ### 3. Document Operations
 
-- You can add documents to the vector store using `.addDocument(id, text)`.
-- For RAG queries, `.askWithRag(question)` retrieves similar documents and provides context-aware answers using the configured LLM.
-- `.retrieveContext(query)` returns only the relevant context.
+- **Automatic loading:** All `.txt` and `.pdf` files in `RAG_DOCS_PATH` are indexed on service startup.
+- **Manual addition:** You can add documents to the vector store using `.addDocument(id, text)`.
 
 ---
 
@@ -88,6 +98,7 @@ VECTOR_STORE=custom              # Example value, handled by your custom code
 ### **A. Use LangChain with Pinecone**
 
 ```env
+RAG_DOCS_PATH=/docs
 RAG_PROVIDER=langchain
 VECTOR_STORE=pinecone
 PINECONE_API_KEY=your-pinecone-key
@@ -101,6 +112,7 @@ OPENAI_API_KEY=sk-xxxx
 ### **B. Use LangChain with Redis**
 
 ```env
+RAG_DOCS_PATH=/docs
 RAG_PROVIDER=langchain
 VECTOR_STORE=redis
 REDIS_URL=redis://localhost:6379
@@ -129,7 +141,6 @@ VECTOR_STORE=custom    # Any value your custom code recognizes
 2. **Start your application as usual.** The service will auto-configure itself based on the provider and vector store settings.
 3. **Call the API/methods:**
    - `addDocument(id, text)` — Add a document to the vector store.
-   - `askWithRag(question)` — Get a context-aware answer from the LLM using retrieved context.
    - `retrieveContext(query)` — Get only the most relevant snippets from the store.
 
 ---
@@ -155,5 +166,3 @@ VECTOR_STORE=custom    # Any value your custom code recognizes
   - **Redis:** Fast and simple, great for dev and small scale.
   - **Pinecone:** Cloud-native, scalable for production workloads.
 - Separate configuration for each environment (dev, staging, prod) for flexibility.
-
----
