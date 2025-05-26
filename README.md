@@ -73,6 +73,14 @@ src/
 
 ---
 
+## 📝 Bot Conversation Flow Diagram
+
+Below is a high-level flowchart representing how the `CoreService` This diagram summarizes the main states (`START`, `AUTH`, `CHAT`), how messages are handled, and what menu options are available at each step.
+
+![Hologram IA Agent fl](./docs/assets/hologram-ia-flow.png)
+
+---
+
 ## 🐳 Running with Docker Compose
 
 You can start the full system (API, Redis, and Ollama for LLMs) using Docker Compose:

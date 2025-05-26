@@ -1,0 +1,42 @@
+@startuml Hologram-IA-Agent
+
+title Message Flow & State Transitions (Hologram-IA-Agent)
+
+start
+
+:Receive message (inputMessage);
+
+:Find/Create session;
+
+:Parse message type;
+
+partition "State Machine" {
+  :Get session.state;
+
+  if (state == START) then (yes)
+    :Send text: LOGIN_REQUIRED (multilanguage);
+    :Send contextual menu: [Authenticate];
+    :Set state = AUTH;
+    stop
+  elseif (state == AUTH) then (yes)
+    :Send credential request (IdentityProofRequestMessage);
+    if (CredentialReceptionMessage with state='done') then (yes)
+      :Send text: "For revocation, provide thread ID";
+      :Set state = CHAT;
+      :Send contextual menu: [Logout];
+    else (no)
+      :Wait for user action;
+    endif
+    stop
+  elseif (state == CHAT) then (yes)
+    :Process chat message (chatBotService.chat);
+    :Send LLM answer as text;
+    :Send contextual menu: [Logout];
+    stop
+  else (default)
+    :Send contextual menu (according to state);
+    stop
+  endif
+}
+
+@enduml

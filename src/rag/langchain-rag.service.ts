@@ -59,7 +59,7 @@ export class LangchainRagService implements OnModuleInit {
       this.redisClient = createClient({ url: redisUrl }) as RedisClientType
       await this.redisClient.connect()
       this.logger.debug('Redis client connected.')
-      this.vectorStore = await RedisVectorStore.fromTexts([], [], embeddings, {
+      this.vectorStore = await new RedisVectorStore(embeddings, {
         redisClient: this.redisClient as any,
         indexName: redisIndexName,
       })
