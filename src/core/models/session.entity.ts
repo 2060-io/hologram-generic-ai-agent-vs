@@ -25,7 +25,9 @@ export class SessionEntity {
   @UpdateDateColumn()
   updatedTs?: Date
 
-  /**
-   * More params...
-   */
+  @Column({ default: false, nullable: true })
+  isAuthenticated?: boolean
+
+  @Column({ nullable: true })
+  userName?: string
 }

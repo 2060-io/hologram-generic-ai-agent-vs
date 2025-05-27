@@ -24,7 +24,7 @@ import { ChatbotModule } from 'src/chatbot/chatbot.module'
         synchronize: true,
         ssl: false,
         logging: false,
-        retryAttempts: 3,
+        retryAttempts: 10,
         retryDelay: 2000,
       }),
       inject: [ConfigService],
