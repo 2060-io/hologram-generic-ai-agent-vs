@@ -17,6 +17,7 @@ All configuration is managed via environment variables.
 | `AGENT_PROMPT`             | Defines the agent's persona and instructions                                                    | See below for example    |
 | `LLM_PROVIDER`             | LLM backend: `openai`, `ollama`, `anthropic`, etc.                                              | `ollama`                 |
 | `OPENAI_API_KEY`           | API key for OpenAI (required if using OpenAI)                                                   | `sk-xxx`                 |
+| `OPENAI_MODEL`             | OpenAI model to use (e.g., `gpt-3.5-turbo`, `gpt-4`)                                            | `gpt-3.5-turbo`          |
 | `OLLAMA_ENDPOINT`          | Ollama endpoint (use container URL if running with Docker Compose)                              | `http://ollama:11435`    |
 | `OLLAMA_MODEL`             | Ollama model to use (`llama3`, etc.)                                                            | `llama3`                 |
 | `ANTHROPIC_API_KEY`        | API key for Anthropic (Claude)                                                                  |                          |

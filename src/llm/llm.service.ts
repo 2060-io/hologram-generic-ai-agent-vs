@@ -37,11 +37,12 @@ export class LlmService {
       this.logger.log('AnthropicProvider selected.')
     } else {
       const apiKey = this.configService.get<string>('appConfig.openaiApiKey')
+      const model = this.configService.get<string>('appConfig.openaiModel')
       if (!apiKey) {
         this.logger.error('OPENAI_API_KEY not set in environment variables!')
         throw new Error('OPENAI_API_KEY not set')
       }
-      this.provider = new OpenAiProvider(apiKey)
+      this.provider = new OpenAiProvider({ apiKey, model })
       this.logger.log('OpenAiProvider selected.')
     }
     this.logger.debug(`Agent prompt loaded: "${this.agentPrompt}"`)

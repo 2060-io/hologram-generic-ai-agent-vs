@@ -50,6 +50,12 @@ export default registerAs('appConfig', () => ({
   openaiApiKey: process.env.OPENAI_API_KEY || '',
 
   /**
+   * OpenAI Model .
+   */
+
+  openaiModel: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+
+  /**
    * Anthropic API key (required if using Anthropic provider, e.g., Claude).
    */
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
