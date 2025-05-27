@@ -138,9 +138,10 @@ export default registerAs('appConfig', () => ({
 
   /**
    * Verifiable credential definition id or URL.
-   * Default: "http://localhost:3000"
+   * Default: "did:web:example.com??service=anoncreds&relativeRef=/credDef/somethinghere"
    */
-  credentialDefinitionId: process.env.CREDENTIAL_DEFINITION_ID || 'http://localhost:3000',
+  credentialDefinitionId:
+    process.env.CREDENTIAL_DEFINITION_ID || 'did:web:example.com??service=anoncreds&relativeRef=/credDef/somethinghere',
 
   /**
    * Service Agent Admin API URL.
