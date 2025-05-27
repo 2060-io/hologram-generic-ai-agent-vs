@@ -1,42 +1,59 @@
-@startuml Hologram-IA-Agent
 
-title Message Flow & State Transitions (Hologram-IA-Agent)
+@startuml Hologram Agent-IA
 
-start
+title Hologram Agent-IA Message Flow
 
-:Receive message (inputMessage);
+actor User
+participant "CoreService" as CS
+participant "ChatbotService" as Chatbot
+participant "ApiClient" as API
 
-:Find/Create session;
+== Connection Established ==
+User -> CS : newConnection(connectionId)
+CS -> CS : handleSession()
+CS -> CS : sendContextualMenu()
 
-:Parse message type;
+== Profile Received ==
+User -> CS : ProfileMessage
+CS -> CS : handleSession()
+CS -> CS : update lang
+CS -> CS : welcomeMessage()
+CS -> API : send(TextMessage with welcome)
 
-partition "State Machine" {
-  :Get session.state;
+== Menu Selection ==
+User -> CS : ContextualMenuSelectMessage
+CS -> CS : handleContextualAction()
+alt Authenticate
+    CS -> API : send(IdentityProofRequestMessage)
+    CS -> API : send(TextMessage AUTH_PROCESS_STARTED)
+    CS -> CS : state = AUTH
+else Logout
+    CS -> CS : isAuthenticated = false
+    CS -> CS : purgeUserData()
+end
 
-  if (state == START) then (yes)
-    :Send text: LOGIN_REQUIRED (multilanguage);
-    :Send contextual menu: [Authenticate];
-    :Set state = AUTH;
-    stop
-  elseif (state == AUTH) then (yes)
-    :Send credential request (IdentityProofRequestMessage);
-    if (CredentialReceptionMessage with state='done') then (yes)
-      :Send text: "For revocation, provide thread ID";
-      :Set state = CHAT;
-      :Send contextual menu: [Logout];
-    else (no)
-      :Wait for user action;
-    endif
-    stop
-  elseif (state == CHAT) then (yes)
-    :Process chat message (chatBotService.chat);
-    :Send LLM answer as text;
-    :Send contextual menu: [Logout];
-    stop
-  else (default)
-    :Send contextual menu (according to state);
-    stop
-  endif
-}
+== TextMessage Input ==
+User -> CS : TextMessage
+CS -> CS : handleStateInput()
+alt state == CHAT
+    alt needsAuth && !isAuthenticated
+        CS -> API : send(TextMessage AUTH_REQUIRED)
+    else
+        CS -> Chatbot : chat()
+        Chatbot -> CS : answer
+        CS -> API : send(TextMessage answer)
+    end
+else state == AUTH
+    alt CredentialReceptionMessage && state == done
+        CS -> CS : isAuthenticated = true
+        CS -> CS : state = CHAT
+        CS -> API : send(TextMessage AUTH_SUCCESS)
+    else
+        CS -> API : send(TextMessage WAITING_CREDENTIAL)
+    end
+end
+
+== Menu Update ==
+CS -> API : send(ContextualMenuUpdateMessage)
 
 @enduml
