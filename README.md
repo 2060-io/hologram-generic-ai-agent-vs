@@ -85,7 +85,7 @@ Below is a high-level flowchart representing how the `CoreService` This diagram 
 
 ## 🐳 Running with Docker Compose
 
-You can start the full system (API, Redis, and Ollama for LLMs) using Docker Compose:
+You can start the full system (API, Redis, PostgreSQL, and Service Agent) using Docker Compose:
 
 ```bash
 docker compose up --build
@@ -94,11 +94,29 @@ docker compose up --build
 This will launch:
 
 - The AI agent backend (NestJS)
-- Redis (for chat memory)
-- Ollama (local LLM, e.g. Llama3)
+- Redis (for chat memory and Service Agent state)
+- PostgreSQL (for session and agent storage)
+- Service Agent (for DIDComm communication and credential handling)
+- Adminer (for browsing the PostgreSQL database)
 
-The chatbot API will be available on [http://localhost:3000](http://localhost:3000).  
-Ollama will be available at [http://localhost:11435](http://localhost:11435).
+The chatbot API will be available at [http://localhost:3000](http://localhost:3000)  
+The Service Agent will be available at [http://localhost:3001](http://localhost:3001)  
+Adminer UI will be accessible at [http://localhost:8080](http://localhost:8080)
+
+### ⚙️ Environment Configuration
+
+Before running the system, you **must create a `.env` file** in the root directory with the required environment variables.
+
+These variables configure:
+
+- LLM provider and API key
+- Vector store (e.g., Pinecone)
+- RAG configuration and document paths
+- Redis and PostgreSQL credentials
+- Service Agent communication settings
+- Agent prompt and memory configuration
+
+👉 Refer to the [Environment Variables](#-environment-variables) section for the full list of required variables and their purpose.
 
 ---
 

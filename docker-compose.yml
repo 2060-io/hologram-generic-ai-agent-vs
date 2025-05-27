@@ -15,7 +15,6 @@ services:
     container_name: hologram-welcome-ai-agent-vs_chatbot
     depends_on:
       - redis
-      - ollama
     environment:
       APP_PORT: ${APP_PORT}
       LOG_LEVEL: ${LOG_LEVEL}
@@ -43,7 +42,7 @@ services:
       - chatbot
 
   service-agent:
-    image: io2060/2060-service-agent:v1.1.0
+    image: io2060/2060-service-agent:v1.2.1-dev.1
     container_name: chatbot-service-agent
     restart: always
     depends_on:
@@ -55,17 +54,17 @@ services:
       - 3000:3000
       - 3001:3001
     environment:
-      AGENT_ENDPOINT: ws://192.168.10.18:3001
-      AGENT_INVITATION_IMAGE_URL: http://192.168.10.18:3001/avatar.png
-      AGENT_LABEL: Welcome AI Agent
-      ANONCREDS_SERVICE_BASE_URL: http://192.168.10.18:3001
-      USE_CORS: true
-      EVENTS_BASE_URL: http://192.168.10.18:3003
+      AGENT_ENDPOINT: ${AGENT_ENDPOINT}
+      AGENT_INVITATION_IMAGE_URL: ${AGENT_INVITATION_IMAGE_URL}
+      AGENT_LABEL: ${AGENT_LABEL}
+      ANONCREDS_SERVICE_BASE_URL: ${ANONCREDS_SERVICE_BASE_URL}
+      USE_CORS: ${USE_CORS}
+      EVENTS_BASE_URL: ${EVENTS_BASE_URL}
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      AGENT_INVITATION_BASE_URL: https://hologram.zone/
-      REDIS_HOST: redis
+      AGENT_INVITATION_BASE_URL: ${AGENT_INVITATION_BASE_URL}
+      REDIS_HOST: ${REDIS_HOST}
 
   postgres:
     image: postgres:alpine3.19
