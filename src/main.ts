@@ -29,7 +29,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Chatbot IA API')
-    .setDescription('API para interactuar con el chatbot IA')
+    .setDescription('API to interact with the AI ​​chatbot')
     .setVersion('1.0')
     .build()
   const document = SwaggerModule.createDocument(app, config)
