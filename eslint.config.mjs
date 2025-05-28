@@ -34,7 +34,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/require-await': 'error',
       '@typescript-eslint/no-unsafe-return': 'error',
-      '@typescript-eslint/no-unsafe-enum-comparison': 'off',
+      '@typescript-eslint/no-unsafe-enum-comparison': 'error',
       '@typescript-eslint/restrict-template-expressions': 'off',
     },
   },

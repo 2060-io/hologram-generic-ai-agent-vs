@@ -170,7 +170,7 @@ export class CoreService implements EventHandler, OnModuleInit {
    * @param selectionId - Identifier of the user's selection.
    * @param session - The current session associated with the message.
    */
-  private async handleContextualAction(selectionId: string, session: SessionEntity): Promise<SessionEntity> {
+  private async handleContextualAction(selectionId: Cmd, session: SessionEntity): Promise<SessionEntity> {
     const { connectionId, lang } = session
     switch (session.state) {
       case StateStep.CHAT:
