@@ -21,6 +21,6 @@ export function getLogLevels(): LogLevel[] {
       logger.log('Log levels set to: log, error')
   }
 
-  logger.log(`Configured log level: ${logLevels}`)
+  logger.log(`Configured log level: ${JSON.stringify(logLevels, null, 2)}`)
   return logLevels
 }

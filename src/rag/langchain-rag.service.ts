@@ -66,8 +66,8 @@ export class LangchainRagService implements OnModuleInit {
       })
       this.logger.log('Redis vector store initialized.')
     } else {
-      this.logger.error(`Unsupported VECTOR_STORE: ${vectorStoreProvider}`)
-      throw new Error(`Unsupported VECTOR_STORE: ${vectorStoreProvider}`)
+      this.logger.error(`Unsupported VECTOR_STORE: ${JSON.stringify(vectorStoreProvider)}`)
+      throw new Error(`Unsupported VECTOR_STORE: ${JSON.stringify(vectorStoreProvider)}`)
     }
 
     const docsPath = this.configService.get<string>('appConfig.ragDocsPath') || './docs'
