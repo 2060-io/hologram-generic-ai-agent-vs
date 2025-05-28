@@ -8,8 +8,8 @@ export class InMemoryBackend implements IMemoryBackend {
     this.windowSize = windowSize
   }
 
-  async getHistory(sessionId: string): Promise<ChatMessage[]> {
-    return this.memory.get(sessionId) ?? []
+  getHistory(sessionId: string): Promise<ChatMessage[]> {
+    return Promise.resolve(this.memory.get(sessionId) ?? [])
   }
 
   async addMessage(sessionId: string, role: 'user' | 'assistant', content: string): Promise<void> {
@@ -21,7 +21,8 @@ export class InMemoryBackend implements IMemoryBackend {
     this.memory.set(sessionId, history)
   }
 
-  async clear(sessionId: string): Promise<void> {
+  clear(sessionId: string): Promise<void> {
     this.memory.delete(sessionId)
+    return Promise.resolve()
   }
 }

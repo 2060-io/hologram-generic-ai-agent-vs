@@ -12,7 +12,7 @@ import { ChatbotModule } from 'src/chatbot/chatbot.module'
     TypeOrmModule.forFeature([ConnectionEntity, SessionEntity]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
+      useFactory: (configService: ConfigService): TypeOrmModuleOptions => ({
         type: 'postgres',
         host: configService.get<string>('appConfig.postgresHost'),
         port: 5432,

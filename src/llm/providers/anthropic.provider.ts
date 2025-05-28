@@ -1,4 +1,4 @@
-import { LlmProvider } from '../interfaces/llm-provider.interface'
+import { LlmProvider, MessageBlock } from '../interfaces/llm-provider.interface'
 import Anthropic from '@anthropic-ai/sdk'
 
 export class AnthropicProvider implements LlmProvider {
@@ -16,7 +16,9 @@ export class AnthropicProvider implements LlmProvider {
       messages: [{ role: 'user', content: prompt }],
     })
 
-    const textBlocks = completion.content.filter((block: any) => block.type === 'text').map((block: any) => block.text)
+    const textBlocks = (completion.content as MessageBlock[])
+      .filter((block) => block.type === 'text')
+      .map((block) => block.text)
 
     const content = textBlocks.join('\n').trim()
 

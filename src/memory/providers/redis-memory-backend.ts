@@ -25,7 +25,7 @@ export class RedisMemoryBackend implements IMemoryBackend, OnModuleInit, OnModul
 
   async getHistory(sessionId: string): Promise<ChatMessage[]> {
     const data = await this.redis.lRange(this.key(sessionId), 0, -1)
-    return data.map((json) => JSON.parse(json)) as ChatMessage[]
+    return data.map((json) => JSON.parse(json) as ChatMessage)
   }
 
   async addMessage(sessionId: string, role: 'user' | 'assistant', content: string): Promise<void> {

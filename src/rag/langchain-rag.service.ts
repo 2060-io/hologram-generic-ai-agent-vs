@@ -108,7 +108,7 @@ export class LangchainRagService implements OnModuleInit {
   /**
    * Cleans up resources (closes Redis client if used) when the module is destroyed.
    */
-  async onModuleDestroy() {
+  onModuleDestroy() {
     if (this.redisClient) {
       this.logger.log('Disconnecting Redis client...')
       this.redisClient.destroy()

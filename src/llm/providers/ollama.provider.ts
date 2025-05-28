@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { LlmProvider } from '../interfaces/llm-provider.interface'
+import { LlmProvider, OllamaResponse } from '../interfaces/llm-provider.interface'
 import axios from 'axios'
 
 /**
@@ -43,7 +43,7 @@ export class OllamaProvider implements LlmProvider {
     this.logger.verbose(`Prompt sent to Ollama: ${prompt}`)
 
     try {
-      const response = await axios.post(url, {
+      const response = await axios.post<OllamaResponse>(url, {
         model,
         prompt,
         stream: false,
