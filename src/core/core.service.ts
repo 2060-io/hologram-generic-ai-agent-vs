@@ -23,6 +23,7 @@ import { StateStep } from './common/enums/state-step.enum'
 import { CHATBOT_WELCOME_TEMPLATES } from '../common/prompts/chatbot.welcome'
 import { ChatbotService } from '../chatbot/chatbot.service'
 import { TRANSLATIONS, AUTH_KEYWORDS_BY_LANG } from './common/i18n/i18n'
+import { isCredentialReceptionMessage } from './utils/type-guards'
 
 @Injectable()
 export class CoreService implements EventHandler, OnModuleInit {
@@ -49,7 +50,6 @@ export class CoreService implements EventHandler, OnModuleInit {
    */
   async inputMessage(message: BaseMessage): Promise<void> {
     let content
-    let inMsg
     const session: SessionEntity = await this.handleSession(message.connectionId)
 
     try {
@@ -60,20 +60,30 @@ export class CoreService implements EventHandler, OnModuleInit {
           content = JsonTransformer.fromJSON(message, TextMessage)
           //entry message user to chatbot agent service ,send session connection
           break
-        case ContextualMenuSelectMessage.type:
-          inMsg = JsonTransformer.fromJSON(message, ContextualMenuSelectMessage)
-          await this.handleContextualAction(inMsg.selectionId, session)
+        case ContextualMenuSelectMessage.type: {
+          const inMsg = JsonTransformer.fromJSON(
+            message,
+            ContextualMenuSelectMessage,
+          ) as unknown as ContextualMenuSelectMessage
+          if (inMsg.selectionId && Object.values(Cmd).includes(inMsg.selectionId as Cmd)) {
+            await this.handleContextualAction(inMsg.selectionId as Cmd, session)
+          } else {
+            this.logger.warn(`Invalid or missing selectionId: ${inMsg.selectionId}`)
+          }
           break
+        }
         case MediaMessage.type:
-          inMsg = JsonTransformer.fromJSON(message, MediaMessage)
+          //inMsg = JsonTransformer.fromJSON(message, MediaMessage)
           content = 'media'
           break
-        case ProfileMessage.type:
-          inMsg = JsonTransformer.fromJSON(message, ProfileMessage)
-          session.lang = inMsg.preferredLanguage
-          //Send Welcome Message
+        case ProfileMessage.type: {
+          const inMsg = JsonTransformer.fromJSON(message, ProfileMessage) as unknown as ProfileMessage
+          if (inMsg.preferredLanguage) {
+            session.lang = inMsg.preferredLanguage
+          }
           await this.welcomeMessage(session.connectionId)
           break
+        }
         case CredentialReceptionMessage.type:
           content = JsonTransformer.fromJSON(message, CredentialReceptionMessage)
           break
@@ -83,7 +93,9 @@ export class CoreService implements EventHandler, OnModuleInit {
 
       if (content != null) {
         if (typeof content === 'string') content = content.trim()
-        if (content.length === 0) content = null
+        if (typeof content === 'string' && content.length === 0) {
+          content = null
+        }
       }
     } catch (error) {
       this.logger.error(`inputMessage: ${error}`)
@@ -133,7 +145,7 @@ export class CoreService implements EventHandler, OnModuleInit {
 
     const welcomeMessage = CHATBOT_WELCOME_TEMPLATES[userLang]?.() ?? CHATBOT_WELCOME_TEMPLATES['en']()
     this.logger.debug(`LLM generated answer: "${welcomeMessage}"`)
-    this.sendText(connectionId, welcomeMessage, userLang)
+    await this.sendText(connectionId, welcomeMessage, userLang)
   }
 
   /**
@@ -217,39 +229,49 @@ export class CoreService implements EventHandler, OnModuleInit {
    * @param content - The content of the message.
    * @param session - The active session to update.
    */
-  private async handleStateInput(content: any, session: SessionEntity): Promise<SessionEntity> {
+  private async handleStateInput(content: unknown, session: SessionEntity): Promise<SessionEntity> {
     const { connectionId, lang: userLang } = session
     this.logger.debug(`New Message ${JSON.stringify(content)}`)
     try {
       switch (session.state) {
         case StateStep.CHAT:
-          if (content?.content) {
-            const lower = content.content.toLowerCase()
-            const keywords = AUTH_KEYWORDS_BY_LANG[userLang] || []
+          if (
+            typeof content === 'object' &&
+            content !== null &&
+            'content' in content &&
+            typeof (content as Record<string, unknown>).content === 'string'
+          ) {
+            const textContent = (content as { content: string }).content.trim()
 
-            this.logger.debug(`[CHAT] User input: "${lower}"`)
-            this.logger.debug(`[CHAT] Keywords for lang "${userLang}": ${JSON.stringify(keywords)}`)
+            if (textContent.length > 0) {
+              const lower = textContent.toLowerCase()
+              const keywords = AUTH_KEYWORDS_BY_LANG[userLang] || []
 
-            const needsAuth = keywords.some((k) => lower.includes(k))
-            this.logger.debug(`[CHAT] needsAuth=${needsAuth}, isAuthenticated=${session.isAuthenticated}`)
+              this.logger.debug(`[CHAT] User input: "${lower}"`)
+              this.logger.debug(`[CHAT] Keywords for lang "${userLang}": ${JSON.stringify(keywords)}`)
 
-            if (needsAuth) {
-              if (!session.isAuthenticated) {
-                await this.sendText(connectionId, this.getText('AUTH_REQUIRED', userLang), userLang)
+              const needsAuth = keywords.some((k) => lower.includes(k))
+              this.logger.debug(`[CHAT] needsAuth=${needsAuth}, isAuthenticated=${session.isAuthenticated}`)
+
+              if (needsAuth) {
+                if (!session.isAuthenticated) {
+                  await this.sendText(connectionId, this.getText('AUTH_REQUIRED', userLang), userLang)
+                  break
+                }
+
+                const stats = await this.getStats(session)
+                await this.sendText(connectionId, stats, userLang)
                 break
               }
 
-              const stats = await this.getStats(session)
-              await this.sendText(connectionId, stats, userLang)
-              break
+              const answer = await this.chatBotService.chat({ userInput: textContent, connectionId, userLang })
+              await this.sendText(connectionId, answer, userLang)
             }
-
-            const answer = await this.chatBotService.chat({ userInput: content.content, connectionId, userLang })
-            await this.sendText(connectionId, answer, userLang)
           }
+
           break
         case StateStep.AUTH:
-          if (content?.type === CredentialReceptionMessage.type && content.state === 'done') {
+          if (isCredentialReceptionMessage(content)) {
             session.isAuthenticated = true
             session.state = StateStep.CHAT
             this.logger.debug(`[AUTH] User ${connectionId} authenticated successfully.`)

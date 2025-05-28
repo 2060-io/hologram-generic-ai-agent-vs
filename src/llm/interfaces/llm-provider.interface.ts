@@ -1,5 +1,5 @@
 export interface LlmProvider {
-  generate(prompt: string, options?: any): Promise<string>
+  generate(prompt: string, options?: GenerateOptions): Promise<string>
 }
 
 export type MessageBlock = {
@@ -9,4 +9,10 @@ export type MessageBlock = {
 
 export type OllamaResponse = {
   response: string
+}
+
+export interface GenerateOptions {
+  userLang?: string
+  model?: string
+  max_tokens?: number
 }

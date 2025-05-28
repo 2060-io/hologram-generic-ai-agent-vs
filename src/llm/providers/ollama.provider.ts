@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { LlmProvider, OllamaResponse } from '../interfaces/llm-provider.interface'
+import { GenerateOptions, LlmProvider, OllamaResponse } from '../interfaces/llm-provider.interface'
 import axios from 'axios'
 
 /**
@@ -33,7 +33,7 @@ export class OllamaProvider implements LlmProvider {
    * @returns The generated text.
    * @throws Error if Ollama returns empty content or the API call fails.
    */
-  async generate(prompt: string, options?: any): Promise<string> {
+  async generate(prompt: string, options?: GenerateOptions): Promise<string> {
     const model = options?.model || this.defaultModel
     const url = this.endpoint.endsWith('/api/generate')
       ? this.endpoint
@@ -57,7 +57,7 @@ export class OllamaProvider implements LlmProvider {
       this.logger.debug(`Response received from Ollama: ${content.trim()}`)
       return content.trim()
     } catch (error) {
-      this.logger.error(`Error generating completion from Ollama: ${error.message}`, error.stack)
+      this.logger.error(`Error generating completion from Ollama: ${JSON.stringify(error)}`)
       throw error
     }
   }

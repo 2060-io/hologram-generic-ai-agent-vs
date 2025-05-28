@@ -36,17 +36,18 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document)
 
   // Get the application port from configuration
-  const PORT = configService.get('appConfig.appPort')
+  const rawPort = configService.get<string>('appConfig.appPort')
+  const PORT = rawPort ? parseInt(rawPort, 10) : 3000
 
   // Start the application and listen on the specified port
   await app.listen(PORT)
 
   // Retrieve application name and version from package.json
-  const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'))
+  const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8')) as { name: string; version: string }
   const appName = packageJson.name
   const appVersion = packageJson.version
 
   // Log the URL where the application is running
   logger.log(`Application (${appName} v${appVersion}) running on: ${await app.getUrl()} `)
 }
-bootstrap()
+void bootstrap()

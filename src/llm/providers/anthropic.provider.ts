@@ -1,4 +1,4 @@
-import { LlmProvider, MessageBlock } from '../interfaces/llm-provider.interface'
+import { GenerateOptions, LlmProvider, MessageBlock } from '../interfaces/llm-provider.interface'
 import Anthropic from '@anthropic-ai/sdk'
 
 export class AnthropicProvider implements LlmProvider {
@@ -8,7 +8,7 @@ export class AnthropicProvider implements LlmProvider {
     this.client = new Anthropic({ apiKey })
   }
 
-  async generate(prompt: string, options?: any): Promise<string> {
+  async generate(prompt: string, options?: GenerateOptions): Promise<string> {
     const model = options?.model || 'claude-3-opus-20240229'
     const completion = await this.client.messages.create({
       model,

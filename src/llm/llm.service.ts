@@ -73,7 +73,7 @@ export class LlmService {
    * @param options Optional parameters (e.g. user language, model, etc.)
    * @returns The LLM's response as a string.
    */
-  async generate(userMessage: string, options?: { userLang?: string; [key: string]: any }): Promise<string> {
+  async generate(userMessage: string, options?: { userLang?: string; [key: string]: unknown }): Promise<string> {
     let lang = options?.userLang
     if (!lang) {
       lang = detectLanguage(userMessage)
@@ -86,7 +86,7 @@ export class LlmService {
       this.logger.debug('LLM provider returned response.')
       return result
     } catch (error) {
-      this.logger.error(`Error during LLM provider generation: ${error.message}`, error.stack)
+      this.logger.error(`Error during LLM provider generation: ${JSON.stringify(error)}`)
       throw error
     }
   }

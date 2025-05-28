@@ -61,7 +61,7 @@ export class LangchainRagService implements OnModuleInit {
       await this.redisClient.connect()
       this.logger.debug('Redis client connected.')
       this.vectorStore = new RedisVectorStore(embeddings, {
-        redisClient: this.redisClient as any,
+        redisClient: this.redisClient,
         indexName: redisIndexName,
       })
       this.logger.log('Redis vector store initialized.')
@@ -108,10 +108,10 @@ export class LangchainRagService implements OnModuleInit {
   /**
    * Cleans up resources (closes Redis client if used) when the module is destroyed.
    */
-  onModuleDestroy() {
+  async onModuleDestroy() {
     if (this.redisClient) {
       this.logger.log('Disconnecting Redis client...')
-      this.redisClient.destroy()
+      await this.redisClient.disconnect()
       this.logger.log('Redis client disconnected.')
     }
   }

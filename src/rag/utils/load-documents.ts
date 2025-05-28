@@ -1,7 +1,8 @@
 import { promises as fs } from 'fs'
 import * as path from 'path'
-import * as pdfParse from 'pdf-parse'
-import { parse as csvParse } from 'csv-parse/sync'
+import pdfParse from 'pdf-parse'
+import { parse as csvParse, Options as CsvParseOptions } from 'csv-parse/sync'
+
 import { Logger } from '@nestjs/common'
 
 /**
@@ -14,6 +15,10 @@ import { Logger } from '@nestjs/common'
  */
 export async function loadDocuments(folderPath: string, logger?: Logger): Promise<{ id: string; content: string }[]> {
   const documents: { id: string; content: string }[] = []
+  const options: CsvParseOptions = {
+    skip_empty_lines: true,
+    columns: false,
+  }
   try {
     await fs.mkdir(folderPath, { recursive: true })
     const files = await fs.readdir(folderPath)
@@ -37,7 +42,7 @@ export async function loadDocuments(folderPath: string, logger?: Logger): Promis
           foundDocs = true
         } else if (ext === '.csv') {
           const csvContent = await fs.readFile(fullPath, 'utf-8')
-          const rows: string[][] = csvParse(csvContent)
+          const rows: string[][] = csvParse(csvContent, options) as string[][]
           const content = rows.map((r) => r.join(', ')).join('\n')
           documents.push({ id: file, content })
           logger?.log?.(`[RAG] Loaded CSV document "${file}"`)

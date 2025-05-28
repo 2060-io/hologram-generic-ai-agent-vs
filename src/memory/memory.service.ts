@@ -25,14 +25,14 @@ export class MemoryService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    if ('onModuleInit' in this.backend && typeof this.backend.onModuleInit === 'function') {
-      await (this.backend as any).onModuleInit()
+    if (typeof (this.backend as Partial<OnModuleInit>).onModuleInit === 'function') {
+      await (this.backend as unknown as OnModuleInit).onModuleInit()
     }
   }
 
   async onModuleDestroy() {
-    if ('onModuleDestroy' in this.backend && typeof this.backend.onModuleDestroy === 'function') {
-      await (this.backend as any).onModuleDestroy()
+    if (typeof (this.backend as Partial<OnModuleDestroy>).onModuleDestroy === 'function') {
+      await (this.backend as unknown as OnModuleDestroy).onModuleDestroy()
     }
   }
 
