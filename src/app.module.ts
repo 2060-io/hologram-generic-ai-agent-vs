@@ -28,7 +28,6 @@ import { CoreModule } from './core/core.module'
       modules: {
         messages: true,
         connections: true,
-        stats: true,
       },
       options: {
         eventHandler: CoreService,

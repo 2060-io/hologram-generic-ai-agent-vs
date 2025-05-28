@@ -27,4 +27,3 @@ export const CHATBOT_PROMPT_TEMPLATES: Record<string, (context: string, question
   Réponds de manière claire et concise en français.
   `,
 }
-

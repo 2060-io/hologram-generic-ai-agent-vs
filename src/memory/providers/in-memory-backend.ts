@@ -9,7 +9,7 @@ export class InMemoryBackend implements IMemoryBackend {
   }
 
   async getHistory(sessionId: string): Promise<ChatMessage[]> {
-    return (await this.memory.get(sessionId)) ?? []
+    return this.memory.get(sessionId) ?? []
   }
 
   async addMessage(sessionId: string, role: 'user' | 'assistant', content: string): Promise<void> {

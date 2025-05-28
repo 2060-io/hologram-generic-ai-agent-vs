@@ -2,6 +2,7 @@ import { promises as fs } from 'fs'
 import * as path from 'path'
 import * as pdfParse from 'pdf-parse'
 import { parse as csvParse } from 'csv-parse/sync'
+import { Logger } from '@nestjs/common'
 
 /**
  * Loads all .txt, .md, .pdf, and .csv files from the given folder.
@@ -11,10 +12,7 @@ import { parse as csvParse } from 'csv-parse/sync'
  * @param folderPath - Absolute or relative path to the folder containing documents.
  * @param logger - Optional logger object (with log, error, debug methods).
  */
-export async function loadDocuments(
-  folderPath: string,
-  logger?: { log: Function; error: Function; debug?: Function },
-): Promise<{ id: string; content: string }[]> {
+export async function loadDocuments(folderPath: string, logger?: Logger): Promise<{ id: string; content: string }[]> {
   const documents: { id: string; content: string }[] = []
   try {
     await fs.mkdir(folderPath, { recursive: true })

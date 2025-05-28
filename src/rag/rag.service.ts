@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { VectorStoreService } from './vector-store.service'
 import { IRagBackend } from './interfaces/rag-backend.interface'
 import { ConfigService } from '@nestjs/config'

@@ -31,7 +31,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     AUTH_SUCCESS: 'Authentification réussie. Vous pouvez maintenant accéder à toutes les fonctionnalités.',
     WAITING_CREDENTIAL: "En attente de la fin du processus d'authentification...",
     AUTH_PROCESS_STARTED: "Le processus d'authentification a commencé. Veuillez répondre à la demande de justificatif.",
-    STATS_ERROR: "Désolé, nous n\'avons pas pu récupérer vos statistiques pour le moment.",
+    STATS_ERROR: "Désolé, nous n'avons pas pu récupérer vos statistiques pour le moment.",
   },
 }
 

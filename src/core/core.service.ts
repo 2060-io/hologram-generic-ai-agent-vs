@@ -1,11 +1,9 @@
 import {
   BaseMessage,
-  Claim,
   ContextualMenuItem,
   ContextualMenuSelectMessage,
   ContextualMenuUpdateMessage,
   CredentialReceptionMessage,
-  CredentialRequestMessage,
   IdentityProofRequestMessage,
   MediaMessage,
   ProfileMessage,
@@ -13,13 +11,13 @@ import {
   VerifiableCredentialRequestedProofItem,
 } from '@2060.io/service-agent-model'
 import { ApiClient, ApiVersion } from '@2060.io/service-agent-client'
-import { CredentialService, EventHandler, StatEventOptions } from '@2060.io/service-agent-nestjs-client'
+import { EventHandler } from '@2060.io/service-agent-nestjs-client'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { SessionEntity } from './models'
 import { JsonTransformer } from '@credo-ts/core'
 import { Cmd } from './common'
 import { Repository } from 'typeorm'
-import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm'
+import { InjectRepository } from '@nestjs/typeorm'
 import { ConfigService } from '@nestjs/config'
 import { StateStep } from './common/enums/state-step.enum'
 import { CHATBOT_WELCOME_TEMPLATES } from '../common/prompts/chatbot.welcome'
@@ -36,7 +34,6 @@ export class CoreService implements EventHandler, OnModuleInit {
     private readonly sessionRepository: Repository<SessionEntity>,
     private readonly configService: ConfigService,
     private readonly chatBotService: ChatbotService,
-    private readonly credentialService: CredentialService,
   ) {
     const baseUrl = configService.get<string>('appConfig.serviceAgentAdminUrl') || 'http://localhost:3001'
     this.apiClient = new ApiClient(baseUrl, ApiVersion.V1)
@@ -53,8 +50,7 @@ export class CoreService implements EventHandler, OnModuleInit {
   async inputMessage(message: BaseMessage): Promise<void> {
     let content
     let inMsg
-    let session: SessionEntity
-    session = await this.handleSession(message.connectionId)
+    const session: SessionEntity = await this.handleSession(message.connectionId)
 
     try {
       this.logger.debug('inputMessage: ' + JSON.stringify(message))
@@ -222,7 +218,7 @@ export class CoreService implements EventHandler, OnModuleInit {
    * @param session - The active session to update.
    */
   private async handleStateInput(content: any, session: SessionEntity): Promise<SessionEntity> {
-    const { id, connectionId, state, lang: userLang } = session
+    const { connectionId, lang: userLang } = session
     this.logger.debug(`New Message ${JSON.stringify(content)}`)
     try {
       switch (session.state) {
