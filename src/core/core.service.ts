@@ -3,12 +3,13 @@ import {
   ContextualMenuItem,
   ContextualMenuSelectMessage,
   ContextualMenuUpdateMessage,
-  CredentialReceptionMessage,
   IdentityProofRequestMessage,
+  IdentityProofSubmitMessage,
   MediaMessage,
   ProfileMessage,
   TextMessage,
   VerifiableCredentialRequestedProofItem,
+  VerifiableCredentialSubmittedProofItem,
 } from '@2060.io/service-agent-model'
 import { ApiClient, ApiVersion } from '@2060.io/service-agent-client'
 import { EventHandler } from '@2060.io/service-agent-nestjs-client'
@@ -23,7 +24,6 @@ import { StateStep } from './common/enums/state-step.enum'
 import { CHATBOT_WELCOME_TEMPLATES } from '../common/prompts/chatbot.welcome'
 import { ChatbotService } from '../chatbot/chatbot.service'
 import { TRANSLATIONS, AUTH_KEYWORDS_BY_LANG } from './common/i18n/i18n'
-import { isCredentialReceptionMessage } from './utils/type-guards'
 
 @Injectable()
 export class CoreService implements EventHandler, OnModuleInit {
@@ -84,8 +84,8 @@ export class CoreService implements EventHandler, OnModuleInit {
           await this.welcomeMessage(session.connectionId)
           break
         }
-        case CredentialReceptionMessage.type:
-          content = JsonTransformer.fromJSON(message, CredentialReceptionMessage)
+        case IdentityProofSubmitMessage.type:
+          content = JsonTransformer.fromJSON(message, IdentityProofSubmitMessage)
           break
         default:
           break
@@ -188,22 +188,23 @@ export class CoreService implements EventHandler, OnModuleInit {
       case StateStep.CHAT:
         if (selectionId === Cmd.AUTHENTICATE) {
           const credentialDefinitionId = this.configService.get<string>('appConfig.credentialDefinitionId')
+          this.logger.debug(`credentialDefinition: ${credentialDefinitionId}`)
           if (!credentialDefinitionId) {
             throw new Error('Missing config: appConfig.credentialDefinitionId')
           }
 
-          const proofRequest = new IdentityProofRequestMessage({
+          const body = new IdentityProofRequestMessage({
             connectionId,
-            requestedProofItems: [
-              new VerifiableCredentialRequestedProofItem({
-                id: '1',
-                type: 'verifiable-credential',
-                credentialDefinitionId,
-              }),
-            ],
+            requestedProofItems: [],
           })
+          const requestedProofItem = new VerifiableCredentialRequestedProofItem({
+            id: '1',
+            type: 'verifiable-credential',
+            credentialDefinitionId,
+          })
+          body.requestedProofItems.push(requestedProofItem)
 
-          await this.apiClient.messages.send(proofRequest)
+          await this.apiClient.messages.send(body)
 
           session.state = StateStep.AUTH
           this.logger.debug(`[AUTH] Proof request sent to ${connectionId}`)
@@ -230,7 +231,7 @@ export class CoreService implements EventHandler, OnModuleInit {
    * @param session - The active session to update.
    */
   private async handleStateInput(content: unknown, session: SessionEntity): Promise<SessionEntity> {
-    const { connectionId, lang: userLang } = session
+    const { connectionId, lang: userLang, userName } = session
     this.logger.debug(`New Message ${JSON.stringify(content)}`)
     try {
       switch (session.state) {
@@ -264,18 +265,59 @@ export class CoreService implements EventHandler, OnModuleInit {
                 break
               }
 
-              const answer = await this.chatBotService.chat({ userInput: textContent, connectionId, userLang })
+              const answer = await this.chatBotService.chat({
+                userInput: textContent,
+                connectionId,
+                userLang,
+                userName,
+              })
               await this.sendText(connectionId, answer, userLang)
             }
           }
 
           break
         case StateStep.AUTH:
-          if (isCredentialReceptionMessage(content)) {
-            session.isAuthenticated = true
-            session.state = StateStep.CHAT
-            this.logger.debug(`[AUTH] User ${connectionId} authenticated successfully.`)
-            await this.sendText(connectionId, this.getText('AUTH_SUCCESS', userLang), userLang)
+          if (
+            typeof content === 'object' &&
+            content !== null &&
+            'type' in content &&
+            (content as IdentityProofSubmitMessage).type === IdentityProofSubmitMessage.type &&
+            'submittedProofItems' in content
+          ) {
+            const submitMessage = content as IdentityProofSubmitMessage
+            const proofItem = submitMessage.submittedProofItems?.[0] as
+              | VerifiableCredentialSubmittedProofItem
+              | undefined
+
+            if (proofItem?.type === VerifiableCredentialSubmittedProofItem.type && !proofItem.errorCode) {
+              session.isAuthenticated = true
+
+              const claims = proofItem.claims as { name: string; value: string }[] | undefined
+              if (claims) {
+                const firstName = claims.find((c) => c.name === 'firstName')?.value
+                const lastName = claims.find((c) => c.name === 'lastName')?.value
+                session.userName = [firstName, lastName].filter(Boolean).join(' ').trim()
+              }
+
+              session.state = StateStep.CHAT
+              await this.sessionRepository.save(session)
+
+              this.logger.debug(`[AUTH] User ${connectionId} authenticated successfully.`)
+              const message = session.userName
+                ? this.getText('AUTH_SUCCESS_NAME', userLang).replace('{name}', session.userName)
+                : this.getText('AUTH_SUCCESS', userLang)
+
+              await this.sendText(connectionId, message, userLang)
+            } else if (proofItem?.errorCode) {
+              this.logger.warn(`[AUTH] Proof submission failed with error: ${proofItem.errorCode}`)
+              await this.sendText(
+                connectionId,
+                `${this.getText('AUTH_ERROR', userLang)}: ${proofItem.errorCode}`,
+                userLang,
+              )
+            } else {
+              await this.sendText(connectionId, this.getText('WAITING_CREDENTIAL', userLang), userLang)
+            }
           } else {
             await this.sendText(connectionId, this.getText('WAITING_CREDENTIAL', userLang), userLang)
           }
