@@ -28,8 +28,19 @@ import { CoreModule } from './core/core.module'
       modules: {
         messages: true,
         connections: true,
+        stats: true,
       },
       options: {
+        statOptions: {
+          host: process.env.VS_AGENT_STATS_HOST,
+          port: Number(process.env.VS_AGENT_STATS_PORT),
+          queue: process.env.VS_AGENT_STATS_QUEUE,
+          username: process.env.VS_AGENT_STATS_USER,
+          password: process.env.VS_AGENT_STATS_PASSWORD,
+          reconnectLimit: 10,
+          threads: 2,
+          delay: 1000,
+        },
         eventHandler: CoreService,
         url: process.env.SERVICE_AGENT_ADMIN_URL,
         imports: [ChatbotModule],
