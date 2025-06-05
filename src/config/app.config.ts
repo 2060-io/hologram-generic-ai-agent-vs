@@ -152,4 +152,21 @@ export default registerAs('appConfig', () => ({
    * Service Agent Admin API URL.
    */
   serviceAgentAdminUrl: process.env.SERVICE_AGENT_ADMIN_URL,
+
+  /**
+   * - toolsConfig: JSON string defining external tools available to the LLM agent.
+   *   Each tool should specify a unique name, description, endpoint, HTTP method,
+   *   and any authentication if required.
+   *
+   *   Example (set in your .env):
+   *   TOOLS_CONFIG=[
+   *     {
+   *       "name": "getStats",
+   *       "description": "Query system statistics by keyword.",
+   *       "endpoint": "https://api.example.com/stats?query={query}",
+   *       "method": "GET"
+   *     }
+   *   ]
+   */
+  toolsConfig: process.env.TOOLS_CONFIG || '[]',
 }))

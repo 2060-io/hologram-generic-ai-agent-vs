@@ -67,7 +67,7 @@ export class ChatbotService {
     this.logger.debug(`Retrieved external context: ${JSON.stringify(contextArr)}`)
 
     // Compose the memory/history block for the prompt
-    const historyContext = history.map((m) => `${m.role === 'user' ? 'user' : 'agent'}: ${m.content}`).join('\n')
+    const historyContext = history.map((m) => `${m.role === 'user' ? 'user' : 'system'}: ${m.content}`).join('\n')
 
     // Build prompt using language-appropriate template
     const template = CHATBOT_PROMPT_TEMPLATES[userLang] || CHATBOT_PROMPT_TEMPLATES['en']
@@ -80,7 +80,7 @@ export class ChatbotService {
 
     // Save both user question and agent reply to memory
     await this.memoryService.addMessage(connectionId, 'user', userInput)
-    await this.memoryService.addMessage(connectionId, 'assistant', answer)
+    await this.memoryService.addMessage(connectionId, 'system', answer)
     this.logger.log(`History updated for session: ${connectionId}`)
 
     return answer

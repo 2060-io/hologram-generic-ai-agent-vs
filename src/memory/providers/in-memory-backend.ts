@@ -12,7 +12,7 @@ export class InMemoryBackend implements IMemoryBackend {
     return Promise.resolve(this.memory.get(sessionId) ?? [])
   }
 
-  async addMessage(sessionId: string, role: 'user' | 'assistant', content: string): Promise<void> {
+  async addMessage(sessionId: string, role: 'user' | 'system', content: string): Promise<void> {
     const history = await this.getHistory(sessionId)
     history.push({ role, content })
     while (history.length > this.windowSize) {

@@ -28,7 +28,7 @@ export class RedisMemoryBackend implements IMemoryBackend, OnModuleInit, OnModul
     return data.map((json) => JSON.parse(json) as ChatMessage)
   }
 
-  async addMessage(sessionId: string, role: 'user' | 'assistant', content: string): Promise<void> {
+  async addMessage(sessionId: string, role: 'user' | 'system', content: string): Promise<void> {
     const msg = JSON.stringify({ role, content })
     await this.redis.rPush(this.key(sessionId), msg)
     await this.redis.lTrim(this.key(sessionId), -this.windowSize, -1)

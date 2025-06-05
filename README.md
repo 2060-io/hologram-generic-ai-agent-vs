@@ -35,6 +35,7 @@ All configuration is managed via environment variables.
 | `POSTGRES_PASSWORD`        | Password for PostgreSQL                                                                         | `2060demo`               |
 | `CREDENTIAL_DEFINITION_ID` | Verifiable credential definition ID or URL                                                      | `http://localhost:3000`  |
 | `SERVICE_AGENT_ADMIN_URL`  | Service Agent Admin API URL                                                                     |                          |
+| `TOOLS_CONFIG`             | Defines external tools (API integrations) available to the agent as a JSON string.              | `[]`                     |
 
 **Example `AGENT_PROMPT`:**
 
@@ -157,3 +158,33 @@ For a full guide on configuring and using the memory module (supporting both in-
 ## 📥 Ollama & Llama3 Installation
 
 Full setup instructions for local LLMs (Ollama + Llama3) are provided in [How to use Ollama](./docs/how-to-use-ollama.md).
+
+## 🛠️ How to Use langchain Tools
+
+Tools allow your AI agent to interact with external APIs and services at inference time. Once defined in `TOOLS_CONFIG`, the agent can:
+
+- Fetch live data (statistics, user info, documents, etc.)
+- Trigger actions (notifications, webhooks, etc.)
+
+You can connect external APIs as langchain "tools" to the AI agent via the `TOOLS_CONFIG` environment variable.
+
+Each tool allows the agent to query external data sources, fetch statistics, access documentation, or trigger actions through HTTP APIs.  
+**Tools are defined as a JSON array** in your `.env`, with each entry describing one tool.
+
+This feature is only available when use opena or anthropic llm
+
+**Example:**
+
+```env
+TOOLS_CONFIG=[{"name":"getLocation","description":"Query location statistics by US zipcode.","endpoint":"https://api.zippopotam.us/us/{query}","method":"GET"}]
+```
+
+- `name`: Unique tool name (no spaces).
+- `description`: Clear, human-readable summary. The LLM will use this to decide when to invoke the tool.
+- `endpoint`: API URL. Use `{query}` as a placeholder for the user's input.
+- `method`: HTTP method, e.g. `"GET"` or `"POST"`.
+- `authHeader` and `authToken`: (optional) For APIs that require authentication, specify the HTTP header and token.
+
+**Once defined, the agent will be able to answer queries like:**
+
+- "Show me the statistics for 90210" (calls `getLocation`)

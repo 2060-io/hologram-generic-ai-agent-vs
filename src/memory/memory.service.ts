@@ -42,7 +42,7 @@ export class MemoryService implements OnModuleInit, OnModuleDestroy {
   }
 
   /** Add a message to the session's memory */
-  addMessage(sessionId: string, role: 'user' | 'assistant', content: string): Promise<void> {
+  addMessage(sessionId: string, role: 'user' | 'system', content: string): Promise<void> {
     return this.backend.addMessage(sessionId, role, content)
   }
 
