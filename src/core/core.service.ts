@@ -7,16 +7,18 @@ import {
   IdentityProofSubmitMessage,
   MediaMessage,
   ProfileMessage,
+  StatEnum,
   TextMessage,
   VerifiableCredentialRequestedProofItem,
   VerifiableCredentialSubmittedProofItem,
 } from '@2060.io/service-agent-model'
 import { ApiClient, ApiVersion } from '@2060.io/service-agent-client'
 import { EventHandler } from '@2060.io/service-agent-nestjs-client'
+import { StatProducerService } from '@2060.io/service-agent-nestjs-client/build/jms'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { SessionEntity } from './models'
 import { JsonTransformer } from '@credo-ts/core'
-import { Cmd } from './common'
+import { Cmd, STAT_KPI } from './common'
 import { Repository } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
 import { ConfigService } from '@nestjs/config'
@@ -37,6 +39,7 @@ export class CoreService implements EventHandler, OnModuleInit {
     private readonly configService: ConfigService,
     private readonly chatBotService: ChatbotService,
     private readonly memoryService: MemoryService,
+    private readonly statProducer: StatProducerService
   ) {
     const baseUrl = configService.get<string>('appConfig.serviceAgentAdminUrl') || 'http://localhost:3001'
     this.apiClient = new ApiClient(baseUrl, ApiVersion.V1)
@@ -406,5 +409,11 @@ export class CoreService implements EventHandler, OnModuleInit {
       this.logger.error(`[STATS] Error generating explanation: ${err}`)
       return this.getText('STATS_ERROR', userLang)
     }
+  }
+
+  async sendStats(kpi: STAT_KPI, session: SessionEntity) {
+    const stats = [STAT_KPI[kpi]]
+    if (session !== null) 
+    await this.statProducer.spool(STAT_KPI[kpi], session.connectionId, [new StatEnum(0, 'string')])
   }
 }
