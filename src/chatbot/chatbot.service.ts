@@ -40,7 +40,7 @@ export class ChatbotService {
    */
   async chat(options: { userInput: string; session: SessionEntity }): Promise<string> {
     const { userInput, session } = options
-    let { lang, isAuthenticated, connectionId, userName } = session
+    const { lang, connectionId, userName } = session
 
     this.logger.debug(`Received user input: "${userInput}" [connectionId: ${connectionId}]`)
 

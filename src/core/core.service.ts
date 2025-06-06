@@ -39,7 +39,7 @@ export class CoreService implements EventHandler, OnModuleInit {
     private readonly configService: ConfigService,
     private readonly chatBotService: ChatbotService,
     private readonly memoryService: MemoryService,
-    private readonly statProducer: StatProducerService
+    private readonly statProducer: StatProducerService,
   ) {
     const baseUrl = configService.get<string>('appConfig.serviceAgentAdminUrl') || 'http://localhost:3001'
     this.apiClient = new ApiClient(baseUrl, ApiVersion.V1)
@@ -237,7 +237,7 @@ export class CoreService implements EventHandler, OnModuleInit {
    * @param session - The active session to update.
    */
   private async handleStateInput(content: unknown, session: SessionEntity): Promise<SessionEntity> {
-    const { connectionId, lang: userLang, userName } = session
+    const { connectionId, lang: userLang } = session
     this.logger.debug(`New Message ${JSON.stringify(content)}`)
     try {
       switch (session.state) {
@@ -387,7 +387,7 @@ export class CoreService implements EventHandler, OnModuleInit {
   }
 
   private async getStats(session: SessionEntity): Promise<string> {
-    const { lang: userLang, connectionId } = session
+    const { lang: userLang } = session
 
     try {
       //TODO: define parameters to
@@ -413,7 +413,6 @@ export class CoreService implements EventHandler, OnModuleInit {
 
   async sendStats(kpi: STAT_KPI, session: SessionEntity) {
     const stats = [STAT_KPI[kpi]]
-    if (session !== null) 
-    await this.statProducer.spool(STAT_KPI[kpi], session.connectionId, [new StatEnum(0, 'string')])
+    if (session !== null) await this.statProducer.spool(stats, session.connectionId, [new StatEnum(0, 'string')])
   }
 }
