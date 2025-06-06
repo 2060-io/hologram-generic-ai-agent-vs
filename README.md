@@ -159,6 +159,11 @@ For a full guide on configuring and using the memory module (supporting both in-
 
 Full setup instructions for local LLMs (Ollama + Llama3) are provided in [How to use Ollama](./docs/how-to-use-ollama.md).
 
+## 📊 Hologram-Welcome JMS integration
+
+For detailed instructions on configuring and using the JMS statistics (stats) module for real-time agent metrics with Artemis or other JMS brokers, see  
+[How to use the JMS Connection Module](./docs/hologram-welcome-jms-integration.md).
+
 ## 🛠️ How to Use langchain Tools
 
 Tools allow your AI agent to interact with external APIs and services at inference time. Once defined in `TOOLS_CONFIG`, the agent can:

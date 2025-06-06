@@ -28,7 +28,7 @@ import { CoreModule } from './core/core.module'
       modules: {
         messages: true,
         connections: true,
-        stats: true,
+        stats: process.env.VS_AGENT_STATS_ENABLED === 'true',
       },
       options: {
         statOptions: {
