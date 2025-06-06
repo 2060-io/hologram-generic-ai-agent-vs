@@ -16,4 +16,5 @@ export interface ExternalToolDef {
   method?: 'GET' | 'POST'
   authHeader?: string
   authToken?: string
+  requiresAuth?: boolean
 }

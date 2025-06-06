@@ -9,7 +9,7 @@ import { createToolCallingAgent } from 'langchain/agents'
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts'
 import { AIMessage, BaseMessage } from '@langchain/core/messages'
 import { ExternalToolDef, SupportedProviders } from './interfaces/llm-provider.interface'
-import { detectLanguage } from 'src/common/utils/lang-detect.util'
+import { SessionEntity } from 'src/core/models'
 
 /**
  * LlmService
@@ -62,21 +62,18 @@ export class LlmService {
    * @param _opts - Optional parameters, reserved for future context (e.g., language).
    * @returns The generated response from the agent as a string.
    */
-  async generate(userMessage: string, options?: { userLang?: string; [key: string]: unknown }): Promise<string> {
-    let lang = options?.userLang
-    if (!lang) {
-      lang = detectLanguage(userMessage)
-      this.logger.log(`Detected user language: ${lang}`)
-    }
-    this.logger.log(`Generating response for user message: "${userMessage}"`)
+  async generate(userMessage: string, options?: { session?: SessionEntity }): Promise<string> {
+    const session = options?.session
+    this.logger.debug(`[generate] Initialize: ${JSON.stringify(session)}`)
 
+    this.logger.log(`Generating response for user message: ${userMessage}`)
     try {
-      const finalprompt = this.buildPrompt(userMessage, { userLang: lang })
       // If a tool-enabled agent is available, use it (requires chat_history placeholder)
       if (this.agentExecutor) {
         this.logger.debug('Using tool-enabled agent executor.')
+
         const result = await this.agentExecutor.invoke({
-          input: finalprompt,
+          input: { userMessage, isAuthenticated: session?.isAuthenticated },
           chat_history: [],
         })
 
@@ -156,8 +153,10 @@ export class LlmService {
   /**
    * Builds the array of DynamicStructuredTool instances based on the TOOLS_CONFIG environment variable.
    * Each tool is validated, logged, and initialized with its own async function and error handling.
+   * If a tool requires authentication (via the `requiresAuth` property), the tool will check
+   * the current user's session and return an authentication message if not authenticated.
    *
-   * @returns An array of DynamicStructuredTool instances, or an empty array if none are configured.
+   * @returns {DynamicStructuredTool[]} An array of DynamicStructuredTool instances, or an empty array if none are configured.
    */
   private buildTools() {
     const raw = this.config.get<string>('appConfig.toolsConfig')
@@ -176,6 +175,7 @@ export class LlmService {
 
     const querySchema = zod.object({
       query: zod.string().describe('Free-form query string passed to the external service.'),
+      isAuthenticated: zod.boolean().describe('Autentication'),
     })
 
     // Map each tool definition to a DynamicStructuredTool instance
@@ -185,8 +185,25 @@ export class LlmService {
           name: def.name,
           description: def.description,
           schema: querySchema,
-          func: async ({ query }) => {
-            // Log when the tool is called and the query/request sent
+          /**
+           * Tool executor function.
+           * @param args - Arguments passed from LLM/tool call (e.g., { query }).
+           * @param context - Custom context, expected to include { session }.
+           * If the tool requires authentication, checks the session and denies access if not authenticated.
+           * Otherwise, executes the external API call.
+           */
+          func: async ({ query, isAuthenticated }) => {
+            // Check if this tool requires authentication and if the user is authenticated
+            this.logger.debug(
+              `[DEBUG] isAuthenticated: ${JSON.stringify(isAuthenticated)} && requiresAuth ${JSON.stringify(def.requiresAuth)}`,
+            )
+
+            if (def.requiresAuth && !isAuthenticated) {
+              this.logger.debug(`[Tool:${def.name}] Attempted access without authentication.`)
+              return 'Authentication is required to access this feature. Please authenticate and try again.'
+            }
+
+            // Execute the tool normally (external API call)
             this.logger.log(`[Tool:${def.name}] Called with query: "${query}"`)
             const url = def.endpoint.replace('{query}', encodeURIComponent(query))
             this.logger.log(`[Tool:${def.name}] Requesting URL: ${url}`)
@@ -194,7 +211,6 @@ export class LlmService {
               method: def.method ?? 'GET',
               headers: def.authHeader ? { [def.authHeader]: def.authToken ?? '' } : undefined,
             })
-            // Log the HTTP status and the first 300 chars of the response
             this.logger.log(`[Tool:${def.name}] HTTP status: ${res.status}`)
             if (!res.ok) {
               this.logger.error(`[Tool:${def.name}] Returned error: ${res.status}`)
@@ -253,24 +269,24 @@ export class LlmService {
     return value
   }
 
-  /**
-   * Builds the final prompt for the LLM using the agent prompt and user-specific options.
-   * Ensures that if the user language is not English, the agent is instructed to respond in that language.
-   *
-   * @param userMessage - The user's input message to include in the prompt.
-   * @param options - Optional parameters (e.g., userLang for the desired response language).
-   * @returns The final prompt string to send to the LLM.
-   */
-  buildPrompt(userMessage: string, options?: { userLang?: string }): string {
-    let prompt = this.agentPrompt
-    // If the user language is not English, instruct the agent to answer in that language
-    if (options?.userLang && options.userLang.toLowerCase() !== 'en') {
-      prompt += ` Always respond in ${options.userLang}, unless told otherwise.`
-      this.logger.debug(`Agent will answer in language: ${options.userLang}`)
+  async detectLanguage(this: LlmService, text: string): Promise<string> {
+    this.logger.debug(`[LLM LANG DETECT] Analyzing: "${text}"`)
+    const prompt = `Detect the language of the following text. Only reply with the ISO 639-1 code (like "en", "es", "fr"). Text: ${text}`
+    try {
+      const response = (await this.llm.invoke([{ role: 'user', content: prompt }])) as string | AIMessage | BaseMessage
+
+      let langCode: string | undefined
+      if (typeof response === 'string') langCode = response.trim().toLowerCase()
+      else if (response && typeof (response as any).content === 'string')
+        langCode = (response as any).content.trim().toLowerCase()
+
+      this.logger.debug(`[LLM LANG DETECT] Model replied: "${langCode}"`)
+      // Extra check: Only accept if matches a real ISO code
+      if (langCode && /^[a-z]{2}$/.test(langCode)) return langCode
+      return 'en'
+    } catch (err) {
+      this.logger.error(`[LLM LANG DETECT] Error: ${err}`)
+      return 'en'
     }
-    // Combine the agent prompt and user message in a typical conversational format
-    const finalPrompt = `${prompt}\nUser: ${userMessage}`
-    this.logger.verbose(`Built prompt: ${finalPrompt}`)
-    return finalPrompt
   }
 }

@@ -174,22 +174,47 @@ Tools allow your AI agent to interact with external APIs and services at inferen
 You can connect external APIs as langchain "tools" to the AI agent via the `TOOLS_CONFIG` environment variable.
 
 Each tool allows the agent to query external data sources, fetch statistics, access documentation, or trigger actions through HTTP APIs.  
-**Tools are defined as a JSON array** in your `.env`, with each entry describing one tool.
+**Tools are defined as a JSON array** in your `.env`, with each entry describing one tool and its options.
 
-This feature is only available when use opena or anthropic llm
+> **Note:** This feature is only available when using **OpenAI** or **Anthropic** as LLM provider.
 
 **Example:**
 
 ```env
-TOOLS_CONFIG=[{"name":"getLocation","description":"Query location statistics by US zipcode.","endpoint":"https://api.zippopotam.us/us/{query}","method":"GET"}]
+TOOLS_CONFIG=[
+  {
+    "name": "getLocation",
+    "description": "Query location statistics by US zipcode.",
+    "endpoint": "https://api.zippopotam.us/us/{query}",
+    "method": "GET",
+    "requiresAuth": false
+  },
+  {
+    "name": "getStats",
+    "description": "Access advanced statistics for the current user.",
+    "endpoint": "https://mydomain.com/api/stats?user={query}",
+    "method": "GET",
+    "requiresAuth": true
+  }
+]
 ```
+
+### Properties
 
 - `name`: Unique tool name (no spaces).
 - `description`: Clear, human-readable summary. The LLM will use this to decide when to invoke the tool.
 - `endpoint`: API URL. Use `{query}` as a placeholder for the user's input.
 - `method`: HTTP method, e.g. `"GET"` or `"POST"`.
 - `authHeader` and `authToken`: (optional) For APIs that require authentication, specify the HTTP header and token.
+- `requiresAuth`: (**new**, `true` or `false`) If set to `true`, the agent will require that the user is authenticated before invoking this tool.  
+  If the user is not authenticated, the agent will respond with an appropriate message.
 
-**Once defined, the agent will be able to answer queries like:**
+### How authentication works
 
-- "Show me the statistics for 90210" (calls `getLocation`)
+- If a tool has `"requiresAuth": true` and the current user session is not authenticated,  
+  the agent will _not_ call the tool and will reply with:  
+  _"Authentication is required to access this feature. Please authenticate and try again."_
+- If `"requiresAuth": false` (or omitted), the tool can be used by any user.
+
+> **Supported LLMs:**  
+> Currently, tools with dynamic HTTP integration are only available for the OpenAI and Anthropic providers.

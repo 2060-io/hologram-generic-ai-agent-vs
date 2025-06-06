@@ -39,9 +39,3 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     STATS_ERROR: "Désolé, nous n'avons pas pu récupérer vos statistiques pour le moment.",
   },
 }
-
-export const AUTH_KEYWORDS_BY_LANG: Record<string, string[]> = {
-  en: ['stat', 'stats', 'statistics'],
-  es: ['estadistica', 'estadísticas'],
-  fr: ['statistique', 'statistiques'],
-}

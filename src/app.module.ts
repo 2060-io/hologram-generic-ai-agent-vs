@@ -8,6 +8,7 @@ import { EventsModule } from '@2060.io/service-agent-nestjs-client'
 import appConfig from './config/app.config'
 import { CoreService } from './core/core.service'
 import { CoreModule } from './core/core.module'
+import { MemoryModule } from './memory/memory.module'
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CoreModule } from './core/core.module'
     ChatbotModule,
     LlmModule,
     RagModule,
+    MemoryModule,
     EventsModule.register({
       modules: {
         messages: true,
@@ -43,7 +45,7 @@ import { CoreModule } from './core/core.module'
         },
         eventHandler: CoreService,
         url: process.env.SERVICE_AGENT_ADMIN_URL,
-        imports: [ChatbotModule],
+        imports: [ChatbotModule, MemoryModule],
       },
     }),
   ],

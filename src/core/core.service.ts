@@ -23,7 +23,8 @@ import { ConfigService } from '@nestjs/config'
 import { StateStep } from './common/enums/state-step.enum'
 import { CHATBOT_WELCOME_TEMPLATES } from '../common/prompts/chatbot.welcome'
 import { ChatbotService } from '../chatbot/chatbot.service'
-import { TRANSLATIONS, AUTH_KEYWORDS_BY_LANG } from './common/i18n/i18n'
+import { TRANSLATIONS } from './common/i18n/i18n'
+import { MemoryService } from '../memory/memory.service'
 
 @Injectable()
 export class CoreService implements EventHandler, OnModuleInit {
@@ -35,6 +36,7 @@ export class CoreService implements EventHandler, OnModuleInit {
     private readonly sessionRepository: Repository<SessionEntity>,
     private readonly configService: ConfigService,
     private readonly chatBotService: ChatbotService,
+    private readonly memoryService: MemoryService,
   ) {
     const baseUrl = configService.get<string>('appConfig.serviceAgentAdminUrl') || 'http://localhost:3001'
     this.apiClient = new ApiClient(baseUrl, ApiVersion.V1)
@@ -215,6 +217,7 @@ export class CoreService implements EventHandler, OnModuleInit {
           session.isAuthenticated = false
           await this.sessionRepository.save(session)
           await this.closeConnection(connectionId)
+          await this.memoryService.clear(connectionId)
         }
         break
       default:
@@ -245,31 +248,9 @@ export class CoreService implements EventHandler, OnModuleInit {
             const textContent = (content as { content: string }).content.trim()
 
             if (textContent.length > 0) {
-              const lower = textContent.toLowerCase()
-              const keywords = AUTH_KEYWORDS_BY_LANG[userLang] || []
-
-              this.logger.debug(`[CHAT] User input: "${lower}"`)
-              this.logger.debug(`[CHAT] Keywords for lang "${userLang}": ${JSON.stringify(keywords)}`)
-
-              const needsAuth = keywords.some((k) => lower.includes(k))
-              this.logger.debug(`[CHAT] needsAuth=${needsAuth}, isAuthenticated=${session.isAuthenticated}`)
-
-              if (needsAuth) {
-                if (!session.isAuthenticated) {
-                  await this.sendText(connectionId, this.getText('AUTH_REQUIRED', userLang), userLang)
-                  break
-                }
-
-                const stats = await this.getStats(session)
-                await this.sendText(connectionId, stats, userLang)
-                break
-              }
-
               const answer = await this.chatBotService.chat({
                 userInput: textContent,
-                connectionId,
-                userLang,
-                userName,
+                session,
               })
               await this.sendText(connectionId, answer, userLang)
             }
@@ -417,8 +398,7 @@ export class CoreService implements EventHandler, OnModuleInit {
 
       const summary = await this.chatBotService.chat({
         userInput: prompt,
-        connectionId,
-        userLang,
+        session,
       })
 
       return summary
