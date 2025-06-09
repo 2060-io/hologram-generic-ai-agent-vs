@@ -1,0 +1,88 @@
+{{- if .Values.chatbot.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "chatbot.fullname" . }}-chatbot
+spec:
+  type: {{ .Values.chatbot.service.type }}
+  ports:
+    - port: {{ .Values.chatbot.service.port }}
+      targetPort: {{ .Values.chatbot.service.port }}
+      name: http
+  selector:
+    app.kubernetes.io/component: chatbot
+    {{- include "chatbot.selectorLabels" . | nindent 4 }}
+{{- end }}
+---
+{{- if and .Values.chatbot.enabled .Values.chatbot.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "chatbot.fullname" . }}-chatbot
+  annotations:
+    {{- if .Values.chatbot.ingress.className }}
+    kubernetes.io/ingress.class: {{ .Values.chatbot.ingress.className }}
+    {{- end }}
+spec:
+  {{- if .Values.chatbot.ingress.tls }}
+  tls:
+    - hosts:
+        - {{ .Values.chatbot.ingress.host }}
+      secretName: {{ include "chatbot.fullname" . }}-chatbot-tls
+  {{- end }}
+  rules:
+    - host: {{ .Values.chatbot.ingress.host }}
+      http:
+        paths:
+          - path: {{ .Values.chatbot.ingress.path }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "chatbot.fullname" . }}-chatbot
+                port:
+                  number: {{ .Values.chatbot.service.port }}
+
+{{- end }}
+
+---
+{{- if .Values.chatbot.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chatbot.fullname" . }}-chatbot
+  labels:
+    app.kubernetes.io/component: chatbot
+    {{- include "chatbot.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.chatbot.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: chatbot
+      {{- include "chatbot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: chatbot
+        {{- include "chatbot.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: chatbot
+          image: "{{ .Values.chatbot.image.repository }}:{{ .Values.chatbot.image.tag }}"
+          resources:
+            {{- toYaml .Values.chatbot.resources | nindent 12 }} 
+          imagePullPolicy: {{ .Values.chatbot.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.chatbot.service.port }}
+              name: http
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.chatbot.envFrom.configMap | quote }}
+            - secretRef:
+                name: {{ .Values.chatbot.envFrom.secret | quote }}  
+          volumeMounts:
+            - name: docs
+              mountPath: /app/rag/docs
+      volumes:
+        - name: docs
+          emptyDir: {}
+{{- end }}

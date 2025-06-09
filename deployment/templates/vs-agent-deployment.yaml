@@ -1,0 +1,83 @@
+{{- if and .Values.serviceAgent.enabled .Values.serviceAgent.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "chatbot.fullname" . }}-vs-agent
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  {{- if .Values.serviceAgent.ingress.tls }}
+  tls:
+    - hosts:
+        - {{ .Values.serviceAgent.ingress.host }}
+      secretName: {{ .Values.serviceAgent.ingress.tlsSecret }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.serviceAgent.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "chatbot.fullname" . }}-vs-agent
+                port:
+                  number: {{ .Values.serviceAgent.service.ports.http }}
+{{- end }}
+---
+{{- if .Values.serviceAgent.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "chatbot.fullname" . }}-vs-agent
+spec:
+  type: {{ .Values.serviceAgent.service.type }}
+  ports:
+    - port: {{ .Values.serviceAgent.service.ports.http }}
+      targetPort: {{ .Values.serviceAgent.service.ports.http }}
+      name: http
+    - port: {{ .Values.serviceAgent.service.ports.ws }}
+      targetPort: {{ .Values.serviceAgent.service.ports.ws }}
+      name: ws
+  selector:
+    app.kubernetes.io/component: vs-agent
+    {{- include "chatbot.selectorLabels" . | nindent 4 }}
+{{- end }}
+---
+{{- if .Values.serviceAgent.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chatbot.fullname" . }}-vs-agent
+  labels:
+    app.kubernetes.io/component: vs-agent
+    {{- include "chatbot.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.serviceAgent.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: vs-agent
+      {{- include "chatbot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: vs-agent
+        {{- include "chatbot.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: vs-agent
+          image: "{{ .Values.serviceAgent.image.repository }}:{{ .Values.serviceAgent.image.tag }}"
+          resources:
+            {{- toYaml .Values.chatbot.resources | nindent 12 }} 
+          imagePullPolicy: {{ .Values.serviceAgent.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.serviceAgent.service.ports.http }}
+              name: http
+            - containerPort: {{ .Values.serviceAgent.service.ports.ws }}
+              name: ws
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.serviceAgent.envFrom.configMap | quote }}
+            - secretRef:
+                name: {{ .Values.serviceAgent.envFrom.secret | quote }}
+{{- end }}

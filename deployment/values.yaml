@@ -1,0 +1,99 @@
+namespace: demos
+
+global:
+  imagePullPolicy: Always
+
+redis:
+  enabled: true
+  image: redis/redis-stack-server:latest
+  port: 6379
+  resources:
+    requests:
+      cpu: '50m'
+      memory: '64Mi'
+    limits:
+      cpu: '200m'
+      memory: '256Mi'
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: true
+    mountPath: /data
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+
+chatbot:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: '100m'
+      memory: '128Mi'
+    limits:
+      cpu: '500m'
+      memory: '512Mi'
+  image:
+    repository: io2060/hologram-welcome-ai-agent
+    tag: latest
+    pullPolicy: Always
+  envFrom:
+    configMap: hw-chatbot-config
+    secret: hw-chatbot-secret
+  service:
+    type: ClusterIP
+    port: 3000
+  ingress:
+    enabled: true
+    className: nginx
+    host: chatbot.example.com
+    path: /
+    tls: false
+
+serviceAgent:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: '100m'
+      memory: '128Mi'
+    limits:
+      cpu: '500m'
+      memory: '512Mi'
+  image:
+    repository: io2060/2060-service-agent
+    tag: v1.2.1-dev.1
+    pullPolicy: Always
+  envFrom:
+    configMap: hwa-vs-agent-config
+    secret: hwa-vs-agent-secret
+  service:
+    type: ClusterIP
+    ports:
+      http: 3000
+      ws: 3001
+  ingress:
+    enabled: true
+    className: nginx
+    host: hologram-welcome.demo.2060.io
+    tlsSecret: hologram-welcome.demo.2060.io-cert
+    tls: true
+
+postgres:
+  enabled: true
+  image: postgres:alpine3.19
+  port: 5432
+  resources:
+    requests:
+      cpu: '200m'
+      memory: '256Mi'
+    limits:
+      cpu: '1000m'
+      memory: '1024Mi'
+  envFrom:
+    secret: hwa-postgres-secret
+  service:
+    type: ClusterIP
+  storage:
+    size: 10Gi
+    storageClassName: ''
