@@ -115,6 +115,7 @@ export class CoreService implements EventHandler, OnModuleInit {
    */
   async newConnection(connectionId: string): Promise<void> {
     const session = await this.handleSession(connectionId)
+    await this.sendStats(STAT_KPI.USER_CONNECTED, session)
     await this.sendContextualMenu(session)
   }
 
@@ -386,32 +387,8 @@ export class CoreService implements EventHandler, OnModuleInit {
     return await this.sessionRepository.save(session)
   }
 
-  private async getStats(session: SessionEntity): Promise<string> {
-    const { lang: userLang } = session
-
-    try {
-      //TODO: define parameters to
-      const statsData = '' //TODO: connect with vs-agent stat
-
-      const prompt = `You are an assistant that helps users understand their chatbot statistics in a friendly way.  
-                      Here is the raw data:
-                      ${JSON.stringify(statsData)}  
-                      Please summarize and explain what this means in a helpful and simple manner,
-                      in ${userLang === 'es' ? 'Spanish' : userLang === 'fr' ? 'French' : 'English'}.`
-
-      const summary = await this.chatBotService.chat({
-        userInput: prompt,
-        session,
-      })
-
-      return summary
-    } catch (err) {
-      this.logger.error(`[STATS] Error generating explanation: ${err}`)
-      return this.getText('STATS_ERROR', userLang)
-    }
-  }
-
   async sendStats(kpi: STAT_KPI, session: SessionEntity) {
+    this.logger.debug(`***send stats***`)
     const stats = [STAT_KPI[kpi]]
     if (session !== null) await this.statProducer.spool(stats, session.connectionId, [new StatEnum(0, 'string')])
   }

@@ -12,9 +12,10 @@ services:
 
   chatbot:
     build: .
-    container_name: hologram-welcome-ai-agent-vs_chatbot
+    container_name: hologram-welcome-ai-agent
     depends_on:
       - redis
+      - artemis
     environment:
       APP_PORT: ${APP_PORT}
       LOG_LEVEL: ${LOG_LEVEL}
@@ -35,8 +36,13 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB_NAME: ${POSTGRES_DB_NAME}
       CREDENTIAL_DEFINITION_ID: ${CREDENTIAL_DEFINITION_ID}
-      VS_AGENT_STATS_ENABLED: ${VS_AGENT_STATS_ENABLED}
       SERVICE_AGENT_ADMIN_URL: ${SERVICE_AGENT_ADMIN_URL}
+      VS_AGENT_STATS_ENABLED: ${VS_AGENT_STATS_ENABLED}
+      VS_AGENT_STATS_HOST: ${VS_AGENT_STATS_HOST}
+      VS_AGENT_STATS_PORT: ${VS_AGENT_STATS_PORT}
+      VS_AGENT_STATS_QUEUE: ${VS_AGENT_STATS_QUEUE}
+      VS_AGENT_STATS_USER: ${VS_AGENT_STATS_USER}
+      VS_AGENT_STATS_PASSWORD: ${VS_AGENT_STATS_PASSWORD}
     ports:
       - '${APP_PORT}:${APP_PORT}'
     volumes:
@@ -91,6 +97,41 @@ services:
       - 8080:8080
     depends_on:
       - postgres
+
+  artemis:
+    image: apache/activemq-artemis:2.31.2
+    container_name: chatbot-artemis
+    restart: always
+    environment:
+      ARTEMIS_USERNAME: artemis
+      ARTEMIS_PASSWORD: artemis
+    ports:
+      - 61616:61616
+      - 8161:8161
+      - 5672:5672
+    networks:
+      - chatbot
+    volumes:
+      - ./data/artemis:/var/lib/artemis
+
+  service-stats:
+    image: mobiera/stats:main
+    networks:
+      - chatbot
+    ports:
+      - 8700:8700
+    environment:
+      - DEBUG=3
+      - QUARKUS_HTTP_PORT=8700
+      - QUARKUS_ARTEMIS_A0_URL=tcp://chatbot-artemis:61616
+      - QUARKUS_ARTEMIS_A0_USERNAME=artemis
+      - QUARKUS_ARTEMIS_A0_PASSWORD=artemis
+      - QUARKUS_DATASOURCE_USERNAME=2060demo
+      - QUARKUS_DATASOURCE_PASSWORD=2060demo
+      - QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://postgres/test-service-agent
+      - COM_MOBIERA_MS_COMMONS_STATS_THREADS=1
+      - COM_MOBIERA_MS_COMMONS_STATS_STANDALONE=1
+      - COM_MOBIERA_MS_COMMONS_STATS_JMS_QUEUE_NAME=hologram-welcome-ia-agent-queue
 
 networks:
   chatbot:
