@@ -10,6 +10,7 @@ import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts
 import { AIMessage, BaseMessage } from '@langchain/core/messages'
 import { ExternalToolDef, SupportedProviders } from './interfaces/llm-provider.interface'
 import { SessionEntity } from 'src/core/models'
+import { statisticsFetcherTool } from './tools/statistics-fetcher.tool'
 
 /**
  * LlmService
@@ -41,7 +42,7 @@ export class LlmService {
     const provider = (this.config.get<string>('LLM_PROVIDER') ?? 'openai') as SupportedProviders
     this.llm = this.instantiateLlm(provider)
     const tools = this.buildTools()
-
+    this.logger.debug(`*** TOOLS: ${JSON.stringify(tools, null, 2)}`)
     if (tools.length && (provider === 'openai' || provider === 'anthropic')) {
       this.setupToolAgent(tools)
         .then(() => this.logger.log(`Tool-enabled agent initialised with ${tools.length} tools.`))
@@ -72,10 +73,17 @@ export class LlmService {
       if (this.agentExecutor) {
         this.logger.debug('Using tool-enabled agent executor.')
 
-        const result = await this.agentExecutor.invoke({
-          input: { userMessage, isAuthenticated: session?.isAuthenticated },
-          chat_history: [],
-        })
+        const result = await this.agentExecutor.invoke(
+          {
+            input: { userMessage },
+            chat_history: [],
+          },
+          {
+            configurable: {
+              isAuthenticated: session?.isAuthenticated ?? true,
+            },
+          },
+        )
 
         this.logger.debug(`Agent executor result: ${JSON.stringify(result)}`)
 
@@ -160,69 +168,74 @@ export class LlmService {
    */
   private buildTools() {
     const raw = this.config.get<string>('appConfig.toolsConfig')
-    if (!raw) {
-      this.logger.log('No TOOLS_CONFIG found – starting without tools.')
-      return []
+    const dynamicTools: DynamicStructuredTool[] = []
+
+    if (raw) {
+      let defs: ExternalToolDef[]
+      try {
+        defs = JSON.parse(raw)
+      } catch (e) {
+        this.logger.error(`Invalid TOOLS_CONFIG JSON: ${e}`)
+        defs = []
+      }
+
+      const querySchema = zod.object({
+        query: zod.string().describe('Free-form query string passed to the external service.'),
+        isAuthenticated: zod.boolean().describe('Authentication flag to restrict access.'),
+      })
+
+      dynamicTools.push(
+        ...defs.map(
+          (def) =>
+            new DynamicStructuredTool({
+              name: def.name,
+              description: def.description,
+              schema: querySchema,
+              func: async ({ query }, _runManager, config) => {
+                const isAuthenticated: boolean = config?.configurable?.isAuthenticated ?? false
+                this.logger.debug(`[Tool] config: ${JSON.stringify(config)}`)
+                this.logger.debug(`[Tool] isAuthenticated: ${isAuthenticated}`)
+                // Check if this tool requires authentication and if the user is authenticated
+
+                this.logger.debug(
+                  `[DEBUG] isAuthenticated: ${JSON.stringify(isAuthenticated)} && requiresAuth ${JSON.stringify(def.requiresAuth)}`,
+                )
+
+                if (def.requiresAuth && !isAuthenticated) {
+                  this.logger.debug(`[Tool:${def.name}] Attempted access without authentication.`)
+                  return 'Authentication is required to access this feature. Please authenticate and try again.'
+                }
+
+                // Execute the tool normally (external API call)
+                this.logger.log(`[Tool:${def.name}] Called with query: "${query}"`)
+                const url = def.endpoint.replace('{query}', encodeURIComponent(query))
+                this.logger.log(`[Tool:${def.name}] Requesting URL: ${url}`)
+                const res = await fetch(url, {
+                  method: def.method ?? 'GET',
+                  headers: def.authHeader ? { [def.authHeader]: def.authToken ?? '' } : undefined,
+                })
+                this.logger.log(`[Tool:${def.name}] HTTP status: ${res.status}`)
+                if (!res.ok) {
+                  this.logger.error(`[Tool:${def.name}] Returned error: ${res.status}`)
+                  throw new Error(`External tool "${def.name}" returned ${res.status}`)
+                }
+                const text = await res.text()
+                this.logger.log(`[Tool:${def.name}] Response body: ${text.slice(0, 300)}`)
+                return text
+              },
+              returnDirect: false,
+            }),
+        ),
+      )
+    } else {
+      this.logger.log('No TOOLS_CONFIG found – skipping dynamic tool loading.')
     }
 
-    let defs: ExternalToolDef[]
-    try {
-      defs = JSON.parse(raw)
-    } catch (e) {
-      this.logger.error(`Invalid TOOLS_CONFIG JSON: ${e}`)
-      return []
-    }
+    // Add static tool for statistics
+    const staticTools = [statisticsFetcherTool]
 
-    const querySchema = zod.object({
-      query: zod.string().describe('Free-form query string passed to the external service.'),
-      isAuthenticated: zod.boolean().describe('Autentication'),
-    })
-
-    // Map each tool definition to a DynamicStructuredTool instance
-    return defs.map(
-      (def) =>
-        new (DynamicStructuredTool as any)({
-          name: def.name,
-          description: def.description,
-          schema: querySchema,
-          /**
-           * Tool executor function.
-           * @param args - Arguments passed from LLM/tool call (e.g., { query }).
-           * @param context - Custom context, expected to include { session }.
-           * If the tool requires authentication, checks the session and denies access if not authenticated.
-           * Otherwise, executes the external API call.
-           */
-          func: async ({ query, isAuthenticated }) => {
-            // Check if this tool requires authentication and if the user is authenticated
-            this.logger.debug(
-              `[DEBUG] isAuthenticated: ${JSON.stringify(isAuthenticated)} && requiresAuth ${JSON.stringify(def.requiresAuth)}`,
-            )
-
-            if (def.requiresAuth && !isAuthenticated) {
-              this.logger.debug(`[Tool:${def.name}] Attempted access without authentication.`)
-              return 'Authentication is required to access this feature. Please authenticate and try again.'
-            }
-
-            // Execute the tool normally (external API call)
-            this.logger.log(`[Tool:${def.name}] Called with query: "${query}"`)
-            const url = def.endpoint.replace('{query}', encodeURIComponent(query))
-            this.logger.log(`[Tool:${def.name}] Requesting URL: ${url}`)
-            const res = await fetch(url, {
-              method: def.method ?? 'GET',
-              headers: def.authHeader ? { [def.authHeader]: def.authToken ?? '' } : undefined,
-            })
-            this.logger.log(`[Tool:${def.name}] HTTP status: ${res.status}`)
-            if (!res.ok) {
-              this.logger.error(`[Tool:${def.name}] Returned error: ${res.status}`)
-              throw new Error(`External tool "${def.name}" returned ${res.status}`)
-            }
-            const text = await res.text()
-            this.logger.log(`[Tool:${def.name}] Response body: ${text.slice(0, 300)}`)
-            return text
-          },
-          returnDirect: false,
-        }),
-    )
+    // Combine dynamic and static tools
+    return [...dynamicTools, ...staticTools]
   }
 
   /**
@@ -232,10 +245,14 @@ export class LlmService {
    * @param tools - Array of DynamicStructuredTool instances.
    */
   private async setupToolAgent(tools: any[]) {
-    this.logger.debug(`***Agent prompt: ${this.agentPrompt}***`)
+    const today = new Date().toISOString().split('T')[0]
+
+    const systemPrompt = `Today's date is: ${today}.\n${this.agentPrompt}`
+
+    this.logger.debug(`***Agent prompt: ${systemPrompt}***`)
 
     const prompt = ChatPromptTemplate.fromMessages([
-      ['system', this.agentPrompt],
+      ['system', systemPrompt],
       new MessagesPlaceholder('chat_history'),
       ['user', '{input}'],
       new MessagesPlaceholder('agent_scratchpad'),

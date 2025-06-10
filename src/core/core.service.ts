@@ -219,6 +219,7 @@ export class CoreService implements EventHandler, OnModuleInit {
 
         if (selectionId === Cmd.LOGOUT) {
           session.isAuthenticated = false
+          session.userName = ''
           await this.sessionRepository.save(session)
           await this.closeConnection(connectionId)
           await this.memoryService.clear(connectionId)

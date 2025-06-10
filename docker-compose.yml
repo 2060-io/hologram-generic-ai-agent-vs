@@ -43,10 +43,12 @@ services:
       VS_AGENT_STATS_QUEUE: ${VS_AGENT_STATS_QUEUE}
       VS_AGENT_STATS_USER: ${VS_AGENT_STATS_USER}
       VS_AGENT_STATS_PASSWORD: ${VS_AGENT_STATS_PASSWORD}
+      STATISTICS_API_URL: ${STATISTICS_API_URL}
+      STATISTICS_REQUIRE_AUTH: ${STATISTICS_REQUIRE_AUTH}
     ports:
       - '${APP_PORT}:${APP_PORT}'
-    volumes:
-      - ./docs:/app/rag/docs
+    #volumes:
+    # - ./docs:/app/rag/docs
     networks:
       - chatbot
 
