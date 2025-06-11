@@ -1,0 +1,41 @@
+export const TRANSLATIONS: Record<string, Record<string, string>> = {
+  en: {
+    ROOT_TITLE: 'Welcome!',
+    LOGOUT: 'Logout',
+    CREDENTIAL: 'Authenticate',
+    WELCOME: 'Welcome! I am Hologram, your smart agent.',
+    LOGIN_REQUIRED: 'Please log in to continue.',
+    AUTH_REQUIRED: 'Authentication is required to access this feature.',
+    AUTH_SUCCESS: 'Authentication completed successfully. You can now access all features.',
+    AUTH_SUCCESS_NAME: 'Authentication successful. Welcome, {name}! you can now access all features.',
+    WAITING_CREDENTIAL: 'Waiting for you to complete the credential process...',
+    AUTH_PROCESS_STARTED: 'Authentication process has started. Please respond to the credential request.',
+    STATS_ERROR: 'Sorry, we could not retrieve your statistics at the moment.',
+  },
+  es: {
+    ROOT_TITLE: '¡Bienvenido!',
+    LOGOUT: 'Cerrar sesión',
+    CREDENTIAL: 'Autenticar',
+    WELCOME: '¡Bienvenido! Soy Hologram, tu agente inteligente.',
+    AUTH_REQUIRED: 'Se requiere autenticación para acceder a esta función.',
+    AUTH_SUCCESS: 'Autenticación completada con éxito. Ahora puedes acceder a todas las funciones.',
+    AUTH_SUCCESS_NAME:
+      'Autenticación completada con éxito. ¡Bienvenido, {name}! ahora puedes acceder a todas las funciones.',
+    WAITING_CREDENTIAL: 'Esperando que completes el proceso de credencial...',
+    AUTH_PROCESS_STARTED: 'El proceso de autenticación ha comenzado. Por favor, responde a la solicitud de credencial.',
+    STATS_ERROR: 'Lo sentimos, no pudimos obtener tus estadísticas en este momento.',
+  },
+  fr: {
+    ROOT_TITLE: 'Bienvenue !',
+    LOGOUT: 'Déconnexion',
+    CREDENTIAL: 'Authentifier',
+    WELCOME: 'Bienvenue ! Je suis Hologram, votre agent intelligent.',
+    AUTH_REQUIRED: "L'authentification est requise pour accéder à cette fonctionnalité.",
+    AUTH_SUCCESS: 'Authentification réussie. Vous pouvez maintenant accéder à toutes les fonctionnalités.',
+    AUTH_SUCCESS_NAME:
+      'Authentification réussie. Bienvenue, {name} ! Vous pouvez maintenant accéder à toutes les fonctionnalités.',
+    WAITING_CREDENTIAL: "En attente de la fin du processus d'authentification...",
+    AUTH_PROCESS_STARTED: "Le processus d'authentification a commencé. Veuillez répondre à la demande de justificatif.",
+    STATS_ERROR: "Désolé, nous n'avons pas pu récupérer vos statistiques pour le moment.",
+  },
+}

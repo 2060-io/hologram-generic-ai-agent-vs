@@ -1,0 +1,75 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/**'
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Force build and push'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  DH_USERNAME: ${{ secrets.DOCKER_HUB_LOGIN }}
+  DH_TOKEN: ${{ secrets.DOCKER_HUB_PWD }}
+  IMAGE_NAME: 'hologram-welcome-ai-agent'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Release Please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          release-type: node
+          token: ${{ secrets.GITHUB_TOKEN }}
+          manifest-file: .release-please-manifest.json
+          config-file: release-please-config.json
+
+  build-and-push:
+    needs: release
+    if: needs.release.outputs.release_created == 'true' || github.event.inputs.force_build == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Extract Version from Release or Git Tags
+        run: |
+          if [[ "${{ needs.release.outputs.release_created }}" == "true" ]]; then
+            echo "RELEASE_VERSION=${{ needs.release.outputs.tag_name }}" >> $GITHUB_ENV
+          else
+            LAST_TAG=$(git tag --sort=-v:refname | head -n 1)
+            echo "RELEASE_VERSION=$LAST_TAG" >> $GITHUB_ENV
+          fi
+
+      - name: Display Release Version
+        run: echo "Building version $RELEASE_VERSION (force_build=${{ github.event.inputs.force_build }})"
+
+      - name: Log in to Docker Hub
+        run: echo "$DH_TOKEN" | docker login -u "$DH_USERNAME" --password-stdin
+
+      - name: Build Docker Image
+        run: docker build -f Dockerfile -t $DH_USERNAME/$IMAGE_NAME:$RELEASE_VERSION .
+
+      - name: Push Docker Image to Docker Hub
+        run: |
+          docker tag $DH_USERNAME/$IMAGE_NAME:$RELEASE_VERSION $DH_USERNAME/$IMAGE_NAME:latest
+          docker push $DH_USERNAME/$IMAGE_NAME:$RELEASE_VERSION
+          docker push $DH_USERNAME/$IMAGE_NAME:latest
