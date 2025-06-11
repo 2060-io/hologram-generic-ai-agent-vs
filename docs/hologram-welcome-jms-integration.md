@@ -19,7 +19,7 @@ When enabled, the stats module connects to a JMS broker (such as Artemis) and su
 | `VS_AGENT_STATS_USER`     | Username for authenticating with the JMS broker                                | `artemis`               |
 | `VS_AGENT_STATS_PASSWORD` | Password for authenticating with the JMS broker                                | `artemis`               |
 
-In the app.module setup, use these values to configure the stats module:
+## Enabling JMS Stats Integration in `main.module.ts`
 
 ```typescript
 import { ConfigService } from '@nestjs/config'
@@ -48,4 +48,44 @@ EventsModule.register({
 })
 ```
 
-> **Tip:** Always convert the stats enabled flag to boolean (`process.env.VS_AGENT_STATS_ENABLED === 'true'`).
+---
+
+## Producing/Spooling Statistics Events in CoreService
+
+Use the `sendStats()` method (already included in your CoreService) to produce events to JMS:
+
+```typescript
+import { STAT_KPI } from './common'
+import { StatEnum } from '@2060.io/service-agent-model'
+
+async sendStats(kpi: STAT_KPI, session: SessionEntity) {
+  this.logger.debug(`***send stats***`)
+  const stats = [STAT_KPI[kpi]]
+  if (session !== null) await this.statProducer.spool(stats, session.connectionId, [new StatEnum(0, 'string')])
+}
+```
+
+- `kpi`: Enum value (e.g. `STAT_KPI.USER_CONNECTED`) – identifies the stat type.
+- `session`: Current session object (required for connection info).
+
+The stats are spooled to the JMS queue and can be consumed downstream.
+
+---
+
+## STAT_KPI Enum Example
+
+```typescript
+export enum STAT_KPI {
+  USER_CONNECTED,
+}
+```
+
+You can extend `STAT_KPI` to cover additional statistics/events as needed.
+
+---
+
+## Tips & Best Practices
+
+- Always check if stats are enabled: `process.env.VS_AGENT_STATS_ENABLED === 'true'`.
+- Place `sendStats()` calls at the business logic points you want to monitor (connections, key actions, etc).
+- The `StatEnum` payload can be extended with meaningful labels/values for your analytics pipeline.
