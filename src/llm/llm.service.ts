@@ -159,7 +159,7 @@ export class LlmService {
   }
 
   /**
-   * Builds the array of DynamicStructuredTool instances based on the TOOLS_CONFIG environment variable.
+   * Builds the array of DynamicStructuredTool instances based on the LLM_TOOLS_CONFIG environment variable.
    * Each tool is validated, logged, and initialized with its own async function and error handling.
    * If a tool requires authentication (via the `requiresAuth` property), the tool will check
    * the current user's session and return an authentication message if not authenticated.
@@ -167,7 +167,7 @@ export class LlmService {
    * @returns {DynamicStructuredTool[]} An array of DynamicStructuredTool instances, or an empty array if none are configured.
    */
   private buildTools() {
-    const raw = this.config.get<string>('appConfig.toolsConfig')
+    const raw = this.config.get<string>('appConfig.llmToolsConfig')
     const dynamicTools: DynamicStructuredTool[] = []
 
     if (raw) {
@@ -175,7 +175,7 @@ export class LlmService {
       try {
         defs = JSON.parse(raw)
       } catch (e) {
-        this.logger.error(`Invalid TOOLS_CONFIG JSON: ${e}`)
+        this.logger.error(`Invalid LLM_TOOLS_CONFIG JSON: ${e}`)
         defs = []
       }
 
@@ -228,7 +228,7 @@ export class LlmService {
         ),
       )
     } else {
-      this.logger.log('No TOOLS_CONFIG found – skipping dynamic tool loading.')
+      this.logger.log('No LLM_TOOLS_CONFIG found – skipping dynamic tool loading.')
     }
 
     // Add static tool for statistics

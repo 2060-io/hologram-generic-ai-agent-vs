@@ -30,7 +30,7 @@ services:
       VECTOR_INDEX_NAME: ${VECTOR_INDEX_NAME}
       AGENT_PROMPT: ${AGENT_PROMPT}
       PINECONE_API_KEY: ${PINECONE_API_KEY}
-      TOOLS_CONFIG: ${TOOLS_CONFIG}
+      LLM_TOOLS_CONFIG: ${LLM_TOOLS_CONFIG}
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -52,9 +52,9 @@ services:
     networks:
       - chatbot
 
-  service-agent:
+  vs-agent:
     image: io2060/2060-service-agent:v1.2.1-dev.1
-    container_name: chatbot-service-agent
+    container_name: chatbot-vs-agent
     restart: always
     depends_on:
       - postgres
@@ -105,8 +105,8 @@ services:
     container_name: chatbot-artemis
     restart: always
     environment:
-      ARTEMIS_USERNAME: artemis
-      ARTEMIS_PASSWORD: artemis
+      ARTEMIS_USERNAME: ${ARTEMIS_USERNAME}
+      ARTEMIS_PASSWORD: ${ARTEMIS_PASSWORD}
     ports:
       - 61616:61616
       - 8161:8161
@@ -123,17 +123,17 @@ services:
     ports:
       - 8700:8700
     environment:
-      - DEBUG=3
-      - QUARKUS_HTTP_PORT=8700
-      - QUARKUS_ARTEMIS_A0_URL=tcp://chatbot-artemis:61616
-      - QUARKUS_ARTEMIS_A0_USERNAME=artemis
-      - QUARKUS_ARTEMIS_A0_PASSWORD=artemis
-      - QUARKUS_DATASOURCE_USERNAME=2060demo
-      - QUARKUS_DATASOURCE_PASSWORD=2060demo
-      - QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://postgres/test-service-agent
-      - COM_MOBIERA_MS_COMMONS_STATS_THREADS=1
-      - COM_MOBIERA_MS_COMMONS_STATS_STANDALONE=1
-      - COM_MOBIERA_MS_COMMONS_STATS_JMS_QUEUE_NAME=hologram-welcome-ia-agent-queue
+      DEBUG: ${DEBUG}
+      QUARKUS_HTTP_PORT: ${QUARKUS_HTTP_PORT}
+      QUARKUS_ARTEMIS_A0_URL: ${QUARKUS_ARTEMIS_A0_URL}
+      QUARKUS_ARTEMIS_A0_USERNAME: ${QUARKUS_ARTEMIS_A0_USERNAME}
+      QUARKUS_ARTEMIS_A0_PASSWORD: ${QUARKUS_ARTEMIS_A0_PASSWORD}
+      QUARKUS_DATASOURCE_USERNAME: ${QUARKUS_DATASOURCE_USERNAME}
+      QUARKUS_DATASOURCE_PASSWORD: ${QUARKUS_DATASOURCE_PASSWORD}
+      QUARKUS_DATASOURCE_JDBC_URL: ${QUARKUS_DATASOURCE_JDBC_URL}
+      COM_MOBIERA_MS_COMMONS_STATS_THREADS: ${COM_MOBIERA_MS_COMMONS_STATS_THREADS}
+      COM_MOBIERA_MS_COMMONS_STATS_STANDALONE: ${COM_MOBIERA_MS_COMMONS_STATS_STANDALONE}
+      COM_MOBIERA_MS_COMMONS_STATS_JMS_QUEUE_NAME: ${COM_MOBIERA_MS_COMMONS_STATS_JMS_QUEUE_NAME}
 
 networks:
   chatbot:

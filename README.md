@@ -35,7 +35,7 @@ All configuration is managed via environment variables.
 | `POSTGRES_PASSWORD`        | Password for PostgreSQL                                                                         | `2060demo`               |
 | `CREDENTIAL_DEFINITION_ID` | Verifiable credential definition ID or URL                                                      | `http://localhost:3000`  |
 | `VS_AGENT_ADMIN_URL`       | Service Agent Admin API URL                                                                     |                          |
-| `TOOLS_CONFIG`             | Defines external tools (API integrations) available to the agent as a JSON string.              | `[]`                     |
+| `LLM_TOOLS_CONFIG`         | Defines external tools (API integrations) available to the agent as a JSON string.              | `[]`                     |
 
 **Example `AGENT_PROMPT`:**
 
@@ -98,11 +98,14 @@ This will launch:
 - Redis (for chat memory and Service Agent state)
 - PostgreSQL (for session and agent storage)
 - Service Agent (for DIDComm communication and credential handling)
+- Artemis (JMS broker to use active stats)
+- Stats module service
 - Adminer (for browsing the PostgreSQL database)
 
-The chatbot API will be available at [http://localhost:3000](http://localhost:3000)  
+The chatbot API will be available at [http://localhost:3000/api](http://localhost:3000/api)  
 The Service Agent will be available at [http://localhost:3001](http://localhost:3001)  
 Adminer UI will be accessible at [http://localhost:8080](http://localhost:8080)
+The Stats module server API be available at [http://localhost:8700/q/swagger-ui](http://localhost:8700/q/swagger-ui)
 
 ### ⚙️ Environment Configuration
 
@@ -166,12 +169,12 @@ For detailed instructions on configuring and using the JMS statistics (stats) mo
 
 ## 🛠️ How to Use langchain Tools
 
-Tools allow your AI agent to interact with external APIs and services at inference time. Once defined in `TOOLS_CONFIG`, the agent can:
+Tools allow your AI agent to interact with external APIs and services at inference time. Once defined in `LLM_TOOLS_CONFIG`, the agent can:
 
 - Fetch live data (statistics, user info, documents, etc.)
 - Trigger actions (notifications, webhooks, etc.)
 
-You can connect external APIs as langchain "tools" to the AI agent via the `TOOLS_CONFIG` environment variable.
+You can connect external APIs as langchain "tools" to the AI agent via the `LLM_TOOLS_CONFIG` environment variable.
 
 Each tool allows the agent to query external data sources, fetch statistics, access documentation, or trigger actions through HTTP APIs.  
 **Tools are defined as a JSON array** in your `.env`, with each entry describing one tool and its options.
@@ -181,7 +184,7 @@ Each tool allows the agent to query external data sources, fetch statistics, acc
 **Example:**
 
 ```env
-TOOLS_CONFIG=[
+LLM_TOOLS_CONFIG=[
   {
     "name": "getLocation",
     "description": "Query location statistics by US zipcode.",

@@ -154,12 +154,12 @@ export default registerAs('appConfig', () => ({
   vsAgentAdminUrl: process.env.VS_AGENT_ADMIN_URL,
 
   /**
-   * - toolsConfig: JSON string defining external tools available to the LLM agent.
+   * - llmToolsConfig: JSON string defining external tools available to the LLM agent.
    *   Each tool should specify a unique name, description, endpoint, HTTP method,
    *   and any authentication if required.
    *
    *   Example (set in your .env):
-   *   TOOLS_CONFIG=[
+   *   LLM_TOOLS_CONFIG=[
    *     {
    *       "name": "getStats",
    *       "description": "Query system statistics by keyword.",
@@ -168,5 +168,5 @@ export default registerAs('appConfig', () => ({
    *     }
    *   ]
    */
-  toolsConfig: process.env.TOOLS_CONFIG || '[]',
+  llmToolsConfig: process.env.LLM_TOOLS_CONFIG || '[]',
 }))
