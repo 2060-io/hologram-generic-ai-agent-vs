@@ -1,22 +1,41 @@
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { StateStep } from 'src/core/common/enums/state-step.enum'
 
 export class AskDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'The message/question from the user.',
+    example: 'What is Hologram?',
+  })
   userInput: string
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Unique identifier for the user connection/session.',
+    example: 'abc123',
+  })
   connectionId: string
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({
+    description: 'Language code for the conversation (ISO 639-1).',
+    example: 'en',
+  })
   lang?: string
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({
+    description: 'Indicates if the user is authenticated.',
+    example: true,
+  })
   isAuthenticated?: boolean
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({
+    description: 'Optional user name for personalization.',
+    example: 'Alice',
+  })
   userName?: string
 
-  @ApiProperty({ required: false, enum: StateStep })
+  @ApiPropertyOptional({
+    description: 'Current state of the user/session.',
+    enum: StateStep,
+    example: StateStep.CHAT,
+  })
   state?: StateStep
 }
