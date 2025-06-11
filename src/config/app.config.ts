@@ -151,7 +151,7 @@ export default registerAs('appConfig', () => ({
   /**
    * Service Agent Admin API URL.
    */
-  serviceAgentAdminUrl: process.env.SERVICE_AGENT_ADMIN_URL,
+  vsAgentAdminUrl: process.env.VS_AGENT_ADMIN_URL,
 
   /**
    * - toolsConfig: JSON string defining external tools available to the LLM agent.

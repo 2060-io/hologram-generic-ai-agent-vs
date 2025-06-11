@@ -34,7 +34,7 @@ All configuration is managed via environment variables.
 | `POSTGRES_DB_NAME`         | Database name for PostgreSQL                                                                    | `test-service-agent`     |
 | `POSTGRES_PASSWORD`        | Password for PostgreSQL                                                                         | `2060demo`               |
 | `CREDENTIAL_DEFINITION_ID` | Verifiable credential definition ID or URL                                                      | `http://localhost:3000`  |
-| `SERVICE_AGENT_ADMIN_URL`  | Service Agent Admin API URL                                                                     |                          |
+| `VS_AGENT_ADMIN_URL`       | Service Agent Admin API URL                                                                     |                          |
 | `TOOLS_CONFIG`             | Defines external tools (API integrations) available to the agent as a JSON string.              | `[]`                     |
 
 **Example `AGENT_PROMPT`:**

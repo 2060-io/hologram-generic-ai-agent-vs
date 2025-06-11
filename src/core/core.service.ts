@@ -41,7 +41,7 @@ export class CoreService implements EventHandler, OnModuleInit {
     private readonly memoryService: MemoryService,
     private readonly statProducer: StatProducerService,
   ) {
-    const baseUrl = configService.get<string>('appConfig.serviceAgentAdminUrl') || 'http://localhost:3001'
+    const baseUrl = configService.get<string>('appConfig.vsAgentAdminUrl') || 'http://localhost:3001'
     this.apiClient = new ApiClient(baseUrl, ApiVersion.V1)
   }
 

@@ -44,7 +44,7 @@ import { MemoryModule } from './memory/memory.module'
           delay: 1000,
         },
         eventHandler: CoreService,
-        url: process.env.SERVICE_AGENT_ADMIN_URL,
+        url: process.env.VS_AGENT_ADMIN_URL,
         imports: [ChatbotModule, MemoryModule],
       },
     }),

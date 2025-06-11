@@ -36,7 +36,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB_NAME: ${POSTGRES_DB_NAME}
       CREDENTIAL_DEFINITION_ID: ${CREDENTIAL_DEFINITION_ID}
-      SERVICE_AGENT_ADMIN_URL: ${SERVICE_AGENT_ADMIN_URL}
+      VS_AGENT_ADMIN_URL: ${VS_AGENT_ADMIN_URL}
       VS_AGENT_STATS_ENABLED: ${VS_AGENT_STATS_ENABLED}
       VS_AGENT_STATS_HOST: ${VS_AGENT_STATS_HOST}
       VS_AGENT_STATS_PORT: ${VS_AGENT_STATS_PORT}
@@ -47,8 +47,8 @@ services:
       STATISTICS_REQUIRE_AUTH: ${STATISTICS_REQUIRE_AUTH}
     ports:
       - '${APP_PORT}:${APP_PORT}'
-    #volumes:
-    # - ./docs:/app/rag/docs
+    volumes:
+      - ./docs:/app/rag/docs
     networks:
       - chatbot
 
