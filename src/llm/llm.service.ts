@@ -11,6 +11,7 @@ import { AIMessage, BaseMessage } from '@langchain/core/messages'
 import { ExternalToolDef, SupportedProviders } from './interfaces/llm-provider.interface'
 import { SessionEntity } from 'src/core/models'
 import { statisticsFetcherTool } from './tools/statistics-fetcher.tool'
+import type { AgentExecutor } from 'langchain/agents'
 
 /**
  * LlmService
@@ -26,7 +27,7 @@ export class LlmService {
   /** The current LLM instance (OpenAI, Anthropic, or Ollama) */
   private llm: ChatOpenAI | ChatAnthropic | ChatOllama
   /** Tool-enabled agent executor (if tools are configured) */
-  private agentExecutor: any = null
+  private agentExecutor: AgentExecutor | null = null
   /** The agent's system prompt (loaded from environment) */
   private readonly agentPrompt: string
 
@@ -244,7 +245,7 @@ export class LlmService {
    *
    * @param tools - Array of DynamicStructuredTool instances.
    */
-  private async setupToolAgent(tools: any[]) {
+  private async setupToolAgent(tools: DynamicStructuredTool[]) {
     const today = new Date().toISOString().split('T')[0]
 
     const systemPrompt = `Today's date is: ${today}.\n${this.agentPrompt}`
