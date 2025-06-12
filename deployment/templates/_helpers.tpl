@@ -3,7 +3,7 @@
 {{- end -}}
 
 {{- define "chatbot.fullname" -}}
-{{- printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s" .Chart.Name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{- define "chatbot.labels" -}}

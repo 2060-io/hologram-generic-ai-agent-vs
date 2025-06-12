@@ -38,8 +38,8 @@ chatbot:
     tag: latest
     pullPolicy: Always
   envFrom:
-    configMap: hw-chatbot-config
-    secret: hw-chatbot-secret
+    configMap: hologram-welcome-chatbot-config
+    secret: hologram-welcome-chatbot-secret
   service:
     type: ClusterIP
     port: 3000
@@ -65,8 +65,8 @@ serviceAgent:
     tag: v1.2.1-dev.1
     pullPolicy: Always
   envFrom:
-    configMap: hwa-vs-agent-config
-    secret: hwa-vs-agent-secret
+    configMap: hologram-welcome-vs-agent-config
+    secret: hologram-welcome-vs-agent-secret
   service:
     type: ClusterIP
     ports:
@@ -91,7 +91,8 @@ postgres:
       cpu: '1000m'
       memory: '1024Mi'
   envFrom:
-    secret: hwa-postgres-secret
+    secret: hologram-welcome-postgres-secret
+    PGDATA: "/var/lib/postgresql/data/pgdata"
   service:
     type: ClusterIP
   storage:

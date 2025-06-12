@@ -34,7 +34,7 @@ spec:
 
 {{- if .Values.postgres.enabled }}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "chatbot.fullname" . }}-postgres
   labels:
@@ -76,6 +76,8 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.postgres.envFrom.secret | quote }}
                   key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: {{ .Values.postgres.envFrom.PGDATA | quote }}
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data

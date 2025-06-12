@@ -1,0 +1,334 @@
+---
+# Source: hologram-welcome-ai-agent/templates/postgres-deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hologram-welcome-ai-agent-postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: hologram-welcome-ai-agent/templates/redis-deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# Source: hologram-welcome-ai-agent/templates/chatbot-deployment.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: hologram-welcome-ai-agent-chatbot
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: http
+  selector:
+    app.kubernetes.io/component: chatbot
+    app.kubernetes.io/name: hologram-welcome-ai-agent
+    app.kubernetes.io/instance: hologram-welcome-dev
+---
+# Source: hologram-welcome-ai-agent/templates/postgres-deployment.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: hologram-welcome-ai-agent-postgres
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: postgres
+  selector:
+    app.kubernetes.io/component: postgres
+    app.kubernetes.io/name: hologram-welcome-ai-agent
+    app.kubernetes.io/instance: hologram-welcome-dev
+---
+# Source: hologram-welcome-ai-agent/templates/redis-deployment.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: hologram-welcome-ai-agent-redis
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: 6379
+      name: redis
+  selector:
+    app.kubernetes.io/component: redis
+    app.kubernetes.io/name: hologram-welcome-ai-agent
+    app.kubernetes.io/instance: hologram-welcome-dev
+---
+# Source: hologram-welcome-ai-agent/templates/vs-agent-deployment.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: hologram-welcome-ai-agent-vs-agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: http
+    - port: 3001
+      targetPort: 3001
+      name: ws
+  selector:
+    app.kubernetes.io/component: vs-agent
+    app.kubernetes.io/name: hologram-welcome-ai-agent
+    app.kubernetes.io/instance: hologram-welcome-dev
+---
+# Source: hologram-welcome-ai-agent/templates/chatbot-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hologram-welcome-ai-agent-chatbot
+  labels:
+    app.kubernetes.io/component: chatbot
+    helm.sh/chart: hologram-welcome-ai-agent-0.0.1
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: chatbot
+      app.kubernetes.io/name: hologram-welcome-ai-agent
+      app.kubernetes.io/instance: hologram-welcome-dev
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: chatbot
+        app.kubernetes.io/name: hologram-welcome-ai-agent
+        app.kubernetes.io/instance: hologram-welcome-dev
+    spec:
+      containers:
+        - name: chatbot
+          image: "io2060/hologram-welcome-ai-agent:latest"
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi 
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: "hologram-welcome-chatbot-config"
+            - secretRef:
+                name: "hologram-welcome-chatbot-secret"  
+          volumeMounts:
+            - name: docs
+              mountPath: /app/rag/docs
+      volumes:
+        - name: docs
+          emptyDir: {}
+---
+# Source: hologram-welcome-ai-agent/templates/vs-agent-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hologram-welcome-ai-agent-vs-agent
+  labels:
+    app.kubernetes.io/component: vs-agent
+    helm.sh/chart: hologram-welcome-ai-agent-0.0.1
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: vs-agent
+      app.kubernetes.io/name: hologram-welcome-ai-agent
+      app.kubernetes.io/instance: hologram-welcome-dev
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: vs-agent
+        app.kubernetes.io/name: hologram-welcome-ai-agent
+        app.kubernetes.io/instance: hologram-welcome-dev
+    spec:
+      containers:
+        - name: vs-agent
+          image: "io2060/2060-service-agent:v1.2.1-dev.1"
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi 
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+            - containerPort: 3001
+              name: ws
+          envFrom:
+            - configMapRef:
+                name: "hologram-welcome-vs-agent-config"
+            - secretRef:
+                name: "hologram-welcome-vs-agent-secret"
+---
+# Source: hologram-welcome-ai-agent/templates/postgres-deployment.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: hologram-welcome-ai-agent-postgres
+  labels:
+    app.kubernetes.io/component: postgres
+    helm.sh/chart: hologram-welcome-ai-agent-0.0.1
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: postgres
+      app.kubernetes.io/name: hologram-welcome-ai-agent
+      app.kubernetes.io/instance: hologram-welcome-dev
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: postgres
+        app.kubernetes.io/name: hologram-welcome-ai-agent
+        app.kubernetes.io/instance: hologram-welcome-dev
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:alpine3.19
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi 
+          ports:
+            - containerPort: 5432
+              name: postgres
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: "hologram-welcome-postgres-secret"
+                  key: POSTGRES_DB_NAME
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: "hologram-welcome-postgres-secret"
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "hologram-welcome-postgres-secret"
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: "/var/lib/postgresql/data/pgdata"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: hologram-welcome-ai-agent-postgres
+---
+# Source: hologram-welcome-ai-agent/templates/redis-deployment.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: hologram-welcome-ai-agent-redis
+  labels:
+    app.kubernetes.io/component: redis
+    helm.sh/chart: hologram-welcome-ai-agent-0.0.1
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: redis
+      app.kubernetes.io/name: hologram-welcome-ai-agent
+      app.kubernetes.io/instance: hologram-welcome-dev
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: redis
+        app.kubernetes.io/name: hologram-welcome-ai-agent
+        app.kubernetes.io/instance: hologram-welcome-dev
+    spec:
+      containers:
+        - name: redis
+          image: redis/redis-stack-server:latest
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi  
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-pvc
+---
+# Source: hologram-welcome-ai-agent/templates/chatbot-deployment.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hologram-welcome-ai-agent-chatbot
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: chatbot.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hologram-welcome-ai-agent-chatbot
+                port:
+                  number: 3000
+---
+# Source: hologram-welcome-ai-agent/templates/vs-agent-deployment.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hologram-welcome-ai-agent-vs-agent
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts:
+        - hologram-welcome.demo.2060.io
+      secretName: hologram-welcome.demo.2060.io-cert
+  rules:
+    - host: hologram-welcome.demo.2060.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hologram-welcome-ai-agent-vs-agent
+                port:
+                  number: 3000

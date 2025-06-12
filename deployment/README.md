@@ -60,7 +60,7 @@ Before installing this chart, you must manually create the following resources i
 #### Secret Chatbot
 
 ```sh
-kubectl create secret generic chatbot-secret \
+kubectl create secret generic hologram-welcome-chatbot-secret \
   --from-literal=OPENAI_API_KEY=sk-xxx \
   --from-literal=PINECONE_API_KEY=pcsk_xxx \
   --from-literal=POSTGRES_PASSWORD=yourpass \
@@ -72,7 +72,7 @@ kubectl create secret generic chatbot-secret \
 #### ConfigMap Chatbot
 
 ```sh
-  kubectl create configmap chatbot-config \
+  kubectl create configmap hologram-welcome-chatbot-config \
   --from-literal=APP_PORT="" \
   --from-literal=LOG_LEVEL="" \
   --from-literal=LLM_PROVIDER="" \
@@ -84,10 +84,10 @@ kubectl create secret generic chatbot-secret \
   --from-literal=AGENT_MEMORY_WINDOW=8 \
   --from-literal=REDIS_URL=redis://localhost:6379 \
   --from-literal=AGENT_PROMPT="Hello, I'm Agent!" \
-  --from-literal=SERVICE_AGENT_ADMIN_URL="" \
+  --from-literal=VS_AGENT_ADMIN_URL="" \
   --from-literal=CREDENTIAL_DEFINITION_ID="" \
   --from-literal=POSTGRES_HOST=services-postgres \
-  --from-literal=TOOLS_CONFIG='[{"name":"exampleTools","description":"Query example tool.","endpoint":"https://api.example.us/us/{query}","method":"GET","requiresAuth":false}]' \
+  --from-literal=LLM_TOOLS_CONFIG='[{"name":"exampleTools","description":"Query example tool.","endpoint":"https://api.example.us/us/{query}","method":"GET","requiresAuth":false}]' \
   -n demos
 ```
 
@@ -96,7 +96,7 @@ kubectl create secret generic chatbot-secret \
 #### Secret Vs-Agent
 
 ```sh
-kubectl create secret generic vs-agent-secret \
+kubectl create secret generic hologram-welcome-vs-agent-secret \
   --from-literal=POSTGRES_PASSWORD=yourpass \
   --from-literal=POSTGRES_USER=postgres \
   -n demos
@@ -105,7 +105,7 @@ kubectl create secret generic vs-agent-secret \
 #### ConfigMap Vs-Agent
 
 ```sh
-kubectl create configmap vs-agent-config \
+kubectl create configmap hologram-welcome-vs-agent-config \
   --from-literal=AGENT_ENDPOINT= \
   --from-literal=AGENT_INVITATION_IMAGE_URL= \
   --from-literal=AGENT_LABEL="Chatbot VS-Agent" \
@@ -123,7 +123,7 @@ kubectl create configmap vs-agent-config \
 #### Secret
 
 ```sh
-kubectl create secret generic postgres-secret \
+kubectl create secret generic hologram-welcome-postgres-secret \
   --from-literal=POSTGRES_PASSWORD=yourpass \
   --from-literal=POSTGRES_USER=postgres \
   --from-literal=POSTGRES_DB_NAME=chatbot_db \
