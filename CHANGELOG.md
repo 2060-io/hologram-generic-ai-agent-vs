@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.2.0...v1.3.0) (2025-06-12)
+
+
+### Features
+
+* Update to use vs-agent-nestjs-client library ([#11](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/11)) ([48e76c3](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/48e76c36d516412bf792f78a5611027c00362ec1))
+
 ## [1.2.0](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.1.0...v1.2.0) (2025-06-11)
 
 
