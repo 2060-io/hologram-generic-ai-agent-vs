@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.3.0...v1.3.1) (2025-06-12)
+
+
+### Bug Fixes
+
+* inject StatProducerService via EventsModule ([#13](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/13)) ([6728d63](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/6728d63c7d287dd3a17f953785524b715ce2bdb5))
+
 ## [1.3.0](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.2.0...v1.3.0) (2025-06-12)
 
 
