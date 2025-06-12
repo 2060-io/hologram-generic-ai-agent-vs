@@ -2,7 +2,7 @@ import { Global, Module } from '@nestjs/common'
 import { SessionEntity } from './models'
 import { CoreService } from './core.service'
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm'
-import { ConnectionEntity } from '@2060.io/vs-agent-nestjs-client'
+import { ConnectionEntity, EventsModule } from '@2060.io/vs-agent-nestjs-client'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { ChatbotModule } from 'src/chatbot/chatbot.module'
 import { MemoryModule } from 'src/memory/memory.module'
@@ -31,6 +31,7 @@ import { MemoryModule } from 'src/memory/memory.module'
     }),
     ChatbotModule,
     MemoryModule,
+    EventsModule,
   ],
   controllers: [],
   providers: [CoreService],

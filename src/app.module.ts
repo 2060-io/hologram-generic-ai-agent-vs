@@ -18,14 +18,9 @@ import { MemoryModule } from './memory/memory.module'
       isGlobal: true,
     }),
     CoreModule,
-    ChatbotModule,
     LlmModule,
     RagModule,
     IntegrationsModule,
-    ChatbotModule,
-    LlmModule,
-    RagModule,
-    MemoryModule,
     EventsModule.register({
       modules: {
         messages: true,
