@@ -22,9 +22,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@2060.io/service-agent-client": "1.2.1-dev.1",
-    "@2060.io/service-agent-model": "1.2.1-dev.1",
-    "@2060.io/service-agent-nestjs-client": "1.2.1-dev.1",
+    "@2060.io/vs-agent-nestjs-client": "^1.3.0",
     "@anthropic-ai/sdk": "^0.51.0",
     "@credo-ts/core": "^0.5.11",
     "@langchain/anthropic": "^0.3.21",
@@ -111,5 +109,10 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },
-  "packageManager": "pnpm@10.7.0+sha1.66453f13fbf9078d3db193718206a8d738afdbdb"
+  "packageManager": "pnpm@10.7.0+sha1.66453f13fbf9078d3db193718206a8d738afdbdb",
+  "pnpm": {
+    "overrides": {
+      "minimatch": "9.0.5"
+    }
+  }
 }
