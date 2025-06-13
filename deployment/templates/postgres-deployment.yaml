@@ -1,24 +1,9 @@
 {{- if .Values.postgres.enabled }}
 apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ include "chatbot.fullname" . }}-postgres
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: {{ .Values.postgres.storage.size }}
-  {{- if .Values.postgres.storage.storageClassName }}
-  storageClassName: {{ .Values.postgres.storage.storageClassName }}
-  {{- end }}
-{{- end }}
----
-{{- if .Values.postgres.enabled }}
-apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "chatbot.fullname" . }}-postgres
+  namespace: {{ .Values.namespace }}
 spec:
   type: {{ .Values.postgres.service.type }}
   ports:
@@ -37,6 +22,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ include "chatbot.fullname" . }}-postgres
+  namespace: {{ .Values.namespace }}
   labels:
     app.kubernetes.io/component: postgres
     {{- include "chatbot.labels" . | nindent 4 }}
@@ -79,10 +65,15 @@ spec:
             - name: PGDATA
               value: {{ .Values.postgres.envFrom.PGDATA | quote }}
           volumeMounts:
-            - name: data
+            - name: pvc-{{ include "chatbot.fullname" . }}-postgres
               mountPath: /var/lib/postgresql/data
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: {{ include "chatbot.fullname" . }}-postgres
+  volumeClaimTemplates:
+    - metadata:
+        name: pvc-{{ include "chatbot.fullname" . }}-postgres
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.postgres.storage.size }}
 {{- end }}

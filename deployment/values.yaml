@@ -1,4 +1,4 @@
-namespace: demos
+namespace: demos-dev
 
 global:
   imagePullPolicy: Always
@@ -42,15 +42,18 @@ chatbot:
     secret: hologram-welcome-chatbot-secret
   service:
     type: ClusterIP
-    port: 3000
+    port: 3003
+  storage:
+    size: 1Gi
   ingress:
     enabled: true
     className: nginx
-    host: chatbot.example.com
+    host: hw-c.demos.dev.2060.io
+    tlsSecret: hw-c.demos.dev.2060.io-cert
     path: /
     tls: false
 
-serviceAgent:
+vsAgent:
   enabled: true
   replicaCount: 1
   resources:
@@ -61,8 +64,8 @@ serviceAgent:
       cpu: '500m'
       memory: '512Mi'
   image:
-    repository: io2060/2060-service-agent
-    tag: v1.2.1-dev.1
+    repository: io2060/vs-agent
+    tag: v1.3.0
     pullPolicy: Always
   envFrom:
     configMap: hologram-welcome-vs-agent-config
@@ -70,18 +73,18 @@ serviceAgent:
   service:
     type: ClusterIP
     ports:
-      http: 3000
-      ws: 3001
+      http: 3001
+      ws: 3000
   ingress:
     enabled: true
     className: nginx
-    host: hologram-welcome.demo.2060.io
-    tlsSecret: hologram-welcome.demo.2060.io-cert
+    host: hologram-welcome.demos.dev.2060.io
+    tlsSecret: hologram-welcome.demos.dev.2060.io-cert
     tls: true
 
 postgres:
   enabled: true
-  image: postgres:alpine3.19
+  image: postgres:15.2
   port: 5432
   resources:
     requests:
@@ -92,9 +95,34 @@ postgres:
       memory: '1024Mi'
   envFrom:
     secret: hologram-welcome-postgres-secret
-    PGDATA: "/var/lib/postgresql/data/pgdata"
+    PGDATA: '/var/lib/postgresql/data/pgdata'
   service:
     type: ClusterIP
   storage:
     size: 10Gi
     storageClassName: ''
+
+stats:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: mobiera/stats
+    tag: main
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 8700
+  envFrom:
+    configMap: hologram-welcome-stats-config
+    secret: hologram-welcome-stats-secret
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  ingress:
+    enabled: true
+    host: hw-stats.demos.dev.2060.io
+    tlsSecret: hw-stats.demos.dev.2060.io-cert

@@ -3,6 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "chatbot.fullname" . }}-chatbot
+  namespace: {{ .Values.namespace }}
 spec:
   type: {{ .Values.chatbot.service.type }}
   ports:
@@ -19,22 +20,20 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "chatbot.fullname" . }}-chatbot
+  namespace: {{ .Values.namespace }}
   annotations:
-    {{- if .Values.chatbot.ingress.className }}
-    kubernetes.io/ingress.class: {{ .Values.chatbot.ingress.className }}
-    {{- end }}
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
-  {{- if .Values.chatbot.ingress.tls }}
+  ingressClassName: nginx
   tls:
     - hosts:
         - {{ .Values.chatbot.ingress.host }}
-      secretName: {{ include "chatbot.fullname" . }}-chatbot-tls
-  {{- end }}
+      secretName: {{ .Values.chatbot.ingress.tlsSecret }}
   rules:
     - host: {{ .Values.chatbot.ingress.host }}
       http:
         paths:
-          - path: {{ .Values.chatbot.ingress.path }}
+          - path: /
             pathType: Prefix
             backend:
               service:
@@ -47,13 +46,15 @@ spec:
 ---
 {{- if .Values.chatbot.enabled }}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "chatbot.fullname" . }}-chatbot
+  namespace: {{ .Values.namespace }}
   labels:
     app.kubernetes.io/component: chatbot
     {{- include "chatbot.labels" . | nindent 4 }}
 spec:
+  serviceName: {{ include "chatbot.fullname" . }}-chatbot
   replicas: {{ .Values.chatbot.replicaCount }}
   selector:
     matchLabels:
@@ -80,9 +81,15 @@ spec:
             - secretRef:
                 name: {{ .Values.chatbot.envFrom.secret | quote }}  
           volumeMounts:
-            - name: docs
+            - name: pvc-{{ include "chatbot.fullname" . }}-chatbot
               mountPath: /app/rag/docs
-      volumes:
-        - name: docs
-          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: pvc-{{ include "chatbot.fullname" . }}-chatbot
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.chatbot.storage.size }}
 {{- end }}

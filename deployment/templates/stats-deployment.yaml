@@ -1,0 +1,83 @@
+{{- if .Values.stats.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "chatbot.fullname" . }}-stats
+  namespace: {{ .Values.namespace }}
+spec:
+  type: {{ .Values.stats.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.stats.service.port }}
+      targetPort: http
+  selector:
+    app.kubernetes.io/component: stats
+    {{- include "chatbot.selectorLabels" . | nindent 4 }}
+
+---
+
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "chatbot.fullname" . }}-stats
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/component: stats
+    {{ include "chatbot.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "chatbot.fullname" . }}-stats
+  replicas: {{ .Values.stats.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: stats
+      {{- include "chatbot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: stats
+        {{- include "chatbot.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: stats-container
+          image: "{{ .Values.stats.image.repository }}:{{ .Values.stats.image.tag }}"
+          imagePullPolicy: {{ .Values.stats.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.stats.envFrom.configMap }}
+            - secretRef:
+                name: {{ .Values.stats.envFrom.secret }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.stats.service.port }}
+          resources:
+            {{- toYaml .Values.stats.resources | nindent 12 }}
+
+---
+{{- if .Values.stats.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "chatbot.fullname" . }}-stats
+  namespace: {{ .Values.namespace }}
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ .Values.stats.ingress.host }}
+      secretName: {{ .Values.stats.ingress.tlsSecret }}
+  rules:
+    - host: {{ .Values.stats.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "chatbot.fullname" . }}-stats
+                port:
+                  number: {{ .Values.stats.service.port }}
+{{- end }}
+{{- end }}
