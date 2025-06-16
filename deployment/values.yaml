@@ -126,3 +126,28 @@ stats:
     enabled: true
     host: hw-stats.demos.dev.2060.io
     tlsSecret: hw-stats.demos.dev.2060.io-cert
+
+artemis:
+  enabled: true
+  image:
+    repository: apache/activemq-artemis
+    tag: '2.41.0'
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    ports:
+      amqp: 5672
+      core: 61616
+      web: 8161
+  envFrom:
+    secret: hologram-welcome-artemis-secret
+  resources:
+    requests:
+      cpu: '100m'
+      memory: '256Mi'
+    limits:
+      cpu: '500m'
+      memory: '512Mi'
+  storage:
+    size: 2Gi
+    mountPath: /var/lib/artemis-instance
