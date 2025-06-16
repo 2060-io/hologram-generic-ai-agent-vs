@@ -1,4 +1,4 @@
-namespace: demos-dev
+namespace: demos
 
 global:
   imagePullPolicy: Always
