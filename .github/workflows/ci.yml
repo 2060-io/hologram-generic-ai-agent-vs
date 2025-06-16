@@ -35,3 +35,9 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+
+      - name: Validate Helm chart
+        run: helm lint ./charts
