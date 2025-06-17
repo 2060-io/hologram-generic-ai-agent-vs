@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.3.1...v1.3.2) (2025-06-17)
+
+
+### Bug Fixes
+
+* Use dynamic date in agent system prompt (LLM prompt now reflects current date) ([#15](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/15)) ([e99b02f](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/e99b02f8f4de59cacd8077704f1174b3bb3612fe))
+
 ## [1.3.1](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.3.0...v1.3.1) (2025-06-12)
 
 
