@@ -70,14 +70,17 @@ export class LlmService {
 
     this.logger.log(`Generating response for user message: ${userMessage}`)
     try {
+      const today = new Date().toISOString().split('T')[0]
+
       // If a tool-enabled agent is available, use it (requires chat_history placeholder)
       if (this.agentExecutor) {
         this.logger.debug('Using tool-enabled agent executor.')
 
         const result = await this.agentExecutor.invoke(
           {
-            input: { userMessage },
+            input: userMessage,
             chat_history: [],
+            today,
           },
           {
             configurable: {
@@ -246,9 +249,7 @@ export class LlmService {
    * @param tools - Array of DynamicStructuredTool instances.
    */
   private async setupToolAgent(tools: DynamicStructuredTool[]) {
-    const today = new Date().toISOString().split('T')[0]
-
-    const systemPrompt = `Today's date is: ${today}.\n${this.agentPrompt}`
+    const systemPrompt = `Today's date is: {today}.\n${this.agentPrompt}`
 
     this.logger.debug(`***Agent prompt: ${systemPrompt}***`)
 
