@@ -169,4 +169,13 @@ export default registerAs('appConfig', () => ({
    *   ]
    */
   llmToolsConfig: process.env.LLM_TOOLS_CONFIG || '[]',
+
+  /**
+   * Maximum size (in characters or tokens) for each document chunk when splitting documents
+   * for Retrieval-Augmented Generation (RAG) processing.
+   *
+   * This value can be configured via the `RAG_CHUNK_SIZE` environment variable.
+   * If not set, it defaults to 1000.
+   */
+  ragChunkSize: Number(process.env.RAG_CHUNK_SIZE) || 1000,
 }))

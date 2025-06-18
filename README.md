@@ -23,6 +23,7 @@ All configuration is managed via environment variables.
 | `ANTHROPIC_API_KEY`        | API key for Anthropic (Claude)                                                                        |                          |
 | `RAG_PROVIDER`             | RAG backend orchestrator: `vectorstore` (custom) or `langchain`                                       | `vectorstore`            |
 | `RAG_DOCS_PATH`            | Filesystem path to directory with context documents for RAG ingestion (`.txt` and `.pdf` only).       | `/docs`                  |
+| `RAG_CHUNK_SIZE`           | Max token/character count per document chunk in RAG                                                   | `1000`                   |
 | `VECTOR_STORE`             | Vector store provider for RAG: `pinecone`, `redis`                                                    | `redis`                  |
 | `VECTOR_INDEX_NAME`        | Index name for both Pinecone and Redis vector stores                                                  | `hologram-ia`            |
 | `PINECONE_API_KEY`         | API key for Pinecone vector store                                                                     | `pcsk_xxx`               |

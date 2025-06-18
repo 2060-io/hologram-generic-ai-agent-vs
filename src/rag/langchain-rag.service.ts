@@ -6,6 +6,7 @@ import { RedisVectorStore } from '@langchain/redis'
 import { createClient, RedisClientType } from 'redis'
 import { OpenAIEmbeddings, OpenAI } from '@langchain/openai'
 import { loadDocuments } from './utils/load-documents'
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters'
 
 type SupportedStores = 'pinecone' | 'redis'
 
@@ -73,8 +74,18 @@ export class LangchainRagService implements OnModuleInit {
     const docsPath = this.configService.get<string>('appConfig.ragDocsPath') || './docs'
     this.logger.log(`[RAG] Loading documents from: ${docsPath}`)
     const docs = await loadDocuments(docsPath, this.logger)
+
+    this.logger.debug(`[RAG] Chunk Size: ${this.configService.get<string>('appConfig.ragChunkSize')}`)
+    const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize: Number(this.configService.get<string>('appConfig.ragChunkSize')) || 1000,
+      chunkOverlap: 200,
+    })
+
     for (const doc of docs) {
-      await this.addDocument(doc.id, doc.content)
+      const chunks = await splitter.createDocuments([doc.content], [{ id: doc.id }])
+      for (const chunk of chunks) {
+        await this.addDocument(chunk.metadata.id, chunk.pageContent)
+      }
     }
     this.logger.log('Seeded vector store with initial document.')
 
