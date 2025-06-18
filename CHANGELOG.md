@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.3.2...v1.4.0) (2025-06-18)
+
+
+### Features
+
+* Make chunk size configurable via env var to avoid token limit docs ([#17](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/17)) ([f21f3e1](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/f21f3e13a92cd2c372a98649f469c64807b20ad1))
+
 ## [1.3.2](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.3.1...v1.3.2) (2025-06-17)
 
 
