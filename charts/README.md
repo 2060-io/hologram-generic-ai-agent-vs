@@ -1,14 +1,14 @@
-# 📦 hologram-welcome-ai-agent Helm Chart
+# hologram-welcome-ai-agent Helm Chart
 
-## 📘 Overview
+## Overview
 
 This Helm chart deploys the `hologram-welcome-ai-agent` application along with the required Kubernetes resources.
 
 ---
 
-## 🚀 Installation Guide
+## Installation Guide
 
-### 1. ✅ Lint the Chart
+### 1. Lint the Chart
 
 Ensure the Helm chart is correctly formatted:
 
@@ -18,7 +18,7 @@ helm lint ./charts/
 
 ---
 
-### 2. 🧪 Render Templates
+### 2. Render Templates
 
 Preview the generated Kubernetes manifests:
 
@@ -28,7 +28,7 @@ helm template <release-name> ./charts/ --namespace <your-namespace>
 
 ---
 
-### 3. 🧯 Dry-Run Installation
+### 3. Dry-Run Installation
 
 Simulate the installation without modifying your cluster:
 
@@ -38,7 +38,7 @@ helm install --dry-run --debug <release-name> ./charts/ --namespace <your-namesp
 
 ---
 
-### 4. 📥 Install the Chart
+### 4. Install the Chart
 
 Ensure the target namespace already exists:
 
@@ -49,18 +49,28 @@ helm upgrade --install <release-name> ./charts/ --namespace <your-namespace>
 > **Note:** `<release-name>` is a Helm release identifier. For example:
 
 ```bash
-helm upgrade hologram-welcome-prod ./charts --namespace <your-namespace-prod>
+helm upgrade hologram-welcome-chart ./charts --namespace <your-namespace-prod>
 ```
 
 ---
 
-## 🔐 Environment Variable Management
+### 5. Uninstall the Chart
+
+To uninstall the release:
+
+```bash
+helm uninstall hologram-welcome-chart --namespace <your-namespace>
+```
+
+---
+
+## Environment Variable Management
 
 This chart **does not create ConfigMaps or Secrets** automatically. To comply with security best practices, especially in public repositories, these resources must be created manually before deploying.
 
 ---
 
-## ⚙️ Prerequisites: ConfigMaps and Secrets
+## Prerequisites: ConfigMaps and Secrets
 
 Create the following Kubernetes resources **in the same namespace** where you’ll deploy the chart.
 
@@ -68,7 +78,7 @@ Create the following Kubernetes resources **in the same namespace** where you’
 
 ### 📍 a) Chatbot Component
 
-#### 🧪 Secret
+#### Secret
 
 ```bash
 kubectl create secret generic hologram-welcome-chatbot-secret \
@@ -80,7 +90,7 @@ kubectl create secret generic hologram-welcome-chatbot-secret \
   -n your-namespace
 ```
 
-#### ⚙️ ConfigMap
+#### ConfigMap
 
 ```bash
 kubectl create configmap hologram-welcome-chatbot-config \
@@ -115,7 +125,7 @@ kubectl create configmap hologram-welcome-chatbot-config \
 
 ### 📍 b) Vs-Agent Component
 
-#### 🧪 Secret Vs-Agent
+#### Secret Vs-Agent
 
 ```bash
 kubectl create secret generic hologram-welcome-vs-agent-secret \
@@ -124,7 +134,7 @@ kubectl create secret generic hologram-welcome-vs-agent-secret \
   -n your-namespace
 ```
 
-#### ⚙️ ConfigMap vs-Agent
+#### ConfigMap vs-Agent
 
 ```bash
 kubectl create configmap hologram-welcome-vs-agent-config \
@@ -148,9 +158,9 @@ kubectl create configmap hologram-welcome-vs-agent-config \
 
 ---
 
-### 📍 c) Postgres Component
+### c) Postgres Component
 
-#### 🧪 Secret Postgres
+#### Secret Postgres
 
 ```bash
 kubectl create secret generic hologram-welcome-postgres-secret \
@@ -162,9 +172,9 @@ kubectl create secret generic hologram-welcome-postgres-secret \
 
 ---
 
-### 📍 d) Stats Module
+### d) Stats Module
 
-#### ⚙️ ConfigMap Stats
+#### ConfigMap Stats
 
 ```bash
 kubectl create configmap hologram-welcome-stats-config \
@@ -180,7 +190,7 @@ kubectl create configmap hologram-welcome-stats-config \
   -n your-namespace
 ```
 
-#### 🧪 Secret Stats
+#### Secret Stats
 
 ```bash
 kubectl create secret generic hologram-welcome-stats-secret \
@@ -191,9 +201,9 @@ kubectl create secret generic hologram-welcome-stats-secret \
 
 ---
 
-### 📍 e) Artemis Component
+### e) Artemis Component
 
-#### 🧪 Secret Artemis
+#### Secret Artemis
 
 ```bash
 kubectl create secret generic hologram-welcome-artemis-secret \
@@ -204,7 +214,7 @@ kubectl create secret generic hologram-welcome-artemis-secret \
 
 ---
 
-## 🧩 Referencing ConfigMaps and Secrets in `values.yaml`
+## Referencing ConfigMaps and Secrets in `values.yaml`
 
 Ensure your `values.yaml` correctly references the resources:
 
@@ -219,7 +229,7 @@ Apply this pattern for each component accordingly.
 
 ---
 
-## 📎 Final Notes
+## Final Notes
 
 - Make sure all ConfigMaps and Secrets exist before installing the Helm chart.
 - Validate that values in `values.yaml` match the names of the Kubernetes resources you created.
