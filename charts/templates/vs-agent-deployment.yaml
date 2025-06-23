@@ -1,4 +1,26 @@
-{{- if and .Values.vsAgent.enabled .Values.vsAgent.ingress.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.vsAgent.envFrom.configMap | quote }}
+  namespace: {{ .Values.namespace }}
+data:
+  {{- range $key, $val := .Values.vsAgent.config }}
+  {{ $key }}: {{ tpl $val $ | quote }}
+  {{- end }}
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.vsAgent.envFrom.secret | quote }}
+  namespace: {{ .Values.namespace }}
+type: Opaque
+stringData:
+  {{- range $key, $val := .Values.vsAgent.secret }}
+  {{ $key }}: {{ tpl $val $ | quote }}
+  {{- end }}
+
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -10,10 +32,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - {{ .Values.vsAgent.ingress.host }}
-      secretName: {{ .Values.vsAgent.ingress.tlsSecret }}
+        - {{ tpl .Values.vsAgent.ingress.host $ }}
+      secretName: {{ tpl .Values.vsAgent.ingress.tlsSecret $ }}
   rules:
-    - host: {{ .Values.vsAgent.ingress.host }}
+    - host: {{ tpl .Values.vsAgent.ingress.host $ }}
       http:
         paths:
           - path: /
@@ -23,9 +45,8 @@ spec:
                 name: {{ include "chatbot.fullname" . }}-vs-agent
                 port:
                   number: {{ .Values.vsAgent.service.ports.http }}
-{{- end }}
+
 ---
-{{- if .Values.vsAgent.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -43,9 +64,9 @@ spec:
   selector:
     app.kubernetes.io/component: vs-agent
     {{- include "chatbot.selectorLabels" . | nindent 4 }}
-{{- end }}
+
 ---
-{{- if .Values.vsAgent.enabled }}
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -83,4 +104,3 @@ spec:
                 name: {{ .Values.vsAgent.envFrom.configMap | quote }}
             - secretRef:
                 name: {{ .Values.vsAgent.envFrom.secret | quote }}
-{{- end }}

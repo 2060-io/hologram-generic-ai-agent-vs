@@ -1,4 +1,25 @@
-{{- if .Values.chatbot.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.chatbot.envFrom.configMap | quote }}
+  namespace: {{ .Values.namespace }}
+data:
+  {{- range $key, $val := .Values.chatbot.config }}
+  {{ $key }}: {{ tpl $val $ | quote }}
+  {{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.chatbot.envFrom.secret | quote }}
+  namespace: {{ .Values.namespace }}
+type: Opaque
+stringData:
+  {{- range $key, $val := .Values.chatbot.secret }}
+  {{ $key }}: {{ tpl $val $ | quote }}
+  {{- end }}
+
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -13,9 +34,9 @@ spec:
   selector:
     app.kubernetes.io/component: chatbot
     {{- include "chatbot.selectorLabels" . | nindent 4 }}
-{{- end }}
+
 ---
-{{- if and .Values.chatbot.enabled .Values.chatbot.ingress.enabled }}
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -27,10 +48,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - {{ .Values.chatbot.ingress.host }}
-      secretName: {{ .Values.chatbot.ingress.tlsSecret }}
+        - {{ tpl .Values.chatbot.ingress.host $ }}
+      secretName: {{ tpl .Values.chatbot.ingress.tlsSecret $ }}
   rules:
-    - host: {{ .Values.chatbot.ingress.host }}
+    - host: {{ tpl .Values.chatbot.ingress.host $ }}
       http:
         paths:
           - path: /
@@ -40,11 +61,8 @@ spec:
                 name: {{ include "chatbot.fullname" . }}-chatbot
                 port:
                   number: {{ .Values.chatbot.service.port }}
-
-{{- end }}
-
 ---
-{{- if .Values.chatbot.enabled }}
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -92,4 +110,3 @@ spec:
         resources:
           requests:
             storage: {{ .Values.chatbot.storage.size }}
-{{- end }}

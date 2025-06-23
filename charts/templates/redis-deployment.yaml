@@ -1,4 +1,4 @@
-{{- if .Values.redis.enabled }}
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -13,9 +13,9 @@ spec:
   selector:
     app.kubernetes.io/component: redis
     {{- include "chatbot.selectorLabels" . | nindent 4 }}
-{{- end }}
+
 ---
-{{- if .Values.redis.enabled }}
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -40,7 +40,7 @@ spec:
         - name: redis
           image: {{ .Values.redis.image }}
           resources:
-            {{- toYaml .Values.chatbot.resources | nindent 12 }}  
+            {{- toYaml .Values.redis.resources | nindent 12 }}  
           ports:
             - containerPort: {{ .Values.redis.port }}
           {{- if .Values.redis.persistence.enabled }}
@@ -56,4 +56,4 @@ spec:
         resources:
           requests:
             storage: {{ .Values.redis.persistence.size }}    
-{{- end }}
+

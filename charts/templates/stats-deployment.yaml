@@ -1,4 +1,24 @@
-{{- if .Values.stats.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.stats.envFrom.configMap | quote }}
+  namespace: {{ .Values.namespace }}
+data:
+  {{- range $key, $val := .Values.stats.config }}
+  {{ $key }}: {{ tpl $val $ | quote }}
+  {{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.stats.envFrom.secret | quote }}
+  namespace: {{ .Values.namespace }}
+type: Opaque
+stringData:
+  {{- range $key, $val := .Values.stats.secret }}
+  {{ $key }}: {{ tpl $val $ | quote }}
+  {{- end }}
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -54,7 +74,7 @@ spec:
             {{- toYaml .Values.stats.resources | nindent 12 }}
 
 ---
-{{- if .Values.stats.ingress.enabled }}
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -66,10 +86,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - {{ .Values.stats.ingress.host }}
-      secretName: {{ .Values.stats.ingress.tlsSecret }}
+        - {{ tpl .Values.stats.ingress.host $ }}
+      secretName: {{ tpl .Values.stats.ingress.tlsSecret $ }}
   rules:
-    - host: {{ .Values.stats.ingress.host }}
+    - host: {{ tpl .Values.stats.ingress.host $ }}
       http:
         paths:
           - path: /
@@ -79,5 +99,4 @@ spec:
                 name: {{ include "chatbot.fullname" . }}-stats
                 port:
                   number: {{ .Values.stats.service.port }}
-{{- end }}
-{{- end }}
+
