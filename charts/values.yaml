@@ -194,7 +194,7 @@ stats:
     tlsSecret: example-stats.{{ .Values.global.domain }}-cert
 
 artemis:
-  enabled: true
+  enabled: false
   image:
     repository: apache/activemq-artemis
     tag: '2.41.0'
