@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Helm chart deploys the `hologram-welcome-ai-agent` application along with the required Kubernetes resources.
+This Helm chart deploys the `hologram-welcome-ai-agent` application and all required Kubernetes components: `chatbot`, `vs-agent`, `postgres`, `redis`, `stats`, and `artemis`. It includes preconfigured Ingress definitions based on a global domain.
 
 ---
 
@@ -66,170 +66,128 @@ helm uninstall hologram-welcome-chart --namespace <your-namespace>
 
 ## Environment Variable Management
 
-This chart **does not create ConfigMaps or Secrets** automatically. To comply with security best practices, especially in public repositories, these resources must be created manually before deploying.
+All environment variables used by each component are defined inside `values.yaml` under the corresponding section.
+
+At deploy time, these variables are passed to the containers via a `ConfigMap` and/or `Secret`, which must exist in the same namespace prior to installation.
 
 ---
 
-## Prerequisites: ConfigMaps and Secrets
+## Ingress with Global Domain
 
-Create the following Kubernetes resources **in the same namespace** where you’ll deploy the chart.
-
----
-
-### 📍 a) Chatbot Component
-
-#### Secret
-
-```bash
-kubectl create secret generic hologram-welcome-chatbot-secret \
-  --from-literal=OPENAI_API_KEY=sk-xxx \
-  --from-literal=PINECONE_API_KEY=pcsk_xxx \
-  --from-literal=POSTGRES_PASSWORD=yourpass \
-  --from-literal=POSTGRES_USER=postgres \
-  --from-literal=POSTGRES_DB_NAME=chatbot_db \
-  -n your-namespace
-```
-
-#### ConfigMap
-
-```bash
-kubectl create configmap hologram-welcome-chatbot-config \
-  --from-literal=APP_PORT="3000" \
-  --from-literal=LOG_LEVEL="info" \
-  --from-literal=LLM_PROVIDER="openai" \
-  --from-literal=OPENAI_MODEL="gpt-4" \
-  --from-literal=VECTOR_STORE="redis" \
-  --from-literal=VECTOR_INDEX_NAME="your_vector_index" \
-  --from-literal=RAG_PROVIDER="langchain" \
-  --from-literal=RAG_DOCS_PATH="/path/to/docs" \
-  --from-literal=AGENT_MEMORY_BACKEND="redis" \
-  --from-literal=VS_AGENT_STATS_ENABLED=true \
-  --from-literal=VS_AGENT_STATS_HOST="activemq-broker.namespace.svc.cluster.local" \
-  --from-literal=VS_AGENT_STATS_PORT=61616 \
-  --from-literal=VS_AGENT_STATS_QUEUE="your-stats-queue-name" \
-  --from-literal=VS_AGENT_STATS_USER="your-username" \
-  --from-literal=VS_AGENT_STATS_PASSWORD="your-password" \
-  --from-literal=AGENT_MEMORY_WINDOW=40 \
-  --from-literal=REDIS_URL="redis://your-redis-host:6379" \
-  --from-literal=AGENT_PROMPT="Your custom prompt message goes here. Include detailed behavior, tone, and expected use of tools." \
-  --from-literal=VS_AGENT_ADMIN_URL="http://your-vs-agent-host:3000" \
-  --from-literal=CREDENTIAL_DEFINITION_ID="your-credential-definition-id" \
-  --from-literal=POSTGRES_HOST="your-postgres-host" \
-  --from-literal=LLM_TOOLS_CONFIG='[{"name":"toolName","description":"What it does","endpoint":"https://api.example.com","method":"GET","requiresAuth":false}]' \
-  --from-literal=STATISTICS_API_URL="http://your-stats-api-host:port/path" \
-  --from-literal=STATISTICS_REQUIRE_AUTH=true \
-  -n your-namespace
-```
-
----
-
-### 📍 b) Vs-Agent Component
-
-#### Secret Vs-Agent
-
-```bash
-kubectl create secret generic hologram-welcome-vs-agent-secret \
-  --from-literal=POSTGRES_PASSWORD=yourpass \
-  --from-literal=POSTGRES_USER=postgres \
-  -n your-namespace
-```
-
-#### ConfigMap vs-Agent
-
-```bash
-kubectl create configmap hologram-welcome-vs-agent-config \
-  --from-literal=AGENT_LOG_LEVEL=info \
-  --from-literal=AGENT_WALLET_ID="your-wallet-id" \
-  --from-literal=AGENT_WALLET_KEY="your-wallet-key" \
-  --from-literal=AGENT_WALLET_KEY_DERIVATION_METHOD=ARGON2I_INT \
-  --from-literal=AGENT_PUBLIC_DID='did:web:your-agent-domain.example.com' \
-  --from-literal=AGENT_ENDPOINT='wss://your-agent-domain.example.com:443' \
-  --from-literal=AGENT_INVITATION_IMAGE_URL='https://your-agent-domain.example.com/static/avatar.png' \
-  --from-literal=AGENT_LABEL="Your Agent Label" \
-  --from-literal=ANONCREDS_SERVICE_BASE_URL='https://your-service-base-url.example.com' \
-  --from-literal=USE_CORS=true \
-  --from-literal=EVENTS_BASE_URL='https://your-events-url.example.com' \
-  --from-literal=AGENT_INVITATION_BASE_URL='https://your-invitation-base-url.example.com/' \
-  --from-literal=REDIRECT_DEFAULT_URL_TO_INVITATION_URL='https://your-redirect-url.example.com/' \
-  --from-literal=REDIS_HOST=your-redis-host.namespace \
-  --from-literal=POSTGRES_HOST=your-postgres-host.namespace \
-  -n your-namespace
-```
-
----
-
-### c) Postgres Component
-
-#### Secret Postgres
-
-```bash
-kubectl create secret generic hologram-welcome-postgres-secret \
-  --from-literal=POSTGRES_PASSWORD=yourpass \
-  --from-literal=POSTGRES_USER=postgres \
-  --from-literal=POSTGRES_DB_NAME=chatbot_db \
-  -n your-namespace
-```
-
----
-
-### d) Stats Module
-
-#### ConfigMap Stats
-
-```bash
-kubectl create configmap hologram-welcome-stats-config \
-  --from-literal=DEBUG="3" \
-  --from-literal=QUARKUS_HTTP_PORT="8700" \
-  --from-literal=COM_MOBIERA_MS_COMMONS_STATS_JMS_QUEUE_NAME="your-stats-queue-name" \
-  --from-literal=COM_MOBIERA_MS_COMMONS_STATS_THREADS="1" \
-  --from-literal=COM_MOBIERA_MS_COMMONS_STATS_STANDALONE="1" \
-  --from-literal=QUARKUS_ARTEMIS_A0_URL="tcp://your-artemis-broker.namespace.svc.cluster.local:61616" \
-  --from-literal=QUARKUS_ARTEMIS_A0_USERNAME="your-artemis-username" \
-  --from-literal=QUARKUS_DATASOURCE_JDBC_URL="jdbc:postgresql://your-postgres-host.namespace/test-database" \
-  --from-literal=QUARKUS_DATASOURCE_USERNAME="your-database-username" \
-  -n your-namespace
-```
-
-#### Secret Stats
-
-```bash
-kubectl create secret generic hologram-welcome-stats-secret \
-  --from-literal=QUARKUS_ARTEMIS_A0_PASSWORD='your-artemis-password' \
-  --from-literal=QUARKUS_DATASOURCE_PASSWORD='your-database-password' \
-  -n your-namespace
-```
-
----
-
-### e) Artemis Component
-
-#### Secret Artemis
-
-```bash
-kubectl create secret generic hologram-welcome-artemis-secret \
-  --from-literal=ARTEMIS_USER=your-artemis-user \
-  --from-literal=ARTEMIS_PASSWORD=your-artemis-password \
-  -n your-namespace
-```
-
----
-
-## Referencing ConfigMaps and Secrets in `values.yaml`
-
-Ensure your `values.yaml` correctly references the resources:
+All ingress resources use the shared domain defined in `global.domain`. This allows centralized control of subdomain routing per component. Example:
 
 ```yaml
-chatbot:
-  envFrom:
-    configMap: chatbot-config
-    secret: chatbot-secret
+host: chatbot.{{ .Values.global.domain }}
+tlsSecretName: chatbot.{{ .Values.global.domain }}-cert
 ```
 
-Apply this pattern for each component accordingly.
+This pattern is applied to all ingress-enabled components.
+
+---
+
+## Environment Variables by Component
+
+Below is a summary of the environment variables required by each component. All values must be defined under `values.yaml` in their respective `config` or `secret` fields.
+
+### 📦 Chatbot
+
+| Source    | Key                      | Description                      |
+| --------- | ------------------------ | -------------------------------- |
+| ConfigMap | APP_PORT                 | Port where the chatbot runs      |
+| ConfigMap | LOG_LEVEL                | Logging level                    |
+| ConfigMap | LLM_PROVIDER             | LLM provider name                |
+| ConfigMap | OPENAI_MODEL             | Model name for OpenAI            |
+| ConfigMap | VECTOR_STORE             | Vector DB to use                 |
+| ConfigMap | VECTOR_INDEX_NAME        | Name of vector index             |
+| ConfigMap | RAG_PROVIDER             | RAG implementation used          |
+| ConfigMap | RAG_DOCS_PATH            | Path to RAG documents            |
+| ConfigMap | AGENT_MEMORY_BACKEND     | Memory backend                   |
+| ConfigMap | AGENT_MEMORY_WINDOW      | Memory window size               |
+| ConfigMap | VS_AGENT_STATS_ENABLED   | Enable stats fetching            |
+| ConfigMap | VS_AGENT_STATS_HOST      | Stats broker host                |
+| ConfigMap | VS_AGENT_STATS_PORT      | Broker port                      |
+| ConfigMap | VS_AGENT_STATS_QUEUE     | Broker queue name                |
+| ConfigMap | VS_AGENT_STATS_USER      | Broker user                      |
+| ConfigMap | VS_AGENT_STATS_PASSWORD  | Broker password                  |
+| ConfigMap | REDIS_URL                | Redis connection URL             |
+| ConfigMap | AGENT_PROMPT             | Custom LLM agent prompt          |
+| ConfigMap | VS_AGENT_ADMIN_URL       | VS-Agent admin dashboard URL     |
+| ConfigMap | CREDENTIAL_DEFINITION_ID | VC credential definition         |
+| ConfigMap | POSTGRES_HOST            | Postgres host URL                |
+| ConfigMap | LLM_TOOLS_CONFIG         | LLM tools config (JSON)          |
+| ConfigMap | STATISTICS_API_URL       | External statistics API endpoint |
+| ConfigMap | STATISTICS_REQUIRE_AUTH  | Require auth on stats            |
+| Secret    | OPENAI_API_KEY           | OpenAI API key                   |
+| Secret    | POSTGRES_USER            | DB user                          |
+| Secret    | POSTGRES_PASSWORD        | DB password                      |
+| Secret    | POSTGRES_DB_NAME         | DB name                          |
+
+---
+
+### 📦 Vs-Agent
+
+| Source    | Key                                    | Description               |
+| --------- | -------------------------------------- | ------------------------- |
+| ConfigMap | AGENT_LOG_LEVEL                        | Log verbosity level       |
+| ConfigMap | AGENT_WALLET_ID                        | Wallet ID                 |
+| ConfigMap | AGENT_WALLET_KEY                       | Wallet secret key         |
+| ConfigMap | AGENT_WALLET_KEY_DERIVATION_METHOD     | Key derivation method     |
+| ConfigMap | AGENT_PUBLIC_DID                       | Public DID                |
+| ConfigMap | AGENT_ENDPOINT                         | WebSocket endpoint        |
+| ConfigMap | AGENT_INVITATION_IMAGE_URL             | Image URL for invitations |
+| ConfigMap | AGENT_LABEL                            | Agent display label       |
+| ConfigMap | ANONCREDS_SERVICE_BASE_URL             | URL for anoncreds         |
+| ConfigMap | USE_CORS                               | Enable CORS               |
+| ConfigMap | EVENTS_BASE_URL                        | Events service URL        |
+| ConfigMap | AGENT_INVITATION_BASE_URL              | Base URL for invitations  |
+| ConfigMap | REDIRECT_DEFAULT_URL_TO_INVITATION_URL | Redirect target           |
+| ConfigMap | REDIS_HOST                             | Redis service hostname    |
+| ConfigMap | POSTGRES_HOST                          | Postgres service hostname |
+| Secret    | POSTGRES_USER                          | DB user                   |
+| Secret    | POSTGRES_PASSWORD                      | DB password               |
+
+---
+
+### 📦 Postgres
+
+| Source | Key               | Description              |
+| ------ | ----------------- | ------------------------ |
+| Secret | POSTGRES_USER     | Postgres DB user         |
+| Secret | POSTGRES_PASSWORD | Postgres DB password     |
+| Secret | POSTGRES_DB       | Name of the DB to create |
+
+---
+
+### 📦 Stats
+
+| Source    | Key                                         | Description                  |
+| --------- | ------------------------------------------- | ---------------------------- |
+| ConfigMap | DEBUG                                       | Log level                    |
+| ConfigMap | QUARKUS_HTTP_PORT                           | App port                     |
+| ConfigMap | COM_MOBIERA_MS_COMMONS_STATS_JMS_QUEUE_NAME | Queue name                   |
+| ConfigMap | COM_MOBIERA_MS_COMMONS_STATS_THREADS        | Number of processing threads |
+| ConfigMap | COM_MOBIERA_MS_COMMONS_STATS_STANDALONE     | Run in standalone mode       |
+| ConfigMap | QUARKUS_ARTEMIS_A0_URL                      | Artemis broker URL           |
+| ConfigMap | QUARKUS_ARTEMIS_A0_USERNAME                 | Artemis username             |
+| ConfigMap | QUARKUS_DATASOURCE_JDBC_URL                 | JDBC connection string       |
+| ConfigMap | QUARKUS_DATASOURCE_USERNAME                 | DB user                      |
+| Secret    | QUARKUS_DATASOURCE_PASSWORD                 | DB password                  |
+| Secret    | QUARKUS_ARTEMIS_A0_PASSWORD                 | Artemis password             |
+
+---
+
+### 📦 Artemis
+
+| Source | Key              | Description     |
+| ------ | ---------------- | --------------- |
+| Secret | ARTEMIS_USER     | Broker user     |
+| Secret | ARTEMIS_PASSWORD | Broker password |
 
 ---
 
 ## Final Notes
 
-- Make sure all ConfigMaps and Secrets exist before installing the Helm chart.
-- Validate that values in `values.yaml` match the names of the Kubernetes resources you created.
+- Environment variables are mapped dynamically using `envFrom` in the Helm templates.
+- Domain configuration for ingress is centralized via `.Values.global.domain`, enabling consistent hostnames and TLS management.
+
+---
