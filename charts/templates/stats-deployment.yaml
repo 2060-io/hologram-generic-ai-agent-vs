@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Values.stats.envFrom.configMap | quote }}
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
 data:
   {{- range $key, $val := .Values.stats.config }}
   {{ $key }}: {{ tpl $val $ | quote }}
@@ -12,7 +12,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: {{ .Values.stats.envFrom.secret | quote }}
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
 type: Opaque
 stringData:
   {{- range $key, $val := .Values.stats.secret }}
@@ -23,7 +23,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "chatbot.fullname" . }}-stats
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
 spec:
   type: {{ .Values.stats.service.type }}
   ports:
@@ -41,7 +41,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ include "chatbot.fullname" . }}-stats
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/component: stats
     {{ include "chatbot.labels" . | nindent 4 }}
@@ -79,7 +79,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "chatbot.fullname" . }}-stats
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
