@@ -91,9 +91,9 @@ spec:
       containers:
         - name: vs-agent
           image: "{{ .Values.vsAgent.image.repository }}:{{ .Values.vsAgent.image.tag }}"
+          imagePullPolicy: {{ .Values.vsAgent.image.pullPolicy }}
           resources:
             {{- toYaml .Values.chatbot.resources | nindent 12 }} 
-          imagePullPolicy: {{ .Values.vsAgent.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.vsAgent.service.ports.http }}
               name: http

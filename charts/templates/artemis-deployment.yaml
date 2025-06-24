@@ -58,7 +58,7 @@ spec:
       containers:
         - name: artemis
           image: "{{ .Values.artemis.image.repository }}:{{ .Values.artemis.image.tag }}"
-          imagePullPolicy: {{ coalesce .Values.artemis.image.pullPolicy .Values.global.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.artemis.image.pullPolicy }}
           resources:
             {{- toYaml .Values.artemis.resources | nindent 12 }}
           envFrom:

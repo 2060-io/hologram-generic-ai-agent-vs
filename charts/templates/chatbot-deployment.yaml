@@ -87,9 +87,9 @@ spec:
       containers:
         - name: chatbot
           image: "{{ .Values.chatbot.image.repository }}:{{ .Values.chatbot.image.tag }}"
+          imagePullPolicy: {{ .Values.chatbot.image.pullPolicy }}
           resources:
             {{- toYaml .Values.chatbot.resources | nindent 12 }} 
-          imagePullPolicy: {{ .Values.chatbot.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.chatbot.service.port }}
               name: http

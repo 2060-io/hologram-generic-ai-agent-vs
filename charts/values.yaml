@@ -1,12 +1,12 @@
-namespace: 2060-core-dev
-
 global:
-  imagePullPolicy: Always
   domain: dev.2060.io
 
 redis:
   enabled: true
-  image: redis/redis-stack-server:latest
+  image:
+    repository: redis/redis-stack-server
+    tag: 7.2.0-v17
+    pullPolicy: Always
   port: 6379
   resources:
     requests:
@@ -36,7 +36,7 @@ chatbot:
       memory: '512Mi'
   image:
     repository: io2060/hologram-welcome-ai-agent
-    tag: latest
+    tag: v1.4.0
     pullPolicy: Always
   envFrom:
     configMap: hologram-welcome-chatbot-config
@@ -137,7 +137,10 @@ vsAgent:
 
 postgres:
   enabled: true
-  image: postgres:15.2
+  image:
+    repository: postgres
+    tag: 15.2
+    pullPolicy: Always
   port: 5432
   resources:
     requests:
@@ -164,7 +167,7 @@ stats:
   replicaCount: 1
   image:
     repository: mobiera/stats
-    tag: main
+    tag: v1.1.5
     pullPolicy: Always
   envFrom:
     configMap: hologram-welcome-stats-config

@@ -38,7 +38,8 @@ spec:
     spec:
       containers:
         - name: redis
-          image: {{ .Values.redis.image }}
+          image: "{{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}"
+          imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
           resources:
             {{- toYaml .Values.redis.resources | nindent 12 }}  
           ports:
