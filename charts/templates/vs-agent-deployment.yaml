@@ -90,7 +90,7 @@ spec:
     spec:
       containers:
         - name: vs-agent
-          image: "{{ .Values.vsAgent.image.repository }}:{{ .Values.vsAgent.image.tag }}"
+          image: "io2060/vs-agent:v1.3.0"
           imagePullPolicy: {{ .Values.vsAgent.image.pullPolicy }}
           resources:
             {{- toYaml .Values.chatbot.resources | nindent 12 }} 

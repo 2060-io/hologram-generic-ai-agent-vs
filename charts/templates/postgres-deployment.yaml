@@ -50,7 +50,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+          image: "postgres:15.2"
           imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
           resources:
             {{- toYaml .Values.postgres.resources | nindent 12 }} 

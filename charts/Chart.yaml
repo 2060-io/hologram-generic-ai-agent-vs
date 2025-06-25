@@ -2,5 +2,5 @@ apiVersion: v2
 name: hologram-welcome-ai-agent-chart
 description: Helm chart for hologram-welcome-ai-agent
 type: application
-version: 1.3.1
-appVersion: '0.0.1'
+version: 1.3.2
+appVersion: '1.3.2'

@@ -60,7 +60,7 @@ spec:
     spec:
       containers:
         - name: stats-container
-          image: "{{ .Values.stats.image.repository }}:{{ .Values.stats.image.tag }}"
+          image: mobiera/stats:v1.1.5
           imagePullPolicy: {{ .Values.stats.image.pullPolicy }}
           envFrom:
             - configMapRef:

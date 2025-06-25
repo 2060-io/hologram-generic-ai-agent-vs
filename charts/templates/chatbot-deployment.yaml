@@ -86,7 +86,7 @@ spec:
     spec:
       containers:
         - name: chatbot
-          image: "{{ .Values.chatbot.image.repository }}:{{ .Values.chatbot.image.tag }}"
+          image: io2060/hologram-welcome-ai-agent:{{ .Chart.Version }}
           imagePullPolicy: {{ .Values.chatbot.image.pullPolicy }}
           resources:
             {{- toYaml .Values.chatbot.resources | nindent 12 }} 
