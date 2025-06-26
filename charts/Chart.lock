@@ -1,0 +1,6 @@
+dependencies:
+- name: vs-agent-chart
+  repository: oci://registry-1.docker.io/io2060
+  version: v1.3.2
+digest: sha256:251372d60f1e6dde2870f17c7b985cc2066b453ac544cdf7ca915b37fe730a64
+generated: "2025-06-26T10:01:05.125393177-05:00"

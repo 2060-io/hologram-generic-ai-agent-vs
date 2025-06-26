@@ -2,7 +2,9 @@
 
 ## Overview
 
-This Helm chart deploys the `hologram-welcome-ai-agent` application and all required Kubernetes components: `chatbot`, `vs-agent`, `postgres`, `redis`, `stats`, and `artemis`. It includes preconfigured Ingress definitions based on a global domain.
+This Helm chart deploys the `hologram-welcome-ai-agent` application and all required Kubernetes components: `chatbot`, `vs-agent`, `postgres`, `redis`, `stats`, and (optional) `artemis`.  
+The `vs-agent` component is deployed as a Helm dependency (`vs-agent-chart`) and configured entirely via `values.yaml`.  
+Ingress definitions are preconfigured and rely on a shared global domain setting.
 
 ---
 
@@ -66,9 +68,11 @@ helm uninstall hologram-welcome-chart --namespace <your-namespace>
 
 ## Environment Variable Management
 
-All environment variables used by each component are defined inside `values.yaml` under the corresponding section.
+All environment variables used by each component are defined inside `values.yaml` under their corresponding section.
 
-At deploy time, these variables are passed to the containers via a `ConfigMap` and/or `Secret`, which must exist in the same namespace prior to installation.
+Plain variables are injected via `env` entries.
+
+> The `vs-agent` subchart defines its own environment variables directly in its own templates.
 
 ---
 
@@ -87,64 +91,60 @@ This pattern is applied to all ingress-enabled components.
 
 ## Environment Variables by Component
 
-Below is a summary of the environment variables required by each component. All values must be defined under `values.yaml` in their respective `config` or `secret` fields.
+Below is a summary of the environment variables required by each component. All values must be defined under `values.yaml` in their respective section.
 
 ### 📦 Chatbot
 
-| Source    | Key                      | Description                      |
-| --------- | ------------------------ | -------------------------------- |
-| ConfigMap | APP_PORT                 | Port where the chatbot runs      |
-| ConfigMap | LOG_LEVEL                | Logging level                    |
-| ConfigMap | LLM_PROVIDER             | LLM provider name                |
-| ConfigMap | OPENAI_MODEL             | Model name for OpenAI            |
-| ConfigMap | VECTOR_STORE             | Vector DB to use                 |
-| ConfigMap | VECTOR_INDEX_NAME        | Name of vector index             |
-| ConfigMap | RAG_PROVIDER             | RAG implementation used          |
-| ConfigMap | RAG_DOCS_PATH            | Path to RAG documents            |
-| ConfigMap | AGENT_MEMORY_BACKEND     | Memory backend                   |
-| ConfigMap | AGENT_MEMORY_WINDOW      | Memory window size               |
-| ConfigMap | VS_AGENT_STATS_ENABLED   | Enable stats fetching            |
-| ConfigMap | VS_AGENT_STATS_HOST      | Stats broker host                |
-| ConfigMap | VS_AGENT_STATS_PORT      | Broker port                      |
-| ConfigMap | VS_AGENT_STATS_QUEUE     | Broker queue name                |
-| ConfigMap | VS_AGENT_STATS_USER      | Broker user                      |
-| ConfigMap | VS_AGENT_STATS_PASSWORD  | Broker password                  |
-| ConfigMap | REDIS_URL                | Redis connection URL             |
-| ConfigMap | AGENT_PROMPT             | Custom LLM agent prompt          |
-| ConfigMap | VS_AGENT_ADMIN_URL       | VS-Agent admin dashboard URL     |
-| ConfigMap | CREDENTIAL_DEFINITION_ID | VC credential definition         |
-| ConfigMap | POSTGRES_HOST            | Postgres host URL                |
-| ConfigMap | LLM_TOOLS_CONFIG         | LLM tools config (JSON)          |
-| ConfigMap | STATISTICS_API_URL       | External statistics API endpoint |
-| ConfigMap | STATISTICS_REQUIRE_AUTH  | Require auth on stats            |
-| Secret    | OPENAI_API_KEY           | OpenAI API key                   |
-| Secret    | POSTGRES_USER            | DB user                          |
-| Secret    | POSTGRES_PASSWORD        | DB password                      |
-| Secret    | POSTGRES_DB_NAME         | DB name                          |
+| Source | Key                      | Description                      |
+| ------ | ------------------------ | -------------------------------- |
+| Env    | APP_PORT                 | Port where the chatbot runs      |
+| Env    | LOG_LEVEL                | Logging level                    |
+| Env    | LLM_PROVIDER             | LLM provider name                |
+| Env    | OPENAI_MODEL             | Model name for OpenAI            |
+| Env    | VECTOR_STORE             | Vector DB to use                 |
+| Env    | VECTOR_INDEX_NAME        | Name of vector index             |
+| Env    | RAG_PROVIDER             | RAG implementation used          |
+| Env    | RAG_DOCS_PATH            | Path to RAG documents            |
+| Env    | AGENT_MEMORY_BACKEND     | Memory backend                   |
+| Env    | AGENT_MEMORY_WINDOW      | Memory window size               |
+| Env    | VS_AGENT_STATS_ENABLED   | Enable stats fetching            |
+| Env    | VS_AGENT_STATS_HOST      | Stats broker host                |
+| Env    | VS_AGENT_STATS_PORT      | Broker port                      |
+| Env    | VS_AGENT_STATS_QUEUE     | Broker queue name                |
+| Env    | VS_AGENT_STATS_USER      | Broker user                      |
+| Env    | VS_AGENT_STATS_PASSWORD  | Broker password                  |
+| Env    | REDIS_URL                | Redis connection URL             |
+| Env    | AGENT_PROMPT             | Custom LLM agent prompt          |
+| Env    | VS_AGENT_ADMIN_URL       | VS-Agent admin dashboard URL     |
+| Env    | CREDENTIAL_DEFINITION_ID | VC credential definition         |
+| Env    | POSTGRES_HOST            | Postgres host URL                |
+| Env    | LLM_TOOLS_CONFIG         | LLM tools config (JSON)          |
+| Env    | STATISTICS_API_URL       | External statistics API endpoint |
+| Env    | STATISTICS_REQUIRE_AUTH  | Require auth on stats            |
+| Secret | OPENAI_API_KEY           | OpenAI API key                   |
+| Secret | POSTGRES_USER            | DB user                          |
+| Secret | POSTGRES_PASSWORD        | DB password                      |
+| Secret | POSTGRES_DB_NAME         | DB name                          |
 
 ---
 
-### 📦 Vs-Agent
+### 📦 Vs-Agent (via `vs-agent-chart`)
 
-| Source    | Key                                    | Description               |
-| --------- | -------------------------------------- | ------------------------- |
-| ConfigMap | AGENT_LOG_LEVEL                        | Log verbosity level       |
-| ConfigMap | AGENT_WALLET_ID                        | Wallet ID                 |
-| ConfigMap | AGENT_WALLET_KEY                       | Wallet secret key         |
-| ConfigMap | AGENT_WALLET_KEY_DERIVATION_METHOD     | Key derivation method     |
-| ConfigMap | AGENT_PUBLIC_DID                       | Public DID                |
-| ConfigMap | AGENT_ENDPOINT                         | WebSocket endpoint        |
-| ConfigMap | AGENT_INVITATION_IMAGE_URL             | Image URL for invitations |
-| ConfigMap | AGENT_LABEL                            | Agent display label       |
-| ConfigMap | ANONCREDS_SERVICE_BASE_URL             | URL for anoncreds         |
-| ConfigMap | USE_CORS                               | Enable CORS               |
-| ConfigMap | EVENTS_BASE_URL                        | Events service URL        |
-| ConfigMap | AGENT_INVITATION_BASE_URL              | Base URL for invitations  |
-| ConfigMap | REDIRECT_DEFAULT_URL_TO_INVITATION_URL | Redirect target           |
-| ConfigMap | REDIS_HOST                             | Redis service hostname    |
-| ConfigMap | POSTGRES_HOST                          | Postgres service hostname |
-| Secret    | POSTGRES_USER                          | DB user                   |
-| Secret    | POSTGRES_PASSWORD                      | DB password               |
+This subchart is fully configured via the `vs-agent-chart` section in `values.yaml`. All `env` variables are defined directly in the template.
+
+| Key                                    | Description               |
+| -------------------------------------- | ------------------------- |
+| AGENT_ENDPOINT                         | WebSocket endpoint        |
+| AGENT_LABEL                            | Agent display label       |
+| AGENT_INVITATION_IMAGE_URL             | Image URL for invitations |
+| EVENTS_BASE_URL                        | Event receiver base URL   |
+| AGENT_PUBLIC_DID                       | Public DID                |
+| ANONCREDS_SERVICE_BASE_URL             | Anoncreds service URL     |
+| REDIRECT_DEFAULT_URL_TO_INVITATION_URL | Redirect control          |
+| POSTGRES_HOST                          | Postgres service hostname |
+| POSTGRES_USER                          | Postgres DB user          |
+| POSTGRES_PASSWORD                      | Postgres DB password      |
+| REDIS_HOST                             | Redis service hostname    |
 
 ---
 
@@ -160,19 +160,19 @@ Below is a summary of the environment variables required by each component. All 
 
 ### 📦 Stats
 
-| Source    | Key                                         | Description                  |
-| --------- | ------------------------------------------- | ---------------------------- |
-| ConfigMap | DEBUG                                       | Log level                    |
-| ConfigMap | QUARKUS_HTTP_PORT                           | App port                     |
-| ConfigMap | COM_MOBIERA_MS_COMMONS_STATS_JMS_QUEUE_NAME | Queue name                   |
-| ConfigMap | COM_MOBIERA_MS_COMMONS_STATS_THREADS        | Number of processing threads |
-| ConfigMap | COM_MOBIERA_MS_COMMONS_STATS_STANDALONE     | Run in standalone mode       |
-| ConfigMap | QUARKUS_ARTEMIS_A0_URL                      | Artemis broker URL           |
-| ConfigMap | QUARKUS_ARTEMIS_A0_USERNAME                 | Artemis username             |
-| ConfigMap | QUARKUS_DATASOURCE_JDBC_URL                 | JDBC connection string       |
-| ConfigMap | QUARKUS_DATASOURCE_USERNAME                 | DB user                      |
-| Secret    | QUARKUS_DATASOURCE_PASSWORD                 | DB password                  |
-| Secret    | QUARKUS_ARTEMIS_A0_PASSWORD                 | Artemis password             |
+| Source | Key                                         | Description                  |
+| ------ | ------------------------------------------- | ---------------------------- |
+| Env    | DEBUG                                       | Log level                    |
+| Env    | QUARKUS_HTTP_PORT                           | App port                     |
+| Env    | COM_MOBIERA_MS_COMMONS_STATS_JMS_QUEUE_NAME | Queue name                   |
+| Env    | COM_MOBIERA_MS_COMMONS_STATS_THREADS        | Number of processing threads |
+| Env    | COM_MOBIERA_MS_COMMONS_STATS_STANDALONE     | Run in standalone mode       |
+| Env    | QUARKUS_ARTEMIS_A0_URL                      | Artemis broker URL           |
+| Env    | QUARKUS_ARTEMIS_A0_USERNAME                 | Artemis username             |
+| Env    | QUARKUS_DATASOURCE_JDBC_URL                 | JDBC connection string       |
+| Env    | QUARKUS_DATASOURCE_USERNAME                 | DB user                      |
+| Secret | QUARKUS_DATASOURCE_PASSWORD                 | DB password                  |
+| Secret | QUARKUS_ARTEMIS_A0_PASSWORD                 | Artemis password             |
 
 ---
 
@@ -187,7 +187,6 @@ Below is a summary of the environment variables required by each component. All 
 
 ## Final Notes
 
-- Environment variables are mapped dynamically using `envFrom` in the Helm templates.
-- Domain configuration for ingress is centralized via `.Values.global.domain`, enabling consistent hostnames and TLS management.
-
----
+- All environment variables are managed through `values.yaml`, using `env` and `secretKeyRef` as needed.
+- The `vs-agent` dependency uses inline values only, not `ConfigMaps` or Helm-generated Secrets.
+- Ingress routing is centralized via `.Values.global.domain`, enabling consistent hostname and TLS management.

@@ -1,6 +1,10 @@
 apiVersion: v2
 name: hologram-welcome-ai-agent-chart
-description: Helm chart for hologram-welcome-ai-agent
-type: application
 version: 1.3.2
 appVersion: '1.3.2'
+description: Helm chart for hologram-welcome-ai-agent
+dependencies:
+  - name: vs-agent-chart
+    version: v1.3.2
+    repository: oci://registry-1.docker.io/io2060
+    condition: vs-agent-chart.enabled

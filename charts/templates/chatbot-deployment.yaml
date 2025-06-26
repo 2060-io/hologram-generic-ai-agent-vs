@@ -1,17 +1,7 @@
 apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Values.chatbot.envFrom.configMap | quote }}
-  namespace: {{ .Release.Namespace }}
-data:
-  {{- range $key, $val := .Values.chatbot.config }}
-  {{ $key }}: {{ tpl $val $ | quote }}
-  {{- end }}
----
-apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ .Values.chatbot.envFrom.secret | quote }}
+  name: chatbot-secret
   namespace: {{ .Release.Namespace }}
 type: Opaque
 stringData:
@@ -34,9 +24,7 @@ spec:
   selector:
     app.kubernetes.io/component: chatbot
     {{- include "chatbot.selectorLabels" . | nindent 4 }}
-
 ---
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -54,7 +42,7 @@ spec:
     - host: {{ tpl .Values.chatbot.ingress.host $ }}
       http:
         paths:
-          - path: /
+          - path: {{ .Values.chatbot.ingress.path }}
             pathType: Prefix
             backend:
               service:
@@ -62,7 +50,6 @@ spec:
                 port:
                   number: {{ .Values.chatbot.service.port }}
 ---
-
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -73,7 +60,7 @@ metadata:
     {{- include "chatbot.labels" . | nindent 4 }}
 spec:
   serviceName: {{ include "chatbot.fullname" . }}-chatbot
-  replicas: {{ .Values.chatbot.replicaCount }}
+  replicas: {{ .Values.chatbot.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/component: chatbot
@@ -86,18 +73,25 @@ spec:
     spec:
       containers:
         - name: chatbot
-          image: io2060/hologram-welcome-ai-agent:{{ .Chart.Version }}
+          image: io2060/hologram-welcome-ai-agent:{{ .Chart.AppVersion }}
           imagePullPolicy: {{ .Values.chatbot.image.pullPolicy }}
-          resources:
-            {{- toYaml .Values.chatbot.resources | nindent 12 }} 
           ports:
             - containerPort: {{ .Values.chatbot.service.port }}
               name: http
-          envFrom:
-            - configMapRef:
-                name: {{ .Values.chatbot.envFrom.configMap | quote }}
-            - secretRef:
-                name: {{ .Values.chatbot.envFrom.secret | quote }}  
+          resources:
+            {{- toYaml .Values.chatbot.resources | nindent 12 }}
+          env:
+            {{- range .Values.chatbot.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            {{- range $key, $val := .Values.chatbot.secret }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name:  chatbot-secret
+                  key: {{ $key }}
+            {{- end }}
           volumeMounts:
             - name: pvc-{{ include "chatbot.fullname" . }}-chatbot
               mountPath: /app/rag/docs

@@ -1,17 +1,7 @@
 apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Values.stats.envFrom.configMap | quote }}
-  namespace: {{ .Release.Namespace }}
-data:
-  {{- range $key, $val := .Values.stats.config }}
-  {{ $key }}: {{ tpl $val $ | quote }}
-  {{- end }}
----
-apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ .Values.stats.envFrom.secret | quote }}
+  name: stats-secret
   namespace: {{ .Release.Namespace }}
 type: Opaque
 stringData:
@@ -33,10 +23,32 @@ spec:
   selector:
     app.kubernetes.io/component: stats
     {{- include "chatbot.selectorLabels" . | nindent 4 }}
-
 ---
-
-
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "chatbot.fullname" . }}-stats
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ tpl .Values.stats.ingress.host $ }}
+      secretName: {{ tpl .Values.stats.ingress.tlsSecret $ }}
+  rules:
+    - host: {{ tpl .Values.stats.ingress.host $ }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "chatbot.fullname" . }}-stats
+                port:
+                  number: {{ .Values.stats.service.port }}
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -62,41 +74,20 @@ spec:
         - name: stats-container
           image: mobiera/stats:v1.1.5
           imagePullPolicy: {{ .Values.stats.image.pullPolicy }}
-          envFrom:
-            - configMapRef:
-                name: {{ .Values.stats.envFrom.configMap }}
-            - secretRef:
-                name: {{ .Values.stats.envFrom.secret }}
           ports:
             - name: http
               containerPort: {{ .Values.stats.service.port }}
           resources:
             {{- toYaml .Values.stats.resources | nindent 12 }}
-
----
-
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: {{ include "chatbot.fullname" . }}-stats
-  namespace: {{ .Release.Namespace }}
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-spec:
-  ingressClassName: nginx
-  tls:
-    - hosts:
-        - {{ tpl .Values.stats.ingress.host $ }}
-      secretName: {{ tpl .Values.stats.ingress.tlsSecret $ }}
-  rules:
-    - host: {{ tpl .Values.stats.ingress.host $ }}
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "chatbot.fullname" . }}-stats
-                port:
-                  number: {{ .Values.stats.service.port }}
-
+          env:
+            {{- range .Values.stats.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            {{- range $key, $val := .Values.stats.secret }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: stats-secret
+                  key: {{ $key }}
+            {{- end }}

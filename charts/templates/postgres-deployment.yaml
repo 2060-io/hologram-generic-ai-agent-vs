@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ .Values.postgres.envFrom.secret | quote }}
+  name: postgres-secret
   namespace: {{ .Release.Namespace }}
 type: Opaque
 stringData:
@@ -24,7 +24,6 @@ spec:
   selector:
     app.kubernetes.io/component: postgres
     {{- include "chatbot.selectorLabels" . | nindent 4 }}
-
 
 ---
 
@@ -52,39 +51,32 @@ spec:
         - name: postgres
           image: "postgres:15.2"
           imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
-          resources:
-            {{- toYaml .Values.postgres.resources | nindent 12 }} 
           ports:
             - containerPort: {{ .Values.postgres.port }}
               name: postgres
+          resources:
+            {{- toYaml .Values.postgres.resources | nindent 12 }}
           env:
-            - name: POSTGRES_DB
+            {{- range .Values.postgres.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            {{- range $key, $val := .Values.postgres.secret }}
+            - name: {{ $key }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.postgres.envFrom.secret | quote }}
-                  key: POSTGRES_DB
-            - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.postgres.envFrom.secret | quote }}
-                  key: POSTGRES_USER
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.postgres.envFrom.secret | quote }}                                                                                                           
-                  key: POSTGRES_PASSWORD
-            - name: PGDATA
-              value: {{ .Values.postgres.envFrom.PGDATA | quote }}
+                  name:  postgres-secret
+                  key: {{ $key }}
+            {{- end }}
           volumeMounts:
             - name: pvc-{{ include "chatbot.fullname" . }}-postgres
               mountPath: /var/lib/postgresql/data
   volumeClaimTemplates:
     - metadata:
         name: pvc-{{ include "chatbot.fullname" . }}-postgres
-      spec:                                                                                                                                             
+      spec:
         accessModes:
           - ReadWriteOnce
         resources:
           requests:
             storage: {{ .Values.postgres.storage.size }}
-
