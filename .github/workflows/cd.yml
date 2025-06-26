@@ -1,7 +1,7 @@
 name: Continuous Deployment
 
 env:
-  IMAGE_NAME: hologram-welcome-ai-agent
+  IMAGE_NAME: hologram-welcome-ai-agent-app
 
 on:
   push:
