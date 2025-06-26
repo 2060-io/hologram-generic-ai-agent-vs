@@ -73,7 +73,7 @@ spec:
     spec:
       containers:
         - name: chatbot
-          image: io2060/hologram-welcome-ai-agent:{{ .Chart.AppVersion }}
+          image: io2060/hologram-welcome-ai-agent-app:{{ .Chart.AppVersion }}
           imagePullPolicy: {{ .Values.chatbot.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.chatbot.service.port }}
