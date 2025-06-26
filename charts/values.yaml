@@ -2,7 +2,6 @@ global:
   domain: dev.2060.io
 
 chatbot:
-  enabled: true
   name: chatbot
   replicas: 1
   image:
