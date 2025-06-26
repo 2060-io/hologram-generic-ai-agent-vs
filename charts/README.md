@@ -1,10 +1,12 @@
-# hologram-welcome-ai-agent Helm Chart
+# hologram-welcome-ai-agent-vs Helm Chart
 
 ## Overview
 
-This Helm chart deploys the `hologram-welcome-ai-agent` application and all required Kubernetes components: `chatbot`, `vs-agent`, `postgres`, `redis`, `stats`, and (optional) `artemis`.  
-The `vs-agent` component is deployed as a Helm dependency (`vs-agent-chart`) and configured entirely via `values.yaml`.  
-Ingress definitions are preconfigured and rely on a shared global domain setting.
+This Helm chart deploys the `hologram-welcome-ai-agent-vs` application and all required Kubernetes components: `chatbot`, `vs-agent`, `postgres`, `redis`, `stats`, and (optional) `artemis`.
+
+- The `vs-agent` component is deployed as a Helm dependency (`vs-agent-chart`) and configured entirely via `values.yaml`.
+
+- Ingress definitions are preconfigured and rely on a shared global domain setting.
 
 ---
 
@@ -115,7 +117,7 @@ Below is a summary of the environment variables required by each component. All 
 | Env    | VS_AGENT_STATS_PASSWORD  | Broker password                  |
 | Env    | REDIS_URL                | Redis connection URL             |
 | Env    | AGENT_PROMPT             | Custom LLM agent prompt          |
-| Env    | VS_AGENT_ADMIN_URL       | VS-Agent admin dashboard URL     |
+| Env    | VS_AGENT_ADMIN_URL       | VS Agent admin URL               |
 | Env    | CREDENTIAL_DEFINITION_ID | VC credential definition         |
 | Env    | POSTGRES_HOST            | Postgres host URL                |
 | Env    | LLM_TOOLS_CONFIG         | LLM tools config (JSON)          |
