@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.0](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.3.1...v1.4.0) (2025-07-01)
+
+
+### Features
+
+* Add Helm chart for hologram welcome ai agent ([#6](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/6)) ([9290594](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/9290594322f795bdba3bd456ffad459b43cf5e87))
+* Make chunk size configurable via env var to avoid token limit docs ([#17](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/17)) ([f21f3e1](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/f21f3e13a92cd2c372a98649f469c64807b20ad1))
+
+
+### Bug Fixes
+
+* Use dynamic date in agent system prompt (LLM prompt now reflects current date) ([#15](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/15)) ([e99b02f](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/e99b02f8f4de59cacd8077704f1174b3bb3612fe))
+
 ## [1.4.0](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.3.2...v1.4.0) (2025-06-18)
 
 
