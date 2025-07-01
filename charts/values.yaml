@@ -1,0 +1,219 @@
+global:
+  domain: dev.2060.io
+
+chatbot:
+  name: chatbot
+  replicas: 1
+  image:
+    pullPolicy: Always
+  resources:
+    requests:
+      cpu: '100m'
+      memory: '128Mi'
+    limits:
+      cpu: '500m'
+      memory: '512Mi'
+  env:
+    - name: APP_PORT
+      value: '3003'
+    - name: LOG_LEVEL
+      value: '3'
+    - name: LLM_PROVIDER
+      value: 'openai'
+    - name: OPENAI_MODEL
+      value: 'gpt-4'
+    - name: VECTOR_STORE
+      value: 'redis'
+    - name: VECTOR_INDEX_NAME
+      value: 'chat_example_index'
+    - name: RAG_PROVIDER
+      value: 'langchain'
+    - name: RAG_DOCS_PATH
+      value: '/app/rag/docs'
+    - name: AGENT_MEMORY_BACKEND
+      value: 'redis'
+    - name: VS_AGENT_STATS_ENABLED
+      value: 'true'
+    - name: VS_AGENT_STATS_HOST
+      value: 'activemq-broker.example.svc.cluster.local'
+    - name: VS_AGENT_STATS_PORT
+      value: '61616'
+    - name: VS_AGENT_STATS_QUEUE
+      value: 'example-agent-queue'
+    - name: VS_AGENT_STATS_USER
+      value: 'example-user'
+    - name: VS_AGENT_STATS_PASSWORD
+      value: 'example-pass'
+    - name: AGENT_MEMORY_WINDOW
+      value: '30'
+    - name: REDIS_URL
+      value: 'redis://example-redis-host:6379'
+    - name: AGENT_PROMPT
+      value: |
+        You are the AI assistant for the Example project.
+        Your role is to greet users and provide help.
+        Always be polite and concise. Use external tools for stats.
+    - name: VS_AGENT_ADMIN_URL
+      value: 'http://example-vs-agent:3000'
+    - name: CREDENTIAL_DEFINITION_ID
+      value: 'did:web:example.com?service=anoncreds&relativeRef=/credDef/example'
+    - name: POSTGRES_HOST
+      value: 'example-postgres-host'
+    - name: LLM_TOOLS_CONFIG
+      value: '[{"name":"getExampleData","endpoint":"https://example.com/api","method":"GET","requiresAuth":false}]'
+    - name: STATISTICS_API_URL
+      value: 'http://example-stats:8700/stats/view'
+    - name: STATISTICS_REQUIRE_AUTH
+      value: 'true'
+  secret:
+    OPENAI_API_KEY: 'sk-example-openai-api-key'
+    POSTGRES_PASSWORD: 'example-db-password'
+    POSTGRES_USER: 'example_db_user'
+    POSTGRES_DB_NAME: 'example_db'
+  service:
+    type: ClusterIP
+    port: 3003
+  storage:
+    size: 1Gi
+  ingress:
+    enabled: true
+    className: nginx
+    host: hw-c.dev.2060.io
+    tlsSecret: hw-c.dev.2060.io-cert
+    path: /
+
+vs-agent-chart:
+  enabled: true
+  name: vs-agent
+  didcommLabel: hologram-welcome
+  eventsBaseUrl: http://chatbot:3003
+  ingress:
+    host: vs-agent.dev.2060.io
+    tlsSecret: public.vs-agent.dev.2060.io-cert
+  database:
+    enabled: false
+    host: localhost
+    user: example-db-user
+    pwd: example-db-password
+  redis:
+    enabled: false
+  extraEnv:
+    - name: ANONCREDS_SERVICE_BASE_URL
+      value: 'https://chatbot.dev.2060.io'
+    - name: REDIRECT_DEFAULT_URL_TO_INVITATION_URL
+      value: 'true'
+    - name: POSTGRES_HOST
+      value: 'localhost'
+    - name: POSTGRES_USER
+      value: 'example-db-user'
+    - name: POSTGRES_PASSWORD
+      value: 'example-db-password'
+    - name: REDIS_HOST
+      value: 'localhost'
+
+redis:
+  enabled: true
+  port: 6379
+  image:
+    pullPolicy: Always
+  persistence:
+    enabled: true
+    mountPath: /data
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+  resources:
+    requests:
+      cpu: '50m'
+      memory: '64Mi'
+    limits:
+      cpu: '200m'
+      memory: '256Mi'
+  service:
+    type: ClusterIP
+
+postgres:
+  enabled: true
+  port: 5432
+  image:
+    pullPolicy: Always
+  env:
+    - name: PGDATA
+      value: '/var/lib/postgresql/data/pgdata'
+  secret:
+    POSTGRES_PASSWORD: 'example-db-password'
+    POSTGRES_USER: 'example-db-user'
+    POSTGRES_DB: 'example-db-name'
+  resources:
+    requests:
+      cpu: '200m'
+      memory: '256Mi'
+    limits:
+      cpu: '1000m'
+      memory: '1024Mi'
+  storage:
+    size: 10Gi
+    storageClassName: ''
+  service:
+    type: ClusterIP
+
+stats:
+  enabled: true
+  replicaCount: 1
+  image:
+    pullPolicy: Always
+  env:
+    - name: DEBUG
+      value: '3'
+    - name: QUARKUS_HTTP_PORT
+      value: '8700'
+    - name: COM_MOBIERA_MS_COMMONS_STATS_JMS_QUEUE_NAME
+      value: 'example-agent-queue'
+    - name: COM_MOBIERA_MS_COMMONS_STATS_THREADS
+      value: '1'
+    - name: COM_MOBIERA_MS_COMMONS_STATS_STANDALONE
+      value: '1'
+    - name: QUARKUS_ARTEMIS_A0_URL
+      value: 'tcp://example-artemis.namespace.svc.cluster.local:61616'
+    - name: QUARKUS_ARTEMIS_A0_USERNAME
+      value: 'example-user'
+    - name: QUARKUS_DATASOURCE_JDBC_URL
+      value: 'jdbc:postgresql://example-postgres.namespace/db'
+    - name: QUARKUS_DATASOURCE_USERNAME
+      value: 'example-db-user'
+  secret:
+    QUARKUS_ARTEMIS_A0_PASSWORD: 'example-artemis-password'
+    QUARKUS_DATASOURCE_PASSWORD: 'example-db-password'
+  service:
+    type: ClusterIP
+    port: 8700
+  ingress:
+    enabled: true
+    host: example-stats.dev.2060.io
+    tlsSecret: example-stats.dev.2060.io-cert
+
+artemis:
+  enabled: false
+  image:
+    pullPolicy: Always
+  secret:
+    ARTEMIS_USERNAME: 'example-user'
+    ARTEMIS_PASSWORD: 'example-password'
+  envFrom:
+    secret: hologram-welcome-artemis-secret
+  service:
+    type: ClusterIP
+    ports:
+      amqp: 5672
+      core: 61616
+      web: 8161
+  resources:
+    requests:
+      cpu: '100m'
+      memory: '256Mi'
+    limits:
+      cpu: '500m'
+      memory: '512Mi'
+  storage:
+    size: 2Gi
+    mountPath: /var/lib/artemis-instance'

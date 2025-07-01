@@ -1,0 +1,97 @@
+{{- if .Values.artemis.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: artemis-secret
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+stringData:
+  {{- range .Values.artemis.secret }}
+  {{ .name }}: {{ tpl .value $ | quote }}
+  {{- end }}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "chatbot.fullname" . }}-artemis
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: {{ .Values.artemis.service.type }}
+  ports:
+    - name: amqp
+      port: {{ .Values.artemis.service.ports.amqp }}
+      targetPort: {{ .Values.artemis.service.ports.amqp }}
+    - name: core
+      port: {{ .Values.artemis.service.ports.core }}
+      targetPort: {{ .Values.artemis.service.ports.core }}
+    - name: web
+      port: {{ .Values.artemis.service.ports.web }}
+      targetPort: {{ .Values.artemis.service.ports.web }}
+  selector:
+    app.kubernetes.io/component: artemis
+    {{- include "chatbot.selectorLabels" . | nindent 4 }}
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "chatbot.fullname" . }}-artemis
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/component: artemis
+    {{- include "chatbot.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "chatbot.fullname" . }}-artemis
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: artemis
+      {{- include "chatbot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: artemis
+        {{- include "chatbot.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: artemis
+          image: apache/activemq-artemis:2.41.0
+          imagePullPolicy: {{ .Values.artemis.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.artemis.resources | nindent 12 }}
+          ports:
+            - containerPort: {{ .Values.artemis.service.ports.amqp }}
+              name: amqp
+            - containerPort: {{ .Values.artemis.service.ports.core }}
+              name: core
+            - containerPort: {{ .Values.artemis.service.ports.web }}
+              name: web
+          env:
+            {{- range .Values.artemis.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            {{- range .Values.artemis.secret }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  name: artemis-secret
+                  key: {{ .name }}
+            {{- end }}
+          volumeMounts:
+            - name: pvc-{{ include "chatbot.fullname" . }}-artemis
+              mountPath: {{ .Values.artemis.storage.mountPath }}
+  volumeClaimTemplates:
+    - metadata:
+        name: pvc-{{ include "chatbot.fullname" . }}-artemis
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: {{ .Values.artemis.storage.size }}
+{{- end }}
