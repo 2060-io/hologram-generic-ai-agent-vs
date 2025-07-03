@@ -83,7 +83,7 @@ spec:
           env:
             {{- range .Values.chatbot.env }}
             - name: {{ .name }}
-              value: {{ .value | quote }}
+              value: {{ tpl .value $ | quote }}
             {{- end }}
             {{- range $key, $val := .Values.chatbot.secret }}
             - name: {{ $key }}

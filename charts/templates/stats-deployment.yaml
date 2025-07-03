@@ -82,7 +82,7 @@ spec:
           env:
             {{- range .Values.stats.env }}
             - name: {{ .name }}
-              value: {{ .value | quote }}
+              value: {{ tpl .value $ | quote }}
             {{- end }}
             {{- range $key, $val := .Values.stats.secret }}
             - name: {{ $key }}
