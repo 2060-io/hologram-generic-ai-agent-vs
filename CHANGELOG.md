@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.5.0...v1.6.0) (2025-07-03)
+
+
+### Features
+
+* Support tpl for env vars + CD refactor with stable release standard ([#22](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/22)) ([5c876f5](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/5c876f55938f8ffd8188a189dbe8fbd6c650ba92))
+
 ## [1.5.0](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.4.0...v1.5.0) (2025-07-01)
 
 
