@@ -17,20 +17,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout service-agent
+      - name: Checkout hologram-welcome-ai-agent-vs
         uses: actions/checkout@v4
 
       - name: Setup Helm
         uses: azure/setup-helm@v3
 
-      - name: Setup node v20
+      - name: Setup Node.js v22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+
+      - name: Enable corepack
+        run: corepack enable
 
       - name: Install dependencies
-        run: |
-          yarn install
+        run: pnpm install
 
       - uses: codfish/semantic-release-action@v3
         id: semantic
