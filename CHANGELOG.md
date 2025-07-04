@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.6.0...v1.6.1) (2025-07-04)
+
+
+### Bug Fixes
+
+* fix image chatbot template ([#25](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/25)) ([111b116](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/111b11632ab56c0b6e0c0f125f94e5bc9837899a))
+
 ## [1.6.0](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.5.0...v1.6.0) (2025-07-03)
 
 
