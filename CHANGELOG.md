@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.2](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.6.1...v1.6.2) (2025-07-17)
+
+
+### Bug Fixes
+
+* increase request limit to 5MB ([#28](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/28)) ([3c927d4](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/3c927d4cbaadaa7b4bd9f714c7a015ef2b2f13ba))
+
 ## [1.6.1](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.6.0...v1.6.1) (2025-07-04)
 
 
