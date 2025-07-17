@@ -5,17 +5,20 @@ import { Logger, ValidationPipe, VersioningType } from '@nestjs/common'
 import { getLogLevels } from './config/logger.config'
 import { ConfigService } from '@nestjs/config'
 import * as fs from 'fs'
+import { NestExpressApplication } from '@nestjs/platform-express'
 
 async function bootstrap() {
   // Retrieve log levels based on environment configuration
   const logLevels = getLogLevels()
 
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: logLevels,
   })
 
   const configService = app.get(ConfigService)
   const logger = new Logger(bootstrap.name)
+
+  app.useBodyParser('json', { limit: '5mb' })
 
   // Enable URI versioning for API routes
   app.enableVersioning({
