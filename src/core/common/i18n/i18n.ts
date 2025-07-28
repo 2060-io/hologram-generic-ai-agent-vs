@@ -11,6 +11,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     WAITING_CREDENTIAL: 'Waiting for you to complete the credential process...',
     AUTH_PROCESS_STARTED: 'Authentication process has started. Please respond to the credential request.',
     STATS_ERROR: 'Sorry, we could not retrieve your statistics at the moment.',
+    ERROR_MESSAGES: 'The service is not available at the moment. Please try again later.',
   },
   es: {
     ROOT_TITLE: '¡Bienvenido!',
@@ -24,6 +25,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     WAITING_CREDENTIAL: 'Esperando que completes el proceso de credencial...',
     AUTH_PROCESS_STARTED: 'El proceso de autenticación ha comenzado. Por favor, responde a la solicitud de credencial.',
     STATS_ERROR: 'Lo sentimos, no pudimos obtener tus estadísticas en este momento.',
+    ERROR_MESSAGES: 'El servicio no está disponible en este momento. Por favor, intenta de nuevo más tarde.',
   },
   fr: {
     ROOT_TITLE: 'Bienvenue !',
@@ -37,5 +39,6 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     WAITING_CREDENTIAL: "En attente de la fin du processus d'authentification...",
     AUTH_PROCESS_STARTED: "Le processus d'authentification a commencé. Veuillez répondre à la demande de justificatif.",
     STATS_ERROR: "Désolé, nous n'avons pas pu récupérer vos statistiques pour le moment.",
+    ERROR_MESSAGES: "Le service n'est pas disponible pour le moment. Veuillez réessayer plus tard.",
   },
 }
