@@ -314,6 +314,7 @@ export class CoreService implements EventHandler, OnModuleInit {
       }
     } catch (error) {
       this.logger.error('handleStateInput: ' + error)
+      await this.sendText(connectionId, this.getText('ERROR_MESSAGES', userLang), userLang)
     }
     return await this.sendContextualMenu(session)
   }
