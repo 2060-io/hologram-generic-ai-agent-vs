@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.3](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.6.2...v1.6.3) (2025-09-01)
+
+
+### Bug Fixes
+
+* user-friendly message when LLM service is unavailable ([#30](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/30)) ([5e490b9](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/5e490b9ef04243d113e929ffc72898ad64fd3da4))
+
 ## [1.6.2](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.6.1...v1.6.2) (2025-07-17)
 
 
