@@ -36,61 +36,33 @@ export class LangchainRagService implements OnModuleInit {
   async onModuleInit() {
     const vectorStoreProvider = this.configService.get<string>('appConfig.vectorStore') as SupportedStores
     const openaiApiKey = this.configService.get<string>('appConfig.openaiApiKey') || process.env.OPENAI_API_KEY
-    const embeddings = new OpenAIEmbeddings({ openAIApiKey: openaiApiKey! })
+    const docsPath = this.configService.get<string>('appConfig.ragDocsPath') || './docs'
 
-    this.logger.log(`Initializing Vector Store: ${vectorStoreProvider}`)
+    let embeddings: OpenAIEmbeddings
+    this.logger.log(`Initializing LangchainRagService with VECTOR_STORE: ${vectorStoreProvider}`)
+
+    try {
+      embeddings = new OpenAIEmbeddings({ openAIApiKey: openaiApiKey! })
+      this.logger.debug('OpenAI embeddings initialized successfully.')
+    } catch (error) {
+      this.logger.error(`Failed to initialize OpenAI embeddings: ${error.message}`)
+      return
+    }
 
     if (vectorStoreProvider === 'pinecone') {
       // Initialize Pinecone vector store
-      this.logger.log('Connecting to Pinecone...')
-      const pinecone = new Pinecone({
-        apiKey: this.configService.get<string>('appConfig.pineconeApiKey')!,
-      })
-      const pineconeIndex = pinecone.index(
-        this.configService.get<string>('appConfig.vectorIndexName') || process.env.VECTOR_INDEX_NAME!,
-      )
-      this.logger.debug('Pinecone index instance created.')
-      this.vectorStore = await PineconeStore.fromExistingIndex(embeddings, { pineconeIndex })
-      this.logger.log('Pinecone vector store initialized.')
+      await this.initPinecone(embeddings)
     } else if (vectorStoreProvider === 'redis') {
       // Initialize Redis vector store
-      const redisUrl = this.configService.get<string>('appConfig.redisUrl') || process.env.REDIS_URL
-      const redisIndexName =
-        this.configService.get<string>('appConfig.redisIndexName') || process.env.VECTOR_INDEX_NAME!
-      this.logger.log(`Connecting to Redis at ${redisUrl} with index ${redisIndexName}...`)
-      this.redisClient = createClient({ url: redisUrl }) as RedisClientType
-      await this.redisClient.connect()
-      this.logger.debug('Redis client connected.')
-      this.vectorStore = new RedisVectorStore(embeddings, {
-        redisClient: this.redisClient,
-        indexName: redisIndexName,
-      })
-      this.logger.log('Redis vector store initialized.')
+      await this.initRedis(embeddings)
     } else {
       this.logger.error(`Unsupported VECTOR_STORE: ${JSON.stringify(vectorStoreProvider)}`)
       throw new Error(`Unsupported VECTOR_STORE: ${JSON.stringify(vectorStoreProvider)}`)
     }
 
-    const docsPath = this.configService.get<string>('appConfig.ragDocsPath') || './docs'
-    this.logger.log(`[RAG] Loading documents from: ${docsPath}`)
-    const docs = await loadDocuments(docsPath, this.logger)
+    await this.loadVectorStore(docsPath, Number(this.configService.get<string>('appConfig.ragChunkSize')) || 1000)
 
-    this.logger.debug(`[RAG] Chunk Size: ${this.configService.get<string>('appConfig.ragChunkSize')}`)
-    const splitter = new RecursiveCharacterTextSplitter({
-      chunkSize: Number(this.configService.get<string>('appConfig.ragChunkSize')) || 1000,
-      chunkOverlap: 200,
-    })
-
-    for (const doc of docs) {
-      const chunks = await splitter.createDocuments([doc.content], [{ id: doc.id }])
-      for (const chunk of chunks) {
-        await this.addDocument(chunk.metadata.id, chunk.pageContent)
-      }
-    }
     this.logger.log('Seeded vector store with initial document.')
-
-    this.llm = new OpenAI({ openAIApiKey: openaiApiKey! })
-    this.logger.log('LLM (OpenAI) instance created.')
   }
 
   /**
@@ -124,6 +96,96 @@ export class LangchainRagService implements OnModuleInit {
       this.logger.log('Disconnecting Redis client...')
       await this.redisClient.disconnect()
       this.logger.log('Redis client disconnected.')
+    }
+  }
+  /**
+   * Loads documents from the specified path into the vector store.
+   * Splits documents into chunks for efficient indexing.
+   * Handles errors gracefully and logs progress.
+   * @param docsPath - Path to the directory containing documents.
+   * @param chunkSize - Size of each text chunk for indexing.
+   * @param chunkOverlap - Overlap size between chunks (default is 200).
+   */
+  private async loadVectorStore(docsPath: string, chunkSize: number, chunkOverlap: number = 200) {
+    try {
+      this.logger.log(`[RAG] Loading documents from: ${docsPath}`)
+      const docs = await loadDocuments(docsPath, this.logger)
+
+      const splitter = new RecursiveCharacterTextSplitter({ chunkSize, chunkOverlap })
+      this.logger.debug(`[RAG] Splitter -> chunkSize=${chunkSize} overlap=${chunkOverlap}`)
+
+      for (const doc of docs) {
+        const t0 = Date.now()
+        const chunks = await splitter.createDocuments([doc.content], [{ id: doc.id }])
+        this.logger.debug(`[RAG] "${doc.id}" → ${chunks.length} chunks`)
+
+        for (const chunk of chunks) {
+          try {
+            await this.addDocument(chunk.metadata.id, chunk.pageContent)
+          } catch (error) {
+            this.logger.error(
+              `[RAG] Error indexing chunk "${chunk.metadata.id}": ${error instanceof Error ? error.message : error}`,
+            )
+            continue
+          }
+        }
+
+        this.logger.debug(`[RAG] Indexed "${doc.id}" in ${Date.now() - t0}ms`)
+      }
+
+      this.logger.log('[RAG] Seeding complete.')
+    } catch (error) {
+      const err = error as Error
+      this.logger.warn(`[RAG] Seeding failed but service will continue: ${err?.message ?? err}`)
+    }
+  }
+  /**
+   * Initializes Pinecone vector store and client.
+   * Logs connection status and handles errors.
+   * @param embeddings - OpenAIEmbeddings instance for Pinecone vector store.
+   */
+  private async initPinecone(embeddings: OpenAIEmbeddings) {
+    this.logger.log('Connecting to Pinecone...')
+    if (!this.configService.get<string>('appConfig.pineconeApiKey')) {
+      this.logger.error('Pinecone API key is not configured. Please set appConfig.pineconeApiKey in your environment.')
+      throw new Error('Pinecone API key is required for initialization.')
+    }
+    if (!this.configService.get<string>('appConfig.vectorIndexName')) {
+      this.logger.error(
+        'Pinecone index name is not configured. Please set appConfig.vectorIndexName in your environment.',
+      )
+      throw new Error('Pinecone index name is required for initialization.')
+    }
+    this.logger.debug('Pinecone API key and index name are configured.')
+    try {
+      const pinecone = new Pinecone({ apiKey: this.configService.get<string>('appConfig.pineconeApiKey')! })
+      const indexName = this.configService.get('appConfig.vectorIndexName', process.env.VECTOR_INDEX_NAME ?? '')
+      const pineconeIndex = pinecone.index(indexName)
+      this.vectorStore = await PineconeStore.fromExistingIndex(embeddings, { pineconeIndex })
+      this.logger.log(`Pinecone ready (index=${indexName}).`)
+    } catch (error) {
+      this.logger.error(`Failed to connect to Pinecone: ${error instanceof Error ? error.message : error}`)
+    }
+  }
+
+  /**
+   * Initializes Redis client and vector store.
+   * Logs connection status and handles errors.
+   * @param embeddings - OpenAIEmbeddings instance for Redis vector store.
+   */
+  private async initRedis(embeddings: OpenAIEmbeddings) {
+    this.logger.log('Connecting to Redis...')
+    const url = this.configService.get<string>('appConfig.redisUrl') || process.env.REDIS_URL
+    const indexName = this.configService.get<string>('appConfig.redisIndexName') || process.env.VECTOR_INDEX_NAME!
+    this.logger.log(`Connecting to Redis: ${url} (index=${indexName})`)
+    try {
+      this.redisClient = createClient({ url }) as RedisClientType
+      await this.redisClient.connect()
+      this.vectorStore = new RedisVectorStore(embeddings, { redisClient: this.redisClient, indexName })
+      this.logger.log('Redis vector store initialized.')
+    } catch (err: any) {
+      this.logger.error(`Redis init failed: ${err?.message ?? err}`)
+      throw err
     }
   }
 }
