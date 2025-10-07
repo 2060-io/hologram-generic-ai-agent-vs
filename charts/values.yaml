@@ -30,6 +30,12 @@ chatbot:
       value: 'langchain'
     - name: RAG_DOCS_PATH
       value: '/app/rag/docs'
+    - name: RAG_CHUNK_SIZE
+      value: '1000'
+    - name: RAG_CHUNK_OVERLAP
+      value: '200'
+    - name: RAG_REMOTE_URLS
+      value: '["https://example.com/example.pdf","https://example.com/data.csv"]'
     - name: AGENT_MEMORY_BACKEND
       value: 'redis'
     - name: VS_AGENT_STATS_ENABLED

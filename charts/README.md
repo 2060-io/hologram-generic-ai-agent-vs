@@ -106,7 +106,10 @@ Below is a summary of the environment variables required by each component. All 
 | Env    | VECTOR_STORE             | Vector DB to use                 |
 | Env    | VECTOR_INDEX_NAME        | Name of vector index             |
 | Env    | RAG_PROVIDER             | RAG implementation used          |
-| Env    | RAG_DOCS_PATH            | Path to RAG documents            |
+| Env    | RAG_DOCS_PATH            | Base path for RAG docs & cache   |
+| Env    | RAG_CHUNK_SIZE           | Chunk size for document splitting|
+| Env    | RAG_CHUNK_OVERLAP        | Chunk overlap for splitting      |
+| Env    | RAG_REMOTE_URLS          | Remote document URLs (JSON list) |
 | Env    | AGENT_MEMORY_BACKEND     | Memory backend                   |
 | Env    | AGENT_MEMORY_WINDOW      | Memory window size               |
 | Env    | VS_AGENT_STATS_ENABLED   | Enable stats fetching            |
