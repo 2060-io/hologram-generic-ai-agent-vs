@@ -68,6 +68,24 @@ export default registerAs('appConfig', () => ({
   ragDocsPath: process.env.RAG_DOCS_PATH || './docs',
 
   /**
+   * Optional list of remote document URLs to ingest for RAG (CSV or JSON array strings).
+   * Supported extensions: .txt, .md, .pdf, .csv
+   */
+  ragRemoteUrls: (() => {
+    const raw = process.env.RAG_REMOTE_URLS
+    if (!raw) return [] as string[]
+    try {
+      if (raw.trim().startsWith('[')) return JSON.parse(raw)
+      return raw
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    } catch {
+      return [] as string[]
+    }
+  })(),
+
+  /**
    * RAG provider selection. "vectorstore" (custom) or "langchain" (with supported vector stores).
    * Default: "vectorstore"
    */
@@ -178,4 +196,12 @@ export default registerAs('appConfig', () => ({
    * If not set, it defaults to 1000.
    */
   ragChunkSize: Number(process.env.RAG_CHUNK_SIZE) || 1000,
+
+  /**
+   * for Retrieval-Augmented Generation (RAG) processing.
+   * Overlap size (in characters or tokens) between document chunks when splitting documents
+   * This value can be configured via the `RAG_CHUNK_OVERLAP` environment variable.
+   * If not set, it defaults to 200.
+   */
+  chunkOverlap: Number(process.env.RAG_CHUNK_OVERLAP) || 200,
 }))

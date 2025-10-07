@@ -59,7 +59,9 @@ export class ChatbotService {
     this.logger.debug(`Retrieved history for session: ${JSON.stringify(history)}`)
 
     // Retrieve additional context (e.g., RAG)
+    this.logger.log(`[RAG] Consulting vector store for context...`)
     const contextArr = await this.ragService.retrieveContext(userInput)
+    this.logger.log(`[RAG] Retrieved ${contextArr.length} context snippet(s).`)
     const context = contextArr.join('\n---\n')
     this.logger.debug(`Retrieved external context: ${JSON.stringify(contextArr)}`)
 
