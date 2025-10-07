@@ -12,7 +12,7 @@ The `RAG Service` is a modular Retrieval Augmented Generation (RAG) implementati
 - **Pluggable Vector Stores:** In LangChain mode, supports both Pinecone and Redis as backends for vector search.
 - **Real Embeddings:** Uses production-ready embeddings (e.g., OpenAI) for all backends.
 - **Extensible:** Architecture allows adding new providers or vector stores with minimal changes.
-- **Automatic Document Loading:** On startup, automatically loads `.txt` and `.pdf` files from a configurable directory (`RAG_DOCS_PATH`). If the directory is empty, a test document is created.
+- **Automatic Document Loading:** On startup, automatically loads `.txt`, `.md`, `.pdf`, and `.csv` files from a configurable directory (`RAG_DOCS_PATH`). It can also download and cache remote files defined in `RAG_REMOTE_URLS`. If no documents are found, a test document is created.
 
 ---
 
@@ -36,7 +36,17 @@ RAG_PROVIDER=langchain           # or 'vector-store'
 
 # Common embedding config
 OPENAI_API_KEY=sk-xxx            # Your OpenAI key (if using OpenAI embeddings)
+
+# Document loading & chunking
+RAG_DOCS_PATH=/app/rag/docs
+RAG_REMOTE_URLS='["https://example.com/file.pdf","https://example.com/data.csv"]'  # optional
+RAG_CHUNK_SIZE=1000
+RAG_CHUNK_OVERLAP=200
 ```
+
+- `RAG_DOCS_PATH` is the base folder for local documents and the cache root for remote downloads (`<RAG_DOCS_PATH>/docs`).
+- `RAG_REMOTE_URLS` can be a comma-separated list or JSON array of remote files to fetch; supported extensions: `.txt`, `.md`, `.pdf`, `.csv`.
+- `RAG_CHUNK_SIZE` and `RAG_CHUNK_OVERLAP` control how documents are split prior to indexing and are honored by every backend.
 
 ### For LangChain (Pinecone)
 
