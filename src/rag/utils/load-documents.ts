@@ -10,7 +10,7 @@ import { LoadDocumentsOptions } from '../interfaces/LoadDocumentsOptions'
  * - Supports .txt, .md, .pdf, .csv
  * - If no valid docs are found, creates a sample example.txt
  *
- * @param opts LoadDocumentsOptions with basePath, optional logger, and optional remoteUrls.
+ * @param opts LoadDocumentsOptions with folderBasePath, optional logger, and optional remoteUrls.
  * @returns Array of { id, content } ready for chunking/indexing.
  */
 export async function loadDocuments(opts: LoadDocumentsOptions): Promise<{ id: string; content: string }[]> {
