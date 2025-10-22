@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.0](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.6.3...v1.7.0) (2025-10-22)
+
+
+### Features
+
+* Update new version Vs-Agent 1.5.3 ([#38](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/38)) ([3209e4a](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/3209e4ac61062bdd1964d3fa8b7340d82a222083))
+* Upgrade vs-agent dependencies charts v1.4.0 ([#33](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/33)) ([b0e0fe1](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/b0e0fe1f9512ab657cd9e874dc622399ed51b64b))
+
 ## [1.6.3](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.6.2...v1.6.3) (2025-09-01)
 
 
