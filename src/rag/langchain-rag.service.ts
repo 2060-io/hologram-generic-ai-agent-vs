@@ -63,8 +63,8 @@ export class LangchainRagService implements OnModuleInit {
     await this.loadVectorStore(
       parseRagLoadOptions({
         folderBasePath: this.configService.get<string>('appConfig.ragDocsPath'),
-        chunkSize: Number(this.configService.get<string>('appConfig.ragChunkSize')),
-        chunkOverlap: 200,
+        chunkSize: this.configService.get<number>('appConfig.ragChunkSize'),
+        chunkOverlap: this.configService.get<number>('appConfig.chunkOverlap'),
         remoteUrls: this.configService.get<string[]>('appConfig.ragRemoteUrls'),
       }),
     )
