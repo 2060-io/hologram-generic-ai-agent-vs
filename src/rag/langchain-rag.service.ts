@@ -6,6 +6,7 @@ import { RedisVectorStore } from '@langchain/redis'
 import { createClient, RedisClientType } from 'redis'
 import { OpenAIEmbeddings, OpenAI } from '@langchain/openai'
 import { loadDocuments } from './utils/load-documents'
+import { parseRagLoadOptions, RagLoadOptionsDto } from './dto/RagLoadOptionsDto'
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters'
 
 type SupportedStores = 'pinecone' | 'redis'
@@ -36,7 +37,6 @@ export class LangchainRagService implements OnModuleInit {
   async onModuleInit() {
     const vectorStoreProvider = this.configService.get<string>('appConfig.vectorStore') as SupportedStores
     const openaiApiKey = this.configService.get<string>('appConfig.openaiApiKey') || process.env.OPENAI_API_KEY
-    const docsPath = this.configService.get<string>('appConfig.ragDocsPath') || './docs'
 
     let embeddings: OpenAIEmbeddings
     this.logger.log(`Initializing LangchainRagService with VECTOR_STORE: ${vectorStoreProvider}`)
@@ -60,7 +60,14 @@ export class LangchainRagService implements OnModuleInit {
       throw new Error(`Unsupported VECTOR_STORE: ${JSON.stringify(vectorStoreProvider)}`)
     }
 
-    await this.loadVectorStore(docsPath, Number(this.configService.get<string>('appConfig.ragChunkSize')) || 1000)
+    await this.loadVectorStore(
+      parseRagLoadOptions({
+        folderBasePath: this.configService.get<string>('appConfig.ragDocsPath'),
+        chunkSize: this.configService.get<number>('appConfig.ragChunkSize'),
+        chunkOverlap: this.configService.get<number>('appConfig.chunkOverlap'),
+        remoteUrls: this.configService.get<string[]>('appConfig.ragRemoteUrls'),
+      }),
+    )
 
     this.logger.log('Seeded vector store with initial document.')
   }
@@ -84,7 +91,13 @@ export class LangchainRagService implements OnModuleInit {
   async retrieveContext(query: string): Promise<string[]> {
     this.logger.debug(`Retrieving context for query: "${query}"`)
     const results = await this.vectorStore.similaritySearch(query, 3)
-    this.logger.verbose(`Context retrieved: ${results.length} result(s) for query "${query}".`)
+    const hitIds = results.map((r) => (r.metadata && (r.metadata as any).id) || '(unknown)')
+    this.logger.log(`[RAG] Context hits (${results.length}): ${hitIds.join(', ')}`)
+    this.logger.debug(
+      `[RAG] Context snippets: ${results
+        .map((r, i) => `#${i + 1}(${(r.pageContent || '').length ?? 0} chars)`)
+        .join(' | ')}`,
+    )
     return results.map((r) => r.pageContent)
   }
 
@@ -106,12 +119,20 @@ export class LangchainRagService implements OnModuleInit {
    * @param chunkSize - Size of each text chunk for indexing.
    * @param chunkOverlap - Overlap size between chunks (default is 200).
    */
-  private async loadVectorStore(docsPath: string, chunkSize: number, chunkOverlap: number = 200) {
+  private async loadVectorStore(options: RagLoadOptionsDto) {
+    const { folderBasePath, remoteUrls, chunkSize, chunkOverlap } = options
     try {
-      this.logger.log(`[RAG] Loading documents from: ${docsPath}`)
-      const docs = await loadDocuments(docsPath, this.logger)
+      this.logger.log(`[RAG] Loading documents from: ${folderBasePath}`)
+      const docs = await loadDocuments({
+        folderBasePath,
+        logger: this.logger,
+        remoteUrls,
+      })
 
-      const splitter = new RecursiveCharacterTextSplitter({ chunkSize, chunkOverlap })
+      const splitter = new RecursiveCharacterTextSplitter({
+        chunkSize,
+        chunkOverlap,
+      })
       this.logger.debug(`[RAG] Splitter -> chunkSize=${chunkSize} overlap=${chunkOverlap}`)
 
       for (const doc of docs) {

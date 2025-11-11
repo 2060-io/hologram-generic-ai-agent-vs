@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   redis:
@@ -6,7 +6,7 @@ services:
     container_name: chatbot-redis
     restart: always
     ports:
-      - '6379:6379'
+      - "6379:6379"
     networks:
       - chatbot
 
@@ -27,6 +27,7 @@ services:
       LLM_PROVIDER: ${LLM_PROVIDER}
       RAG_PROVIDER: ${RAG_PROVIDER}
       RAG_DOCS_PATH: ${RAG_DOCS_PATH}
+      RAG_REMOTE_URLS: ${RAG_REMOTE_URLS}
       VECTOR_INDEX_NAME: ${VECTOR_INDEX_NAME}
       AGENT_PROMPT: ${AGENT_PROMPT}
       PINECONE_API_KEY: ${PINECONE_API_KEY}
@@ -46,7 +47,7 @@ services:
       STATISTICS_API_URL: ${STATISTICS_API_URL}
       STATISTICS_REQUIRE_AUTH: ${STATISTICS_REQUIRE_AUTH}
     ports:
-      - '${APP_PORT}:${APP_PORT}'
+      - "${APP_PORT}:${APP_PORT}"
     volumes:
       - ./docs:/app/rag/docs
     networks:

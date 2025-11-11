@@ -22,8 +22,10 @@ All configuration is managed via environment variables.
 | `OLLAMA_MODEL`             | Ollama model to use (`llama3`, etc.)                                                                  | `llama3`                 |
 | `ANTHROPIC_API_KEY`        | API key for Anthropic (Claude)                                                                        |                          |
 | `RAG_PROVIDER`             | RAG backend orchestrator: `vectorstore` (custom) or `langchain`                                       | `vectorstore`            |
-| `RAG_DOCS_PATH`            | Filesystem path to directory with context documents for RAG ingestion (`.txt` and `.pdf` only).       | `/docs`                  |
-| `RAG_CHUNK_SIZE`           | Max token/character count per document chunk in RAG                                                   | `1000`                   |
+| `RAG_DOCS_PATH`            | Base directory for RAG documents and remote cache (`.txt`, `.md`, `.pdf`, `.csv`).                   | `/app/rag/docs`      |
+| `RAG_CHUNK_SIZE`           | Max characters per document chunk during splitting (RAG)                                              | `1000`                   |
+| `RAG_CHUNK_OVERLAP`        | Overlap size (characters) between consecutive chunks during splitting                                 | `200`                    |
+| `RAG_REMOTE_URLS`          | Optional list of remote document URLs (CSV or JSON array). Supports `.txt`, `.md`, `.pdf`, `.csv`.   | `https://host/test.pdf,https://host/test.csv` |
 | `VECTOR_STORE`             | Vector store provider for RAG: `pinecone`, `redis`                                                    | `redis`                  |
 | `VECTOR_INDEX_NAME`        | Index name for both Pinecone and Redis vector stores                                                  | `hologram-ia`            |
 | `PINECONE_API_KEY`         | API key for Pinecone vector store                                                                     | `pcsk_xxx`               |
@@ -155,6 +157,22 @@ Response:
 
 Full setup and usage instructions for the modular RAG service—including how to configure vector stores (Pinecone, Redis) and RAG providers—are provided in  
 [How to use RAG Service](./docs/how-to-use-rag-service.md).
+
+### Chunking options
+
+- `RAG_CHUNK_SIZE` controls the maximum characters per chunk (default `1000`).
+- `RAG_CHUNK_OVERLAP` controls the overlap between consecutive chunks (default `200`).
+- Both `vectorstore` and `langchain` backends honor these settings through the shared document loader.
+
+### Remote documents (optional)
+
+- `RAG_DOCS_PATH` is both the base folder for local files and the cache root for remote downloads. Cached files live under `<RAG_DOCS_PATH>/docs`.
+- Provide additional sources through `RAG_REMOTE_URLS`:
+  - CSV list: `RAG_REMOTE_URLS=https://host/file1.pdf,https://host/file2.csv`
+  - JSON array: `RAG_REMOTE_URLS='["https://host/file1.pdf","https://host/file2.csv"]'`
+- On first run each URL is downloaded (max 50MB, 30s timeout) and reused from cache afterwards.
+- Supported formats: `.txt`, `.md`, `.pdf`, `.csv`. Others are ignored.
+- Both `vectorstore` and `langchain` providers use these settings under the hood via the shared loader.
 
 ## 🧠 Memory Module Setup
 

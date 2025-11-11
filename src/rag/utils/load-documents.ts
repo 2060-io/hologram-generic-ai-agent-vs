@@ -1,70 +1,93 @@
 import { promises as fs } from 'fs'
 import * as path from 'path'
-import pdfParse from 'pdf-parse'
-import { parse as csvParse, Options as CsvParseOptions } from 'csv-parse/sync'
+import { Options as CsvParseOptions } from 'csv-parse/sync'
 
-import { Logger } from '@nestjs/common'
+import { ensureUniqueId, loadLocalDocument, loadRemoteDocument } from './document-utils'
+import { LoadDocumentsOptions } from '../interfaces/LoadDocumentsOptions'
 
 /**
- * Loads all .txt, .md, .pdf, and .csv files from the given folder.
- * If no valid documents are found, creates a sample file for testing.
- * Returns an array of objects: { id: fileName, content: extractedText }
+ * Load and normalize documents from a base folder and optional remote URLs.
+ * - Supports .txt, .md, .pdf, .csv
+ * - If no valid docs are found, creates a sample example.txt
  *
- * @param folderPath - Absolute or relative path to the folder containing documents.
- * @param logger - Optional logger object (with log, error, debug methods).
+ * @param opts LoadDocumentsOptions with folderBasePath, optional logger, and optional remoteUrls.
+ * @returns Array of { id, content } ready for chunking/indexing.
  */
-export async function loadDocuments(folderPath: string, logger?: Logger): Promise<{ id: string; content: string }[]> {
+export async function loadDocuments(opts: LoadDocumentsOptions): Promise<{ id: string; content: string }[]> {
+  const { folderBasePath, logger } = opts
+
   const documents: { id: string; content: string }[] = []
   const options: CsvParseOptions = {
     skip_empty_lines: true,
     columns: false,
   }
+  const usedIds = new Set<string>()
+
   try {
-    await fs.mkdir(folderPath, { recursive: true })
-    const files = await fs.readdir(folderPath)
+    await fs.mkdir(folderBasePath, { recursive: true })
+    const files = await fs.readdir(folderBasePath)
     let foundDocs = false
     for (const file of files) {
-      const fullPath = path.join(folderPath, file)
+      const fullPath = path.join(folderBasePath, file)
       const stat = await fs.stat(fullPath)
       if (!stat.isFile()) continue
-      const ext = path.extname(file).toLowerCase()
       try {
-        if (ext === '.txt' || ext === '.md') {
-          const content = await fs.readFile(fullPath, 'utf-8')
-          documents.push({ id: file, content })
-          logger?.log?.(`[RAG] Loaded ${ext.toUpperCase()} document "${file}"`)
+        const doc = await loadLocalDocument(fullPath, file, options, usedIds, logger)
+        if (doc) {
+          documents.push(doc)
           foundDocs = true
-        } else if (ext === '.pdf') {
-          const dataBuffer = await fs.readFile(fullPath)
-          const pdfData = await pdfParse(dataBuffer)
-          documents.push({ id: file, content: pdfData.text })
-          logger?.log?.(`[RAG] Loaded PDF document "${file}"`)
-          foundDocs = true
-        } else if (ext === '.csv') {
-          const csvContent = await fs.readFile(fullPath, 'utf-8')
-          const rows: string[][] = csvParse(csvContent, options) as string[][]
-          const content = rows.map((r) => r.join(', ')).join('\n')
-          documents.push({ id: file, content })
-          logger?.log?.(`[RAG] Loaded CSV document "${file}"`)
-          foundDocs = true
-        } else {
-          logger?.debug?.(`[RAG] Ignored unsupported file: "${file}"`)
         }
       } catch (err) {
         logger?.error?.(`[RAG] Error processing file "${file}": ${err}`)
       }
     }
 
-    // If no documents found, create a sample file
-    if (!foundDocs) {
-      const samplePath = path.join(folderPath, 'example.txt')
+    // Optionally fetch remote documents from env: RAG_REMOTE_URLS
+    let urls: string[] = []
+    if (opts?.remoteUrls && opts.remoteUrls.length > 0) {
+      urls = opts.remoteUrls
+    } else {
+      const remoteVar = process.env.RAG_REMOTE_URLS
+      if (remoteVar && remoteVar.trim().length > 0) {
+        try {
+          if (remoteVar.trim().startsWith('[')) {
+            urls = JSON.parse(remoteVar)
+          } else {
+            urls = remoteVar
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          }
+        } catch (e) {
+          logger?.error?.(`[RAG] RAG_REMOTE_URLS is not valid JSON/CSV: ${e instanceof Error ? e.message : e}`)
+          urls = []
+        }
+      }
+    }
+
+    if (urls.length) {
+      logger?.log?.(`[RAG] Downloading ${urls.length} remote document(s) into cache under: ${folderBasePath}`)
+      await fs.mkdir(folderBasePath, { recursive: true })
+      const results = await Promise.all(
+        urls.map((u) => loadRemoteDocument(u, folderBasePath, options, usedIds, logger)),
+      )
+      for (const doc of results) {
+        if (doc) {
+          documents.push(doc)
+          foundDocs = true
+        }
+      }
+    }
+    // If no documents found anywhere, create a sample file
+    if (!foundDocs && documents.length === 0) {
+      const samplePath = path.join(folderBasePath, 'example.txt')
       const exampleText = 'This is an example document for testing the RAG system.'
       await fs.writeFile(samplePath, exampleText)
-      documents.push({ id: 'example.txt', content: exampleText })
+      documents.push({ id: ensureUniqueId(usedIds, 'example.txt'), content: exampleText })
       logger?.log?.(`[RAG] No documents found. Created sample file: "example.txt"`)
     }
   } catch (err) {
-    logger?.error?.(`[RAG] Error loading documents from ${folderPath}: ${err}`)
+    logger?.error?.(`[RAG] Error loading documents from ${folderBasePath}: ${err}`)
   }
   return documents
 }
