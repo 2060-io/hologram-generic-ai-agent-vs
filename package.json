@@ -63,6 +63,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.24",
+    "yaml": "^2.8.1",
     "zod": "^3.25.51"
   },
   "devDependencies": {

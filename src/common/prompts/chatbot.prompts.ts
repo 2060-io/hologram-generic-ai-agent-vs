@@ -1,8 +1,4 @@
-/**
- * Multilanguage prompt templates for the chatbot agent.
- * You can extend this map to support more languages.
- */
-export const CHATBOT_PROMPT_TEMPLATES: Record<
+export const DEFAULT_CHATBOT_PROMPT_TEMPLATES: Record<
   string,
   (context: string, question: string, userName?: string) => string
 > = {
@@ -33,3 +29,5 @@ export const CHATBOT_PROMPT_TEMPLATES: Record<
   Réponds de manière claire et concise en français.
   `,
 }
+
+export const CHATBOT_PROMPT_TEMPLATES = DEFAULT_CHATBOT_PROMPT_TEMPLATES

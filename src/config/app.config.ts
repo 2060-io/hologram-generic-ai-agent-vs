@@ -1,4 +1,15 @@
 import { registerAs } from '@nestjs/config'
+import { loadAgentPack, pickNumber, pickString, resolveRagRemoteUrls, resolveToolsConfig } from './agent-pack.loader'
+
+const agentPackResult = loadAgentPack()
+const agentPack = agentPackResult.pack
+
+// Resolve tools configuration (LLM tools and statistics tool)
+const { llmToolsConfig, agentPackBundledTools, statisticsToolConfig } = resolveToolsConfig({
+  envLlmTools: process.env.LLM_TOOLS_CONFIG,
+  packDynamicTools: agentPack?.tools?.dynamicConfig,
+  packBundledTools: (agentPack?.tools?.bundled as Record<string, unknown>) ?? {},
+})
 
 /**
  * Global application configuration loader.
@@ -6,6 +17,18 @@ import { registerAs } from '@nestjs/config'
  */
 export default registerAs('appConfig', () => ({
   // Application General Settings
+
+  agentPack: agentPack ?? null,
+  agentPackMeta: {
+    manifestPath: agentPackResult.manifestPath,
+    warnings: agentPackResult.warnings,
+    error: agentPackResult.errorMessage,
+  },
+
+  /**
+   * Bundled tools provided by the agent pack.
+   */
+  agentPackBundledTools,
 
   /**
    * The port number where the application HTTP server runs.
@@ -24,13 +47,13 @@ export default registerAs('appConfig', () => ({
   /**
    * The default agent prompt to define the LLM's persona/role.
    */
-  agentPrompt: process.env.AGENT_PROMPT || '',
+  agentPrompt: pickString('AGENT_PROMPT', agentPack?.llm?.agentPrompt, ''),
 
   /**
    * LLM provider to use: "openai" | "ollama" | "anthropic" | etc.
    * Default: openai
    */
-  llmProvider: process.env.LLM_PROVIDER || 'openai',
+  llmProvider: pickString('LLM_PROVIDER', agentPack?.llm?.provider, 'openai'),
 
   /**
    * Ollama endpoint URL for local LLM inference.
@@ -53,7 +76,7 @@ export default registerAs('appConfig', () => ({
    * OpenAI Model .
    */
 
-  openaiModel: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+  openaiModel: pickString('OPENAI_MODEL', agentPack?.llm?.model, 'gpt-4'),
 
   /**
    * Anthropic API key (required if using Anthropic provider, e.g., Claude).
@@ -65,50 +88,38 @@ export default registerAs('appConfig', () => ({
   /**
    * Directory path from which RAG loads .txt and .pdf documents for context retrieval.
    */
-  ragDocsPath: process.env.RAG_DOCS_PATH || './docs',
+  ragDocsPath: pickString('RAG_DOCS_PATH', agentPack?.rag?.docsPath, './docs'),
 
   /**
    * Optional list of remote document URLs to ingest for RAG (CSV or JSON array strings).
    * Supported extensions: .txt, .md, .pdf, .csv
    */
-  ragRemoteUrls: (() => {
-    const raw = process.env.RAG_REMOTE_URLS
-    if (!raw) return [] as string[]
-    try {
-      if (raw.trim().startsWith('[')) return JSON.parse(raw)
-      return raw
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean)
-    } catch {
-      return [] as string[]
-    }
-  })(),
+  ragRemoteUrls: resolveRagRemoteUrls(process.env.RAG_REMOTE_URLS, agentPack?.rag?.remoteUrls),
 
   /**
    * RAG provider selection. "vectorstore" (custom) or "langchain" (with supported vector stores).
    * Default: "vectorstore"
    */
-  ragProvider: process.env.RAG_PROVIDER || 'vectorstore',
+  ragProvider: pickString('RAG_PROVIDER', agentPack?.rag?.provider, 'vectorstore'),
 
   /**
    * Vector store provider for RAG: "pinecone","redis" etc.
    * Used when RAG_PROVIDER = "langchain"
    * Default: redis
    */
-  vectorStore: process.env.VECTOR_STORE || 'redis',
+  vectorStore: pickString('VECTOR_STORE', agentPack?.rag?.vectorStore?.type, 'redis'),
 
   /**
    * Shared index name for all supported vector stores (e.g., Pinecone, Redis).
    * Set as VECTOR_INDEX_NAME in your environment.
    * Default: hologram-ia
    */
-  vectorIndexName: process.env.VECTOR_INDEX_NAME || 'hologram-ia',
+  vectorIndexName: pickString('VECTOR_INDEX_NAME', agentPack?.rag?.vectorStore?.indexName, 'agent-ia'),
 
   /**
    * Pinecone API key (required if using Pinecone vector store).
    */
-  pineconeApiKey: process.env.PINECONE_API_KEY || '',
+  pineconeApiKey: pickString('PINECONE_API_KEY', agentPack?.rag?.pinecone?.apiKey, ''),
 
   // Memory/Session Settings
 
@@ -116,13 +127,13 @@ export default registerAs('appConfig', () => ({
    * Memory backend: "memory" for in-memory, "redis" for Redis.
    * Default: memory
    */
-  agentMemoryBackend: process.env.AGENT_MEMORY_BACKEND || 'memory',
+  agentMemoryBackend: pickString('AGENT_MEMORY_BACKEND', agentPack?.memory?.backend, 'memory'),
 
   /**
    * Number of messages/tokens to keep in session memory window.
    * Default: 8
    */
-  agentMemoryWindow: parseInt(process.env.AGENT_MEMORY_WINDOW || '8', 10),
+  agentMemoryWindow: pickNumber('AGENT_MEMORY_WINDOW', agentPack?.memory?.window, 8),
 
   // External Service URLs
 
@@ -130,7 +141,7 @@ export default registerAs('appConfig', () => ({
    * Redis database URL for persistent memory/session storage.
    * Default: redis://localhost:6379
    */
-  redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+  redisUrl: pickString('REDIS_URL', agentPack?.memory?.redisUrl, 'redis://localhost:6379'),
 
   // PostgreSQL Database Configuration
 
@@ -185,8 +196,16 @@ export default registerAs('appConfig', () => ({
    *       "method": "GET"
    *     }
    *   ]
+   *
+   *   Puede declararse en agent-pack (tools.dynamicConfig) y sobrescribirse con LLM_TOOLS_CONFIG.
    */
-  llmToolsConfig: process.env.LLM_TOOLS_CONFIG || '[]',
+  llmToolsConfig,
+
+  /**
+   * Configuración de la herramienta de estadísticas (bundled) que se puede habilitar/ajustar desde
+   * el agent pack o variables de entorno.
+   */
+  statisticsTool: statisticsToolConfig,
 
   /**
    * Maximum size (in characters or tokens) for each document chunk when splitting documents
@@ -195,7 +214,7 @@ export default registerAs('appConfig', () => ({
    * This value can be configured via the `RAG_CHUNK_SIZE` environment variable.
    * If not set, it defaults to 1000.
    */
-  ragChunkSize: Number(process.env.RAG_CHUNK_SIZE) || 1000,
+  ragChunkSize: pickNumber('RAG_CHUNK_SIZE', agentPack?.rag?.chunkSize, 1000),
 
   /**
    * for Retrieval-Augmented Generation (RAG) processing.
@@ -203,5 +222,5 @@ export default registerAs('appConfig', () => ({
    * This value can be configured via the `RAG_CHUNK_OVERLAP` environment variable.
    * If not set, it defaults to 200.
    */
-  chunkOverlap: Number(process.env.RAG_CHUNK_OVERLAP) || 200,
+  chunkOverlap: pickNumber('RAG_CHUNK_OVERLAP', agentPack?.rag?.chunkOverlap, 200),
 }))

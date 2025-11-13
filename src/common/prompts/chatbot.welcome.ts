@@ -1,8 +1,4 @@
-/**
- * Multilanguage welcome message templates for the chatbot agent.
- * You can extend this map to support more languages.
- */
-export const CHATBOT_WELCOME_TEMPLATES: Record<string, () => string> = {
+export const DEFAULT_CHATBOT_WELCOME_TEMPLATES: Record<string, () => string> = {
   en: () =>
     `Hi there! 👋 I'm Holo, your smart assistant here at Hologram. I'm here to help you explore everything Verana and Hologram have to offer.`,
 
@@ -15,3 +11,5 @@ export const CHATBOT_WELCOME_TEMPLATES: Record<string, () => string> = {
   pt: () =>
     `Olá! 👋 Eu sou o Holo, seu assistente inteligente na Hologram. Estou aqui para te ajudar a explorar tudo que a Verana e a Hologram oferecem.`,
 }
+
+export const CHATBOT_WELCOME_TEMPLATES = DEFAULT_CHATBOT_WELCOME_TEMPLATES

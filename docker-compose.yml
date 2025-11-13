@@ -17,6 +17,7 @@ services:
       - redis
       - artemis
     environment:
+      AGENT_PACK_PATH: /app/agent-packs/customer-service
       APP_PORT: ${APP_PORT}
       LOG_LEVEL: ${LOG_LEVEL}
       VECTOR_STORE: ${VECTOR_STORE}
@@ -46,10 +47,12 @@ services:
       VS_AGENT_STATS_PASSWORD: ${VS_AGENT_STATS_PASSWORD}
       STATISTICS_API_URL: ${STATISTICS_API_URL}
       STATISTICS_REQUIRE_AUTH: ${STATISTICS_REQUIRE_AUTH}
+      STATISTICS_TOOL_ENABLED: ${STATISTICS_TOOL_ENABLED}
     ports:
       - "${APP_PORT}:${APP_PORT}"
     volumes:
       - ./docs:/app/rag/docs
+      - ./agent-packs:/app/agent-packs
     networks:
       - chatbot
 
