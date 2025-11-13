@@ -10,7 +10,7 @@ import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts
 import { AIMessage, BaseMessage } from '@langchain/core/messages'
 import { ExternalToolDef, SupportedProviders } from './interfaces/llm-provider.interface'
 import { SessionEntity } from 'src/core/models'
-import { statisticsFetcherTool } from './tools/statistics-fetcher.tool'
+import { createStatisticsFetcherTool, StatisticsFetcherToolOptions } from './tools/statistics-fetcher.tool'
 import type { AgentExecutor } from 'langchain/agents'
 
 /**
@@ -235,8 +235,13 @@ export class LlmService {
       this.logger.log('No LLM_TOOLS_CONFIG found – skipping dynamic tool loading.')
     }
 
-    // Add static tool for statistics
-    const staticTools = [statisticsFetcherTool]
+    // Add static tool for statistics if configured
+    const staticTools: DynamicStructuredTool[] = []
+    const statisticsToolOptions = this.config.get<StatisticsFetcherToolOptions>('appConfig.statisticsTool')
+    const statisticsTool = createStatisticsFetcherTool(statisticsToolOptions)
+    if (statisticsTool) {
+      staticTools.push(statisticsTool)
+    }
 
     // Combine dynamic and static tools
     return [...dynamicTools, ...staticTools]

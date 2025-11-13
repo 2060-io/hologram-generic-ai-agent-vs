@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { RagService } from '../rag/rag.service'
 import { LlmService } from '../llm/llm.service'
-import { CHATBOT_PROMPT_TEMPLATES } from '../common/prompts/chatbot.prompts'
 import { MemoryService } from 'src/memory/memory.service'
 import { SessionEntity } from 'src/core/models'
+import { AgentContentService } from 'src/core/agent-content.service'
 
 /**
  * ChatbotService
@@ -26,6 +26,7 @@ export class ChatbotService {
     private readonly ragService: RagService,
     private readonly llmService: LlmService,
     private readonly memoryService: MemoryService,
+    private readonly agentContent: AgentContentService,
   ) {}
 
   /**
@@ -68,9 +69,13 @@ export class ChatbotService {
     // Compose the memory/history block for the prompt
     const historyContext = history.map((m) => `${m.role === 'user' ? 'user' : 'system'}: ${m.content}`).join('\n')
 
-    // Build prompt using language-appropriate template
-    const template = CHATBOT_PROMPT_TEMPLATES[userLang] || CHATBOT_PROMPT_TEMPLATES['en']
-    const prompt = template(`${historyContext}\n${context}`, userInput, userName)
+    // Build prompt using language template
+    const prompt = this.agentContent.buildPrompt({
+      lang: userLang,
+      context: `${historyContext}\n${context}`,
+      question: userInput,
+      userName,
+    })
     this.logger.verbose(`Final prompt built for LLM:\n${prompt}`)
 
     // Call LLM to get response

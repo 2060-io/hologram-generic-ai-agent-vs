@@ -19,15 +19,14 @@ import {
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { SessionEntity } from './models'
 import { JsonTransformer } from '@credo-ts/core'
-import { Cmd, STAT_KPI } from './common'
+import { STAT_KPI } from './common'
 import { Repository } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
 import { ConfigService } from '@nestjs/config'
 import { StateStep } from './common/enums/state-step.enum'
-import { CHATBOT_WELCOME_TEMPLATES } from '../common/prompts/chatbot.welcome'
 import { ChatbotService } from '../chatbot/chatbot.service'
-import { TRANSLATIONS } from './common/i18n/i18n'
 import { MemoryService } from '../memory/memory.service'
+import { AgentContentService } from './agent-content.service'
 
 @Injectable()
 export class CoreService implements EventHandler, OnModuleInit {
@@ -41,10 +40,25 @@ export class CoreService implements EventHandler, OnModuleInit {
     private readonly chatBotService: ChatbotService,
     private readonly memoryService: MemoryService,
     private readonly statProducer: StatProducerService,
+    private readonly agentContent: AgentContentService,
   ) {
     const baseUrl = configService.get<string>('appConfig.vsAgentAdminUrl') || 'http://localhost:3001'
     this.apiClient = new ApiClient(baseUrl, ApiVersion.V1)
+    this.menuItems = this.agentContent.getMenuItems()
+    this.menuActions = this.menuItems.reduce<Record<string, string | undefined>>((acc, item) => {
+      if (item.action) acc[item.id] = item.action
+      return acc
+    }, {})
+    this.welcomeFlowConfig = this.agentContent.getWelcomeFlowConfig()
+    this.authFlowConfig = this.agentContent.getAuthFlowConfig()
+    this.credentialDefinitionId = this.authFlowConfig.credentialDefinitionId
   }
+
+  private readonly menuItems: { id: string; labelKey?: string; label?: string; action?: string; visibleWhen?: string }[]
+  private readonly menuActions: Record<string, string | undefined>
+  private readonly welcomeFlowConfig: { enabled: boolean; sendOnProfile: boolean; templateKey: string }
+  private readonly authFlowConfig: { enabled: boolean; credentialDefinitionId?: string }
+  private readonly credentialDefinitionId?: string
 
   async onModuleInit() {}
 
@@ -71,10 +85,13 @@ export class CoreService implements EventHandler, OnModuleInit {
             message,
             ContextualMenuSelectMessage,
           ) as unknown as ContextualMenuSelectMessage
-          if (inMsg.selectionId && Object.values(Cmd).includes(inMsg.selectionId as Cmd)) {
-            await this.handleContextualAction(inMsg.selectionId as Cmd, session)
+          const selectionId = inMsg.selectionId as string | undefined
+          const action = selectionId ? this.menuActions[selectionId] : undefined
+          if (selectionId && action) {
+            this.logger.debug(`ContextualMenuSelectMessage with selectionId: ${selectionId} and action: ${action}`)
+            await this.handleContextualAction(selectionId, session)
           } else {
-            this.logger.warn(`Invalid or missing selectionId: ${inMsg.selectionId}`)
+            this.logger.warn(`Invalid or missing selectionId: ${selectionId}`)
           }
           break
         }
@@ -87,7 +104,9 @@ export class CoreService implements EventHandler, OnModuleInit {
           if (inMsg.preferredLanguage) {
             session.lang = inMsg.preferredLanguage
           }
-          await this.welcomeMessage(session.connectionId)
+          if (this.welcomeFlowConfig.enabled && this.welcomeFlowConfig.sendOnProfile) {
+            await this.welcomeMessage(session.connectionId)
+          }
           break
         }
         case IdentityProofSubmitMessage.type:
@@ -150,7 +169,7 @@ export class CoreService implements EventHandler, OnModuleInit {
   private async welcomeMessage(connectionId: string) {
     const userLang = (await this.handleSession(connectionId)).lang
 
-    const welcomeMessage = CHATBOT_WELCOME_TEMPLATES[userLang]?.() ?? CHATBOT_WELCOME_TEMPLATES['en']()
+    const welcomeMessage = this.agentContent.getWelcomeMessage(userLang, this.welcomeFlowConfig.templateKey)
     this.logger.debug(`LLM generated answer: "${welcomeMessage}"`)
     await this.sendText(connectionId, welcomeMessage, userLang)
   }
@@ -178,8 +197,7 @@ export class CoreService implements EventHandler, OnModuleInit {
    * @param lang - The language of the text.
    */
   private getText(key: string, lang: string): string {
-    const messages = TRANSLATIONS[lang] || TRANSLATIONS['en']
-    return messages[key] || key
+    return this.agentContent.getString(lang ?? this.agentContent.getDefaultLanguage(), key)
   }
 
   /**
@@ -189,15 +207,16 @@ export class CoreService implements EventHandler, OnModuleInit {
    * @param selectionId - Identifier of the user's selection.
    * @param session - The current session associated with the message.
    */
-  private async handleContextualAction(selectionId: Cmd, session: SessionEntity): Promise<SessionEntity> {
+  private async handleContextualAction(selectionId: string, session: SessionEntity): Promise<SessionEntity> {
     const { connectionId, lang } = session
     switch (session.state) {
-      case StateStep.CHAT:
-        if (selectionId === Cmd.AUTHENTICATE) {
-          const credentialDefinitionId = this.configService.get<string>('appConfig.credentialDefinitionId')
+      case StateStep.CHAT: {
+        this.logger.debug(`this.authFlowConfig.enabled: ${this.authFlowConfig.enabled}`)
+        if (selectionId === 'authenticate' && this.authFlowConfig.enabled) {
+          const credentialDefinitionId = this.credentialDefinitionId
           this.logger.debug(`credentialDefinition: ${credentialDefinitionId}`)
           if (!credentialDefinitionId) {
-            throw new Error('Missing config: appConfig.credentialDefinitionId')
+            throw new Error('Missing config: credentialDefinitionId')
           }
 
           const body = new IdentityProofRequestMessage({
@@ -218,7 +237,7 @@ export class CoreService implements EventHandler, OnModuleInit {
           await this.sendText(connectionId, this.getText('AUTH_PROCESS_STARTED', lang), lang)
         }
 
-        if (selectionId === Cmd.LOGOUT) {
+        if (selectionId === 'logout') {
           session.isAuthenticated = false
           session.userName = ''
           await this.sessionRepository.save(session)
@@ -226,6 +245,7 @@ export class CoreService implements EventHandler, OnModuleInit {
           await this.memoryService.clear(connectionId)
         }
         break
+      }
       default:
         break
     }
@@ -367,12 +387,19 @@ export class CoreService implements EventHandler, OnModuleInit {
   }
 
   private async sendContextualMenu(session: SessionEntity): Promise<SessionEntity> {
-    const options: ContextualMenuItem[] = []
-    if (!session.isAuthenticated) {
-      options.push(new ContextualMenuItem({ id: Cmd.AUTHENTICATE, title: this.getText('CREDENTIAL', session.lang) }))
-    } else {
-      options.push(new ContextualMenuItem({ id: Cmd.LOGOUT, title: this.getText('LOGOUT', session.lang) }))
-    }
+    const options: ContextualMenuItem[] = this.menuItems
+      .filter(
+        (item) =>
+          this.isMenuItemVisible(item.visibleWhen, session.isAuthenticated ?? false) &&
+          this.isMenuActionEnabled(item.action),
+      )
+      .map(
+        (item) =>
+          new ContextualMenuItem({
+            id: item.id,
+            title: item.label ?? this.getText(item.labelKey ?? item.id, session.lang),
+          }),
+      )
 
     const title =
       session.isAuthenticated && session.userName
@@ -394,5 +421,22 @@ export class CoreService implements EventHandler, OnModuleInit {
     this.logger.debug(`***send stats***`)
     const stats = [STAT_KPI[kpi]]
     if (session !== null) await this.statProducer.spool(stats, session.connectionId, [new StatEnum(0, 'string')])
+  }
+
+  private isMenuItemVisible(visibleWhen: string | undefined, isAuthenticated: boolean) {
+    switch (visibleWhen) {
+      case 'authenticated':
+        return !!isAuthenticated
+      case 'unauthenticated':
+        return !isAuthenticated
+      default:
+        return true
+    }
+  }
+
+  private isMenuActionEnabled(action?: string) {
+    if (!action) return true
+    if (action === 'authenticate') return this.authFlowConfig.enabled
+    return true
   }
 }
