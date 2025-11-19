@@ -91,7 +91,7 @@ chatbot:
 vs-agent-chart:
   enabled: true
   name: vs-agent
-  didcommLabel: hologram-welcome
+  didcommLabel: hologram-generic
   eventsBaseUrl: http://chatbot:3003
   ingress:
     host: vs-agent.dev.2060.io
@@ -206,7 +206,7 @@ artemis:
     ARTEMIS_USERNAME: 'example-user'
     ARTEMIS_PASSWORD: 'example-password'
   envFrom:
-    secret: hologram-welcome-artemis-secret
+    secret: hologram-generic-artemis-secret
   service:
     type: ClusterIP
     ports:
