@@ -4,11 +4,10 @@ import { Logger } from '@nestjs/common'
 
 const logger = new Logger('statisticsFetcherTool')
 
-export const statisticsFetcherTool = new DynamicStructuredTool({
-  name: 'statistics_fetcher',
-  description:
-    'Use this tool to fetch statistics USER_CONNECTED by sending a POST request with time range, stat class, and granularity',
-  schema: z.object({
+const toolCtor = DynamicStructuredTool as unknown as new (fields: any) => DynamicStructuredTool
+
+const statisticsSchema: z.ZodTypeAny = z
+  .object({
     from: z.string().describe('Start date in ISO format (e.g., 2025-06-01T00:00:00Z)'),
     to: z.string().describe('End date in ISO format (e.g., 2025-06-10T23:59:59Z)'),
     statClass: z.string().describe('Statistic class, e.g., USER_CONNECTED'),
@@ -24,7 +23,14 @@ export const statisticsFetcherTool = new DynamicStructuredTool({
         }),
       )
       .describe('List of enum filters for the query'),
-  }),
+  })
+  .strict() as z.ZodTypeAny
+
+export const statisticsFetcherTool = new toolCtor({
+  name: 'statistics_fetcher',
+  description:
+    'Use this tool to fetch statistics USER_CONNECTED by sending a POST request with time range, stat class, and granularity',
+  schema: statisticsSchema,
   async func({ from, to, statClass, statGranularity, statResultType, statEnums }, _runManager, config) {
     const url = process.env.STATISTICS_API_URL
 
@@ -98,4 +104,4 @@ export const statisticsFetcherTool = new DynamicStructuredTool({
       return `Failed to fetch statistics: ${(error as Error).message}`
     }
   },
-})
+}) as DynamicStructuredTool
