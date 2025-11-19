@@ -1,8 +1,8 @@
-# Hologram-Welcome JMS integration Module
+# Hologram-Generic JMS integration Module
 
 ## Overview
 
-The Hologram-Welcome implement JMS integration Module integration includes a statistics (stats) module that communicates via JMS (Java Message Service) to send and receive agent metrics and events. This module is designed to work with brokers like Apache ActiveMQ Artemis.
+The Hologram-Generic implement JMS integration Module integration includes a statistics (stats) module that communicates via JMS (Java Message Service) to send and receive agent metrics and events. This module is designed to work with brokers like Apache ActiveMQ Artemis.
 
 ## How It Works
 
