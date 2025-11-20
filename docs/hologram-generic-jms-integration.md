@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Hologram-Generic implement JMS integration Module integration includes a statistics (stats) module that communicates via JMS (Java Message Service) to send and receive agent metrics and events. This module is designed to work with brokers like Apache ActiveMQ Artemis.
+Hologram Generic AI Agent implements includes a statistics (stats) module that communicates via JMS (Java Message Service) to send and receive agent metrics and events. This module is designed to work with brokers like Apache ActiveMQ Artemis.
 
 ## How It Works
 
