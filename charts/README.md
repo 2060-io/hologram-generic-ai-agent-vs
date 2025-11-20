@@ -1,8 +1,8 @@
-# hologram-welcome-ai-agent-vs Helm Chart
+# hologram-generic-ai-agent-vs Helm Chart
 
 ## Overview
 
-This Helm chart deploys the `hologram-welcome-ai-agent-vs` application and all required Kubernetes components: `chatbot`, `vs-agent`, `postgres`, `redis`, `stats`, and (optional) `artemis`.
+This Helm chart deploys the `hologram-generic-ai-agent-vs` application and all required Kubernetes components: `chatbot`, `vs-agent`, `postgres`, `redis`, `stats`, and (optional) `artemis`.
 
 - The `vs-agent` component is deployed as a Helm dependency (`vs-agent-chart`) and configured entirely via `values.yaml`.
 
@@ -53,7 +53,7 @@ helm upgrade --install <release-name> ./charts/ --namespace <your-namespace>
 > **Note:** `<release-name>` is a Helm release identifier. For example:
 
 ```bash
-helm upgrade hologram-welcome-chart ./charts --namespace <your-namespace-prod>
+helm upgrade hologram-generic-chart ./charts --namespace <your-namespace-prod>
 ```
 
 ---
@@ -63,7 +63,7 @@ helm upgrade hologram-welcome-chart ./charts --namespace <your-namespace-prod>
 To uninstall the release:
 
 ```bash
-helm uninstall hologram-welcome-chart --namespace <your-namespace>
+helm uninstall hologram-generic-chart --namespace <your-namespace>
 ```
 
 ---

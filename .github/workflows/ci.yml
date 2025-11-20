@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout didcomm-mediator
+      - name: Checkout hologram-generic-ai-agent-vs
         uses: actions/checkout@v4
 
       - name: Setup Node.js v22
