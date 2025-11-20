@@ -22,7 +22,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@2060.io/vs-agent-nestjs-client": "^1.5.3",
+    "@2060.io/vs-agent-nestjs-client": "1.5.5",
     "@anthropic-ai/sdk": "^0.51.0",
     "@credo-ts/core": "^0.5.18",
     "@langchain/anthropic": "^0.3.21",

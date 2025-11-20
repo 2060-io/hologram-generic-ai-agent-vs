@@ -54,7 +54,7 @@ services:
       - chatbot
 
   vs-agent:
-    image: io2060/vs-agent:v1.5.1
+    image: io2060/vs-agent:v1.5.5
     container_name: chatbot-vs-agent
     restart: always
     depends_on:
