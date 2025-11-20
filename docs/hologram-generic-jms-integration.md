@@ -1,4 +1,4 @@
-# Hologram-Generic JMS integration Module
+# JMS integration Module
 
 ## Overview
 
