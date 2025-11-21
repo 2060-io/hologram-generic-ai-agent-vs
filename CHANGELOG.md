@@ -2,7 +2,6 @@
 
 ## [1.8.0](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.7.0...v1.8.0) (2025-11-20)
 
-
 ### Features
 
 * Enhance RAG ingestion with remote caching, configurable chunking vector ([#36](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/36)) ([5107a27](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/5107a27b21f7c9c2421056c0c9a60c9c1ee330a2))
