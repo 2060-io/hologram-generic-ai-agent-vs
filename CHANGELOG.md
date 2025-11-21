@@ -1,11 +1,11 @@
 # Changelog
 
-## [1.8.0](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.7.0...v1.8.0) (2025-11-11)
-
+## [1.8.0](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.7.0...v1.8.0) (2025-11-20)
 
 ### Features
 
-* Enhance RAG ingestion with remote caching, configurable chunking vector ([#36](https://github.com/2060-io/hologram-welcome-ai-agent-vs/issues/36)) ([5107a27](https://github.com/2060-io/hologram-welcome-ai-agent-vs/commit/5107a27b21f7c9c2421056c0c9a60c9c1ee330a2))
+* Enhance RAG ingestion with remote caching, configurable chunking vector ([#36](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/36)) ([5107a27](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/5107a27b21f7c9c2421056c0c9a60c9c1ee330a2))
+* rebranding hologram-generic-ai-agents ([#44](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/44)) ([841120b](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/841120ba221f8165fda9687c1dfccc9767975d1a))
 
 ## [1.7.0](https://github.com/2060-io/hologram-welcome-ai-agent-vs/compare/v1.6.3...v1.7.0) (2025-10-22)
 
