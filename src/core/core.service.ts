@@ -105,7 +105,7 @@ export class CoreService implements EventHandler, OnModuleInit {
             session.lang = inMsg.preferredLanguage
           }
           if (this.welcomeFlowConfig.enabled && this.welcomeFlowConfig.sendOnProfile) {
-            await this.welcomeMessage(session.connectionId)
+            await this.sendGreetingMessage(session.connectionId)
           }
           break
         }
@@ -166,12 +166,12 @@ export class CoreService implements EventHandler, OnModuleInit {
     await this.purgeUserData(session)
   }
 
-  private async welcomeMessage(connectionId: string) {
+  private async sendGreetingMessage(connectionId: string) {
     const userLang = (await this.handleSession(connectionId)).lang
 
-    const welcomeMessage = this.agentContent.getWelcomeMessage(userLang, this.welcomeFlowConfig.templateKey)
-    this.logger.debug(`LLM generated answer: "${welcomeMessage}"`)
-    await this.sendText(connectionId, welcomeMessage, userLang)
+    const greetingMessage = this.agentContent.getGreetingMessage(userLang, this.welcomeFlowConfig.templateKey)
+    this.logger.debug(`LLM generated answer: "${greetingMessage}"`)
+    await this.sendText(connectionId, greetingMessage, userLang)
   }
 
   /**

@@ -12,7 +12,7 @@ metadata:
 
 languages:
   es:
-    welcomeMessage: >-
+    greetingMessage: >-
       Hola, soy tu asistente virtual para el registro de PQRSD en modo DEMO. Una vez
       completes la autenticación, te haré unas preguntas cortas para registrar tu
       caso y entregarte un número de caso.
@@ -31,7 +31,7 @@ languages:
       STATS_ERROR: 'No puedo acceder a registros adicionales en este momento. Como es un DEMO, solo registraré tu caso actual.'
       ERROR_MESSAGES: 'El servicio no está disponible por ahora. Intenta nuevamente en unos minutos.'
   en:
-    welcomeMessage: >-
+    greetingMessage: >-
       Hello, I am your virtual assistant for PQRSD registration in DEMO mode. Once
       you complete authentication, I will ask you a few short questions to register
       your case and give you a case number.
@@ -51,8 +51,8 @@ languages:
       ERROR_MESSAGES: 'Service temporarily unavailable. Please retry in a few minutes.'
 
 llm:
-  provider: ${LLM_PROVIDER}
-  model: ${OPENAI_MODEL}
+  provider: openai
+  model: gpt-4
   temperature: 0.2
   agentPrompt: >-
     ROLE OF THE AGENT
@@ -129,9 +129,9 @@ llm:
            - Subject
            - Detailed message
          - You must show the user a clear summary in a single block, for example:
-           - Type: {selected_type}
-           - Subject: {provided_subject}
-           - Description: {detailed_message}
+           - Type
+           - Subject: 
+           - Description: 
          - Ask the user if the information is correct or if they want to adjust the subject or description.
          - If the user asks for changes:
            - Update the corresponding field (subject or description).
@@ -156,7 +156,7 @@ llm:
 
       COMMUNICATION STYLE
 
-      - Language: use English when the language setting is "en".
+      - Language: use always the language of the user.
       - Tone: professional, empathetic, respectful.
       - Length: short and direct responses. Clear, concise sentences.
       - Do not use emojis or informal abbreviations.
@@ -210,7 +210,7 @@ flows:
   welcome:
     enabled: true
     sendOnProfile: true
-    templateKey: welcomeMessage
+    templateKey: greetingMessage
   authentication:
     enabled: true
     credentialDefinitionId: ${CREDENTIAL_DEFINITION_ID}

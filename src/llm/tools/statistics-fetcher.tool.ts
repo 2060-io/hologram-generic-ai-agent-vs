@@ -95,8 +95,8 @@ export const statisticsFetcherTool = new toolCtor({
         throw new Error(`API returned ${response.status}: ${err}`)
       }
 
-      logger.debug('Invoked with parameters:')
-      logger.debug(JSON.stringify({ from, to, statClass, statGranularity, statResultType, statEnums }, null, 2))
+      const result = await response.json()
+      logger.debug(`✅ API Response: ${JSON.stringify(result, null, 2)}`)
 
       return JSON.stringify(result, null, 2)
     } catch (error) {

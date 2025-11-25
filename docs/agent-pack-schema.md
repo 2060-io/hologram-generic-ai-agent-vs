@@ -95,7 +95,7 @@ flows:
   welcome:
     enabled: true
     sendOnProfile: true
-    templateKey: welcomeMessage
+    templateKey: greetingMessage
   authentication:
     enabled: true
     credentialDefinitionId: ${CREDENTIAL_DEFINITION_ID}

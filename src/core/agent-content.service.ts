@@ -6,7 +6,7 @@ import { DEFAULT_TRANSLATIONS } from './common/i18n/i18n'
 import { Cmd } from './common'
 
 type LanguageBlock = {
-  welcomeMessage?: string
+  greetingMessage?: string
   systemPrompt?: string
   strings?: Record<string, string>
   [key: string]: unknown
@@ -39,16 +39,24 @@ export class AgentContentService {
     return packLanguages['en']
   }
 
-  getWelcomeMessage(lang?: string, templateKey = 'welcomeMessage'): string {
+  getGreetingMessage(lang?: string, templateKey = 'greetingMessage'): string {
     const langKey = this.resolveLanguage(lang)
+    const effectiveTemplateKey = templateKey === 'welcomeMessage' ? 'greetingMessage' : templateKey
     const block = this.getLanguageBlock(langKey)
     if (block) {
-      const value = block[templateKey]
+      const value = block[effectiveTemplateKey]
       if (typeof value === 'string' && value.trim().length > 0) {
         return value
       }
-      if (templateKey === 'welcomeMessage' && typeof block.welcomeMessage === 'string') {
-        return block.welcomeMessage
+      if (effectiveTemplateKey !== 'greetingMessage') {
+        const fallbackGreeting = block['greetingMessage']
+        if (typeof fallbackGreeting === 'string' && fallbackGreeting.trim().length > 0) {
+          return fallbackGreeting
+        }
+      }
+      const legacyWelcome = block['welcomeMessage']
+      if (typeof legacyWelcome === 'string' && legacyWelcome.trim().length > 0) {
+        return legacyWelcome
       }
     }
     const fallback = DEFAULT_CHATBOT_WELCOME_TEMPLATES[langKey] ?? DEFAULT_CHATBOT_WELCOME_TEMPLATES['en']
@@ -106,10 +114,11 @@ export class AgentContentService {
 
   getWelcomeFlowConfig() {
     const welcomeConfig = this.agentPack?.flows?.welcome ?? {}
+    const templateKey = typeof welcomeConfig.templateKey === 'string' ? welcomeConfig.templateKey : 'greetingMessage'
     return {
       enabled: this.toBoolean(welcomeConfig.enabled, true),
       sendOnProfile: this.toBoolean(welcomeConfig.sendOnProfile, true),
-      templateKey: typeof welcomeConfig.templateKey === 'string' ? welcomeConfig.templateKey : 'welcomeMessage',
+      templateKey: templateKey === 'welcomeMessage' ? 'greetingMessage' : templateKey,
     }
   }
 

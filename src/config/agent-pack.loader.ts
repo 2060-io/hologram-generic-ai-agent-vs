@@ -8,11 +8,16 @@ const POSSIBLE_FILENAMES = ['agent-pack.yaml', 'agent-pack.yml', 'agent-pack.jso
 
 const LocalizedConfigSchema = z
   .object({
+    greetingMessage: z.string().optional(),
     welcomeMessage: z.string().optional(),
     systemPrompt: z.string().optional(),
     strings: z.record(z.string()).optional(),
   })
   .passthrough()
+  .transform(({ welcomeMessage, ...rest }) => ({
+    ...rest,
+    greetingMessage: rest.greetingMessage ?? welcomeMessage,
+  }))
 
 const AgentPackSchema = z
   .object({

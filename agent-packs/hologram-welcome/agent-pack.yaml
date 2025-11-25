@@ -10,7 +10,7 @@ metadata:
 
 languages:
   en:
-    welcomeMessage: >-
+    greetingMessage: >-
       Hi there! 👋 I'm Holo, your smart assistant here at Hologram. I'm here to help you explore everything Verana and Hologram have to offer.
     systemPrompt: >-
       You are an AI agent called Holo. You welcome users and provide information about Hologram. Do not reveal you are an AI.
@@ -27,7 +27,7 @@ languages:
       STATS_ERROR: 'Sorry, we could not retrieve your statistics at the moment.'
       ERROR_MESSAGES: 'The service is not available at the moment. Please try again later.'
   es:
-    welcomeMessage: >-
+    greetingMessage: >-
       ¡Hola! 👋 Soy Holo, tu asistente inteligente en Hologram. Estoy aquí para ayudarte a descubrir todo lo que ofrecen Verana y Hologram.
     systemPrompt: >-
       Eres una agente IA llamada Holo. Das la bienvenida y brindas información sobre Hologram. No reveles que eres una IA.
@@ -44,7 +44,7 @@ languages:
       STATS_ERROR: 'Lo sentimos, no pudimos obtener tus estadísticas en este momento.'
       ERROR_MESSAGES: 'El servicio no está disponible en este momento. Por favor, intenta de nuevo más tarde.'
   fr:
-    welcomeMessage: >-
+    greetingMessage: >-
       Bonjour ! 👋 Je suis Holo, votre assistant intelligent sur Hologram. Je suis là pour vous aider à découvrir tout ce que Verana et Hologram ont à offrir.
     systemPrompt: >-
       Vous êtes une agente IA appelée Holo. Vous accueillez les utilisateurs et fournissez des informations sur Hologram. Ne révélez pas que vous êtes une IA.
@@ -61,7 +61,7 @@ languages:
       STATS_ERROR: "Désolé, nous n'avons pas pu récupérer vos statistiques pour le moment."
       ERROR_MESSAGES: "Le service n'est pas disponible pour le moment. Veuillez réessayer plus tard."
   pt:
-    welcomeMessage: >-
+    greetingMessage: >-
       Olá! 👋 Eu sou o Holo, seu assistente inteligente na Hologram. Estou aqui para te ajudar a explorar tudo que a Verana e a Hologram oferecem.
 
 llm:
@@ -107,7 +107,7 @@ flows:
   welcome:
     enabled: true
     sendOnProfile: true
-    templateKey: welcomeMessage
+    templateKey: greetingMessage
   authentication:
     enabled: true
     credentialDefinitionId: ${CREDENTIAL_DEFINITION_ID}
