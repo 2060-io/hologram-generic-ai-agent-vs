@@ -15,6 +15,7 @@ All configuration is managed via environment variables.
 | `APP_PORT`                 | Port on which the application runs                                                                    | `3000`                   |
 | `LOG_LEVEL`                | Log level (`1=error`, `2=warn`, `3=info`, `4=debug`)                                                  | `3`                      |
 | `AGENT_PROMPT`             | Defines the agent's persona and instructions                                                          | See below for example    |
+| `AGENT_PACK_PATH`          | Filesystem path to the agent pack manifest (`agent-pack.yaml`); if missing, falls back to env vars    | `./agent-packs/hologram-welcome` |
 | `LLM_PROVIDER`             | LLM backend: `openai`, `ollama`, `anthropic`, etc.                                                    | `ollama`                 |
 | `OPENAI_API_KEY`           | API key for OpenAI (required if using OpenAI)                                                         | `sk-xxx`                 |
 | `OPENAI_MODEL`             | OpenAI model to use (e.g., `gpt-3.5-turbo`, `gpt-4`)                                                  | `gpt-3.5-turbo`          |
@@ -64,6 +65,19 @@ You are an AI agent called Karen. You welcome users and provide information abou
 - **Operate in multiple languages** (English, Spanish, French out-of-the-box; easily extendable).
 - **Centralize all configuration** via `.env` and the NestJS config system.
 - **Deploy with Docker Compose** including ready-to-use Redis and Ollama containers.
+
+---
+
+## 📦 Agent Packs (declarative config)
+
+You can bundle all agent configuration (prompts, greeting messages, menus, RAG, tools, integrations) into a single `agent-pack.yaml` and mount it at runtime.
+
+- Set `AGENT_PACK_PATH` to the directory containing `agent-pack.yaml` (e.g., `/app/agent-packs/hologram-welcome`).
+- If the pack is missing or invalid, the app falls back to legacy environment variables.
+- The manifest supports `${VAR}` placeholders resolved from `process.env`.
+- Full schema and examples: [`docs/agent-pack-schema.md`](./docs/agent-pack-schema.md).
+
+With Docker Compose/Helm, mount your pack at `/app/agent-packs/<your-pack>/agent-pack.yaml` and set `AGENT_PACK_PATH=/app/agent-packs/<your-pack>`.
 
 ---
 
