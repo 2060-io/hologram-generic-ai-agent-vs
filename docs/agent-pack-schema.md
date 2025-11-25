@@ -1,6 +1,6 @@
 # Agent Pack Schema
 
-This document describes the proposed format for _agent packs_. Agent packs make the current Agent Welcome chatbot fully configurable so the same binary can be reused for other conversational agents.
+This document describes the proposed format for _agent packs_. Agent packs make the AI agent chatbot fully configurable so the same binary can be reused for other conversational agents.
 
 ## Goals
 
