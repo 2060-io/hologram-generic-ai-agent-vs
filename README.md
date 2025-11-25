@@ -1,6 +1,6 @@
-# 🤖 hologram-welcome-ai-agent-vs
+# 🤖 hologram-generic-ai-agent-vs
 
-Welcome to **hologram-welcome-ai-agent-vs** – a modular, multi-language AI agent built with NestJS, designed for welcoming users, providing personalized information, and integrating with any LLM, Retrieval Augmented Generation (RAG), and external APIs.
+Welcome to **hologram-generic-ai-agent-vs** – a modular, multi-language AI agent built with NestJS, designed for welcoming users, providing personalized information, and integrating with any LLM, Retrieval Augmented Generation (RAG), and external APIs.
 
 ---
 
@@ -52,7 +52,7 @@ You are an AI agent called Karen. You welcome users and provide information abou
 
 ## 🚀 Overview
 
-**hologram-welcome-ai-agent-vs** is a backend conversational AI agent that serves as the intelligent welcoming agent for Hologram and related ecosystems. The system is designed to:
+**hologram-generic-ai-agent-vs** is a backend conversational AI agent that serves as the intelligent welcoming agent for Hologram and related ecosystems. The system is designed to:
 
 - **Send a personalized, AI-generated welcome message** when a new user connects.
 - **Provide information about Hologram, Verana, and more** via natural conversation.
@@ -183,10 +183,10 @@ For a full guide on configuring and using the memory module (supporting both in-
 
 Full setup instructions for local LLMs (Ollama + Llama3) are provided in [How to use Ollama](./docs/how-to-use-ollama.md).
 
-## 📊 Hologram-Welcome JMS integration
+## 📊 Hologram-Generic JMS integration
 
 For detailed instructions on configuring and using the JMS statistics (stats) module for real-time agent metrics with Artemis or other JMS brokers, see  
-[How to use the JMS Connection Module](./docs/hologram-welcome-jms-integration.md).
+[How to use the JMS Connection Module](./docs/hologram-generic-jms-integration.md).
 
 ## 🛠️ How to Use langchain Tools
 

@@ -1,10 +1,10 @@
 apiVersion: v2
-name: hologram-welcome-ai-agent-chart
+name: hologram-generic-ai-agent-chart
 version: 1.3.2
 appVersion: '1.3.2'
-description: Helm chart to deploy Hologram Welcome AI Agent Verifiable Service
+description: Helm chart to deploy Hologram Generic AI Agent Verifiable Service
 dependencies:
   - name: vs-agent-chart
-    version: v1.5.3
+    version: v1.5.5
     repository: oci://registry-1.docker.io/io2060
     condition: vs-agent-chart.enabled

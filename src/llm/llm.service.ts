@@ -42,7 +42,7 @@ export class LlmService {
 
     const provider = (this.config.get<string>('LLM_PROVIDER') ?? 'openai') as SupportedProviders
     this.llm = this.instantiateLlm(provider)
-    const tools = this.buildTools()
+    const tools: DynamicStructuredTool[] = this.buildTools()
     this.logger.debug(`*** TOOLS: ${JSON.stringify(tools, null, 2)}`)
     if (tools.length && (provider === 'openai' || provider === 'anthropic')) {
       this.setupToolAgent(tools)
@@ -170,7 +170,9 @@ export class LlmService {
    *
    * @returns {DynamicStructuredTool[]} An array of DynamicStructuredTool instances, or an empty array if none are configured.
    */
-  private buildTools() {
+  private static readonly toolCtor = DynamicStructuredTool as unknown as new (fields: any) => DynamicStructuredTool
+
+  private buildTools(): DynamicStructuredTool[] {
     const raw = this.config.get<string>('appConfig.llmToolsConfig')
     const dynamicTools: DynamicStructuredTool[] = []
 
@@ -183,15 +185,15 @@ export class LlmService {
         defs = []
       }
 
-      const querySchema = zod.object({
+      const querySchema: zod.ZodTypeAny = zod.object({
         query: zod.string().describe('Free-form query string passed to the external service.'),
         isAuthenticated: zod.boolean().describe('Authentication flag to restrict access.'),
-      })
+      }) as zod.ZodTypeAny
 
       dynamicTools.push(
         ...defs.map(
           (def) =>
-            new DynamicStructuredTool({
+            new LlmService.toolCtor({
               name: def.name,
               description: def.description,
               schema: querySchema,
