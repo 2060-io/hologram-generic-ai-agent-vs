@@ -48,7 +48,7 @@ metadata:
 
 Each entry can define:
 
-- `welcomeMessage`: short greeting sent on connection (supports `{userName}` placeholders).
+- `greetingMessage`: short greeting sent on connection (supports `{userName}` placeholders).
 - `systemPrompt`: persona/instructions for this language.
 - `strings`: dictionary of localized literals (menu labels, auth messages, etc.).
 
