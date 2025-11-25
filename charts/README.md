@@ -97,39 +97,40 @@ Below is a summary of the environment variables required by each component. All 
 
 ### 📦 Chatbot
 
-| Source | Key                      | Description                      |
-| ------ | ------------------------ | -------------------------------- |
-| Env    | APP_PORT                 | Port where the chatbot runs      |
-| Env    | LOG_LEVEL                | Logging level                    |
-| Env    | LLM_PROVIDER             | LLM provider name                |
-| Env    | OPENAI_MODEL             | Model name for OpenAI            |
-| Env    | VECTOR_STORE             | Vector DB to use                 |
-| Env    | VECTOR_INDEX_NAME        | Name of vector index             |
-| Env    | RAG_PROVIDER             | RAG implementation used          |
-| Env    | RAG_DOCS_PATH            | Base path for RAG docs & cache   |
-| Env    | RAG_CHUNK_SIZE           | Chunk size for document splitting|
-| Env    | RAG_CHUNK_OVERLAP        | Chunk overlap for splitting      |
-| Env    | RAG_REMOTE_URLS          | Remote document URLs (JSON list) |
-| Env    | AGENT_MEMORY_BACKEND     | Memory backend                   |
-| Env    | AGENT_MEMORY_WINDOW      | Memory window size               |
-| Env    | VS_AGENT_STATS_ENABLED   | Enable stats fetching            |
-| Env    | VS_AGENT_STATS_HOST      | Stats broker host                |
-| Env    | VS_AGENT_STATS_PORT      | Broker port                      |
-| Env    | VS_AGENT_STATS_QUEUE     | Broker queue name                |
-| Env    | VS_AGENT_STATS_USER      | Broker user                      |
-| Env    | VS_AGENT_STATS_PASSWORD  | Broker password                  |
-| Env    | REDIS_URL                | Redis connection URL             |
-| Env    | AGENT_PROMPT             | Custom LLM agent prompt          |
-| Env    | VS_AGENT_ADMIN_URL       | VS Agent admin URL               |
-| Env    | CREDENTIAL_DEFINITION_ID | VC credential definition         |
-| Env    | POSTGRES_HOST            | Postgres host URL                |
-| Env    | LLM_TOOLS_CONFIG         | LLM tools config (JSON)          |
-| Env    | STATISTICS_API_URL       | External statistics API endpoint |
-| Env    | STATISTICS_REQUIRE_AUTH  | Require auth on stats            |
-| Secret | OPENAI_API_KEY           | OpenAI API key                   |
-| Secret | POSTGRES_USER            | DB user                          |
-| Secret | POSTGRES_PASSWORD        | DB password                      |
-| Secret | POSTGRES_DB_NAME         | DB name                          |
+| Source | Key                      | Description                       |
+| ------ | ------------------------ | --------------------------------- |
+| Env    | APP_PORT                 | Port where the chatbot runs       |
+| Env    | LOG_LEVEL                | Logging level                     |
+| Env    | LLM_PROVIDER             | LLM provider name                 |
+| Env    | OPENAI_MODEL             | Model name for OpenAI             |
+| Env    | VECTOR_STORE             | Vector DB to use                  |
+| Env    | VECTOR_INDEX_NAME        | Name of vector index              |
+| Env    | RAG_PROVIDER             | RAG implementation used           |
+| Env    | RAG_DOCS_PATH            | Base path for RAG docs & cache    |
+| Env    | RAG_CHUNK_SIZE           | Chunk size for document splitting |
+| Env    | RAG_CHUNK_OVERLAP        | Chunk overlap for splitting       |
+| Env    | RAG_REMOTE_URLS          | Remote document URLs (JSON list)  |
+| Env    | AGENT_MEMORY_BACKEND     | Memory backend                    |
+| Env    | AGENT_MEMORY_WINDOW      | Memory window size                |
+| Env    | AGENT_PACK_PATH          | Path to the mounted agent pack    |
+| Env    | VS_AGENT_STATS_ENABLED   | Enable stats fetching             |
+| Env    | VS_AGENT_STATS_HOST      | Stats broker host                 |
+| Env    | VS_AGENT_STATS_PORT      | Broker port                       |
+| Env    | VS_AGENT_STATS_QUEUE     | Broker queue name                 |
+| Env    | VS_AGENT_STATS_USER      | Broker user                       |
+| Env    | VS_AGENT_STATS_PASSWORD  | Broker password                   |
+| Env    | REDIS_URL                | Redis connection URL              |
+| Env    | AGENT_PROMPT             | Custom LLM agent prompt           |
+| Env    | VS_AGENT_ADMIN_URL       | VS Agent admin URL                |
+| Env    | CREDENTIAL_DEFINITION_ID | VC credential definition          |
+| Env    | POSTGRES_HOST            | Postgres host URL                 |
+| Env    | LLM_TOOLS_CONFIG         | LLM tools config (JSON)           |
+| Env    | STATISTICS_API_URL       | External statistics API endpoint  |
+| Env    | STATISTICS_REQUIRE_AUTH  | Require auth on stats             |
+| Secret | OPENAI_API_KEY           | OpenAI API key                    |
+| Secret | POSTGRES_USER            | DB user                           |
+| Secret | POSTGRES_PASSWORD        | DB password                       |
+| Secret | POSTGRES_DB_NAME         | DB name                           |
 
 ---
 
@@ -195,3 +196,24 @@ This subchart is fully configured via the `vs-agent-chart` section in `values.ya
 - All environment variables are managed through `values.yaml`, using `env` and `secretKeyRef` as needed.
 - The `vs-agent` dependency uses inline values only, not `ConfigMaps` or Helm-generated Secrets.
 - Ingress routing is centralized via `.Values.global.domain`, enabling consistent hostname and TLS management.
+- To bundle a custom `agent-pack`, set `chatbot.agentPack.enabled=true`; the chart will create/mount a ConfigMap at `/app/agent-packs/<name>/agent-pack.yaml` and export `AGENT_PACK_PATH` automatically. You can also point to an existing ConfigMap via `chatbot.agentPack.existingConfigMap`.
+
+### Add agent-pack
+
+```yaml
+chatbot:
+  agentPack:
+    enabled: true
+    name: customer-service
+    # mountPath: /app/agent-packs/customer-service   # optional
+    existingConfigMap: '' # set the name of the already created configMap
+    content: |
+      metadata:
+        id: customer-service
+        displayName: Customer Service Agent
+        defaultLanguage: es
+      languages:
+        es:
+          greetingMessage: "Hola, soy tu asistente."
+          systemPrompt: "Eres un agente de atención."
+```
