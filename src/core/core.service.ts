@@ -368,10 +368,17 @@ export class CoreService implements EventHandler, OnModuleInit {
 
   private async sendContextualMenu(session: SessionEntity): Promise<SessionEntity> {
     const options: ContextualMenuItem[] = []
-    if (!session.isAuthenticated) {
+    const authConfigured = !!this.configService.get<string>('appConfig.credentialDefinitionId')?.trim()
+
+    if (!session.isAuthenticated && authConfigured) {
       options.push(new ContextualMenuItem({ id: Cmd.AUTHENTICATE, title: this.getText('CREDENTIAL', session.lang) }))
-    } else {
+    } else if (session.isAuthenticated) {
       options.push(new ContextualMenuItem({ id: Cmd.LOGOUT, title: this.getText('LOGOUT', session.lang) }))
+    }
+
+    if (options.length === 0) {
+      this.logger.debug('[MENU] Skipping contextual menu: no auth options available.')
+      return await this.sessionRepository.save(session)
     }
 
     const title =
