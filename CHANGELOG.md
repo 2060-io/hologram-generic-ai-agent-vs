@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.1](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.8.0...v1.8.1) (2025-12-03)
+
+
+### Bug Fixes
+
+* Auth hide menu when no auth option exists ([#47](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/47)) ([4e6ceee](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/4e6ceeea9766c6e184d19e8da85df2d4388ccda8))
+* Fix image name to hologram-generic-ai-agent in stable-release  ([#46](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/46)) ([681b78b](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/681b78b23f7031b55fd1498da945f15008afc6d5))
+
 ## [1.8.0](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.7.0...v1.8.0) (2025-11-20)
 
 ### Features
