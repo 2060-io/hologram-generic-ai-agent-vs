@@ -37,7 +37,7 @@ All configuration is managed via environment variables.
 | `POSTGRES_USER`            | Username for PostgreSQL database                                                                      | `2060demo`               |
 | `POSTGRES_DB_NAME`         | Database name for PostgreSQL                                                                          | `test-service-agent`     |
 | `POSTGRES_PASSWORD`        | Password for PostgreSQL                                                                               | `2060demo`               |
-| `CREDENTIAL_DEFINITION_ID` | Verifiable credential definition ID or URL                                                            | `http://localhost:3000`  |
+| `CREDENTIAL_DEFINITION_ID` | Verifiable credential definition ID or URL. If omitted, the authentication menu is hidden.            | `http://localhost:3000`  |
 | `VS_AGENT_ADMIN_URL`       | Service Agent Admin API URL                                                                           |                          |
 | `LLM_TOOLS_CONFIG`         | Defines external tools (API integrations) available to the agent as a JSON string.                    | `[]`                     |
 | `STATISTICS_API_URL`       | Base URL for the statistics API service. The agent uses this endpoint to fetch statistics via tools.  |                          |
@@ -57,7 +57,7 @@ You are an AI agent called Karen. You welcome users and provide information abou
 
 - **Send a personalized, AI-generated welcome message** when a new user connects.
 - **Provide information about Hologram, Verana, and more** via natural conversation.
-- **Support authentication-aware features and localizable menus** (“Authenticate” or “Logout” as appropriate, with menu titles personalized per user status).
+- **Support authentication-aware features and localizable menus** (“Authenticate” or “Logout” as appropriate, with menu titles personalized per user status). The menu is only shown when an auth credential is configured.
 - **Seamlessly integrate with multiple LLMs** (OpenAI, Ollama, Anthropic) with model/content generation configurable by environment variables.
 - **Retrieve contextual knowledge** from local files using RAG (Retrieval Augmented Generation) with Pinecone + LangChain integration.
 - **Support session memory** (in-memory or Redis-based), so the agent can remember the context of each user’s conversation.
