@@ -355,6 +355,7 @@ export class CoreService implements EventHandler, OnModuleInit {
       session = this.sessionRepository.create({
         connectionId: connectionId,
         state: StateStep.CHAT,
+        isAuthenticated: false,
       })
 
       await this.sessionRepository.save(session)

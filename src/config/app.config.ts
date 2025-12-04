@@ -75,8 +75,17 @@ export default registerAs('appConfig', () => ({
   /**
    * OpenAI Model .
    */
+  openaiModel: pickString('OPENAI_MODEL', agentPack?.llm?.model, 'gpt-4o-mini'),
 
-  openaiModel: pickString('OPENAI_MODEL', agentPack?.llm?.model, 'gpt-4'),
+  /**
+   * OpenAI temperature (0-1).
+   */
+  openaiTemperature: pickNumber('OPENAI_TEMPERATURE', agentPack?.llm?.temperature, 0.3),
+
+  /**
+   * OpenAI max tokens per completion.
+   */
+  openaiMaxTokens: pickNumber('OPENAI_MAX_TOKENS', agentPack?.llm?.maxTokens, 512),
 
   /**
    * Anthropic API key (required if using Anthropic provider, e.g., Claude).

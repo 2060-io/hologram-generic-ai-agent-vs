@@ -8,10 +8,15 @@ import { DynamicStructuredTool } from '@langchain/core/tools'
 import { createToolCallingAgent } from 'langchain/agents'
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts'
 import { AIMessage, BaseMessage } from '@langchain/core/messages'
+import type { Runnable } from '@langchain/core/runnables'
+import type { AgentExecutor } from 'langchain/agents'
+
 import { ExternalToolDef, SupportedProviders } from './interfaces/llm-provider.interface'
 import { SessionEntity } from 'src/core/models'
-import { statisticsFetcherTool } from './tools/statistics-fetcher.tool'
-import type { AgentExecutor } from 'langchain/agents'
+import { statisticsFetcherTool, authCheckerTool, createRagRetrieverTool } from './tools/'
+import { MemoryService } from 'src/memory/memory.service'
+import { LangchainSessionMemory } from 'src/memory/langchain-session-memory'
+import { RagService } from '../rag/rag.service'
 
 /**
  * LlmService
@@ -26,8 +31,10 @@ export class LlmService {
   private readonly logger = new Logger(LlmService.name)
   /** The current LLM instance (OpenAI, Anthropic, or Ollama) */
   private llm: ChatOpenAI | ChatAnthropic | ChatOllama
-  /** Tool-enabled agent executor (if tools are configured) */
-  private agentExecutor: AgentExecutor | null = null
+  /** Tool-calling agent (without executor) */
+  private agent: Runnable | null = null
+  /** Tools available for the agent */
+  private tools: DynamicStructuredTool[] = []
   /** The agent's system prompt (loaded from environment) */
   private readonly agentPrompt: string
 
@@ -36,14 +43,21 @@ export class LlmService {
    * and configures the tool-calling agent if supported.
    *
    * @param config - The NestJS ConfigService instance.
+   * @param memoryService - Backend-agnostic chat memory service (in-memory / Redis).
    */
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly memoryService: MemoryService,
+    private readonly ragService: RagService,
+  ) {
     this.agentPrompt = this.config.get<string>('appConfig.agentPrompt') ?? 'You are a helpful AI agent called Hologram.'
 
     const provider = (this.config.get<string>('LLM_PROVIDER') ?? 'openai') as SupportedProviders
     this.llm = this.instantiateLlm(provider)
     const tools: DynamicStructuredTool[] = this.buildTools()
+    this.tools = tools
     this.logger.debug(`*** TOOLS: ${JSON.stringify(tools, null, 2)}`)
+
     if (tools.length && (provider === 'openai' || provider === 'anthropic')) {
       this.setupToolAgent(tools)
         .then(() => this.logger.log(`Tool-enabled agent initialised with ${tools.length} tools.`))
@@ -56,15 +70,20 @@ export class LlmService {
   }
 
   /**
-   * Generates a response from the LLM agent, using tool-enabled agents if available,
-   * otherwise falls back to a plain system+user prompt.
-   * Handles context/history placeholder requirements, logs execution steps, and manages errors gracefully.
+   * Generates a response from the LLM agent, using tool-enabled agents with LangChain Memory
+   * when available, otherwise falls back to a plain system+user prompt.
    *
    * @param userMessage - The raw user input/message for the agent.
-   * @param _opts - Optional parameters, reserved for future context (e.g., language).
+   * @param options - Optional parameters, including session information.
    * @returns The generated response from the agent as a string.
    */
-  async generate(userMessage: string, options?: { session?: SessionEntity }): Promise<string> {
+  async generate(
+    userMessage: string,
+    options?: {
+      session?: SessionEntity
+      // history?: { role: 'user' | 'assistant' | 'system'; content: string }[] // legacy, ya no utilizado
+    },
+  ): Promise<string> {
     const session = options?.session
     this.logger.debug(`[generate] Initialize: ${JSON.stringify(session)}`)
 
@@ -72,61 +91,70 @@ export class LlmService {
     try {
       const today = new Date().toISOString().split('T')[0]
 
-      // If a tool-enabled agent is available, use it (requires chat_history placeholder)
-      if (this.agentExecutor) {
-        this.logger.debug('Using tool-enabled agent executor.')
+      if (this.agent && this.tools.length && session?.connectionId) {
+        this.logger.debug('Using tool-enabled agent with LangChain Memory.')
 
-        const result = await this.agentExecutor.invoke(
+        const { AgentExecutor } = await import('langchain/agents')
+
+        const memory = new LangchainSessionMemory(this.memoryService, session.connectionId)
+
+        const agentExecutor = new AgentExecutor({
+          agent: this.agent,
+          tools: this.tools,
+          memory,
+          verbose: this.config.get<boolean>('appConfig.agentVerbose') ?? false,
+        }) as any as AgentExecutor
+
+        const result = await agentExecutor.invoke(
           {
             input: userMessage,
-            chat_history: [],
             today,
           },
           {
             configurable: {
-              isAuthenticated: session?.isAuthenticated ?? true,
+              isAuthenticated: session?.isAuthenticated ?? false,
             },
           },
         )
 
         this.logger.debug(`Agent executor result: ${JSON.stringify(result)}`)
 
-        if (typeof result?.output === 'string') {
+        const output = (result as any)?.output ?? result
+
+        if (typeof output === 'string') {
           this.logger.log('Agent executor returned output string.')
-          return result.output
+          return this.sanitizeResponse(output)
         }
-        if (typeof result === 'string') {
-          this.logger.log('Agent executor returned string directly.')
-          return result
-        }
+
         this.logger.warn('Agent executor returned a non-string result. Returning JSON stringified result.')
-        return JSON.stringify(result)
+        return this.sanitizeResponse(JSON.stringify(output))
       }
 
-      // Fallback: build prompt using only system and user messages (no tools)
-      this.logger.debug('No agent executor present. Using plain prompt with system and user messages.')
+      /**
+       * Fallback: build prompt using only system and user messages (no tools, no LangChain memory).
+       */
+      this.logger.debug('No agent present. Using plain prompt with system and user messages.')
       const prompt = ChatPromptTemplate.fromMessages([
         ['system', this.agentPrompt],
         ['user', '{input}'],
       ])
       const messages = await prompt.formatMessages({ input: userMessage })
 
-      // Send formatted messages to the LLM
       const response = (await this.llm.invoke(messages)) as string | AIMessage | BaseMessage
 
       this.logger.debug(`Raw LLM response: ${JSON.stringify(response)}`)
 
       if (typeof response === 'string') {
         this.logger.log('LLM returned a string response.')
-        return response
+        return this.sanitizeResponse(response)
       }
       if (response && typeof (response as any).content === 'string') {
         this.logger.log('LLM returned a message object with content string.')
-        return (response as any).content
+        return this.sanitizeResponse((response as any).content)
       }
 
       this.logger.warn('LLM returned an unexpected response type. Returning JSON stringified response.')
-      return JSON.stringify(response)
+      return this.sanitizeResponse(JSON.stringify(response))
     } catch (error) {
       this.logger.error(
         `Error during agent response generation: ${error instanceof Error ? error.message : String(error)}`,
@@ -158,6 +186,8 @@ export class LlmService {
         return new ChatOpenAI({
           openAIApiKey: this.getOrThrow('OPENAI_API_KEY'),
           model: this.config.get<string>('appConfig.openaiModel') ?? 'gpt-4o',
+          temperature: this.config.get<number>('appConfig.openaiTemperature'),
+          maxTokens: this.config.get<number>('appConfig.openaiMaxTokens'),
         })
     }
   }
@@ -201,7 +231,6 @@ export class LlmService {
                 const isAuthenticated: boolean = config?.configurable?.isAuthenticated ?? false
                 this.logger.debug(`[Tool] config: ${JSON.stringify(config)}`)
                 this.logger.debug(`[Tool] isAuthenticated: ${isAuthenticated}`)
-                // Check if this tool requires authentication and if the user is authenticated
 
                 this.logger.debug(
                   `[DEBUG] isAuthenticated: ${JSON.stringify(isAuthenticated)} && requiresAuth ${JSON.stringify(def.requiresAuth)}`,
@@ -212,7 +241,6 @@ export class LlmService {
                   return 'Authentication is required to access this feature. Please authenticate and try again.'
                 }
 
-                // Execute the tool normally (external API call)
                 this.logger.log(`[Tool:${def.name}] Called with query: "${query}"`)
                 const url = def.endpoint.replace('{query}', encodeURIComponent(query))
                 this.logger.log(`[Tool:${def.name}] Requesting URL: ${url}`)
@@ -237,15 +265,18 @@ export class LlmService {
       this.logger.log('No LLM_TOOLS_CONFIG found – skipping dynamic tool loading.')
     }
 
-    // Add static tool for statistics
-    const staticTools = [statisticsFetcherTool]
+    // RAG tool
+    const ragTool = createRagRetrieverTool(this.ragService)
 
-    // Combine dynamic and static tools
+    // Static tools
+    const staticTools = [statisticsFetcherTool, authCheckerTool, ragTool]
+
+    // Combine dynamic, static and auth tool
     return [...dynamicTools, ...staticTools]
   }
 
   /**
-   * Sets up the tool-enabled agent executor using LangChain's agent API.
+   * Sets up the tool-enabled agent using LangChain's agent API.
    * This enables dynamic tool-calling with prompt injection and logging.
    *
    * @param tools - Array of DynamicStructuredTool instances.
@@ -268,13 +299,7 @@ export class LlmService {
       prompt,
     })
 
-    // Use dynamic import to avoid type recursion and runtime issues
-    const { AgentExecutor } = await import('langchain/agents')
-    this.agentExecutor = new AgentExecutor({
-      agent,
-      tools,
-      verbose: this.config.get<boolean>('appConfig.agentVerbose') ?? false,
-    }) as any
+    this.agent = agent
   }
 
   /**
@@ -288,6 +313,26 @@ export class LlmService {
     const value = this.config.get<string>(envVar) ?? process.env[envVar]
     if (!value) throw new Error(`Environment variable ${envVar} is required.`)
     return value
+  }
+
+  /**
+   * Removes common meta prefixes (e.g., "Response:", "System:") from model outputs
+   * so end-users only see the actual reply text.
+   */
+  private sanitizeResponse(text: string): string {
+    const normalized = text.replace(/[\r\n]+/g, '\n').trim()
+
+    const lines = normalized
+      .split('\n')
+      .map((line) => line.trim())
+      // Drop meta/thought lines the model may emit.
+      .filter((line) => !/^(response|assistant|system|analysis|thought|user)\s*:/i.test(line))
+
+    const cleaned = lines.join('\n')
+    const stripPrefixes = cleaned.replace(/^(response|assistant|system|analysis|thought)\s*:\s*/i, '')
+    const stripInline = stripPrefixes.replace(/\n(response|assistant|system|analysis|thought)\s*:\s*/gi, '\n')
+
+    return stripInline.trim()
   }
 
   async detectLanguage(this: LlmService, text: string): Promise<string> {

@@ -36,6 +36,7 @@ const AgentPackSchema = z
         provider: z.string().optional(),
         model: z.string().optional(),
         temperature: z.union([z.number(), z.string()]).optional(),
+        maxTokens: z.union([z.number(), z.string()]).optional(),
         agentPrompt: z.string().optional(),
         verbose: z.union([z.boolean(), z.string()]).optional(),
       })
