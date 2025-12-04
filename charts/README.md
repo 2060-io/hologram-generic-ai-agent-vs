@@ -103,6 +103,8 @@ Below is a summary of the environment variables required by each component. All 
 | Env    | LOG_LEVEL                | Logging level                     |
 | Env    | LLM_PROVIDER             | LLM provider name                 |
 | Env    | OPENAI_MODEL             | Model name for OpenAI             |
+| Env    | OPENAI_TEMPERATURE       | Temperature for OpenAI completions|
+| Env    | OPENAI_MAX_TOKENS        | Max tokens per OpenAI completion  |
 | Env    | VECTOR_STORE             | Vector DB to use                  |
 | Env    | VECTOR_INDEX_NAME        | Name of vector index              |
 | Env    | RAG_PROVIDER             | RAG implementation used           |
@@ -127,7 +129,12 @@ Below is a summary of the environment variables required by each component. All 
 | Env    | LLM_TOOLS_CONFIG         | LLM tools config (JSON)           |
 | Env    | STATISTICS_API_URL       | External statistics API endpoint  |
 | Env    | STATISTICS_REQUIRE_AUTH  | Require auth on stats             |
+| Env    | STATISTICS_TOOL_ENABLED  | Enable/disable bundled stats tool |
+| Env    | OLLAMA_ENDPOINT          | Ollama endpoint                   |
+| Env    | OLLAMA_MODEL             | Ollama model name                 |
 | Secret | OPENAI_API_KEY           | OpenAI API key                    |
+| Secret | ANTHROPIC_API_KEY        | Anthropic API key                 |
+| Secret | PINECONE_API_KEY         | Pinecone API key                  |
 | Secret | POSTGRES_USER            | DB user                           |
 | Secret | POSTGRES_PASSWORD        | DB password                       |
 | Secret | POSTGRES_DB_NAME         | DB name                           |
