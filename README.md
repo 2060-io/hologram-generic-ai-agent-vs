@@ -18,7 +18,9 @@ All configuration is managed via environment variables.
 | `AGENT_PACK_PATH`          | Filesystem path to the agent pack manifest (`agent-pack.yaml`); if missing, falls back to env vars    | `./agent-packs/hologram-welcome` |
 | `LLM_PROVIDER`             | LLM backend: `openai`, `ollama`, `anthropic`, etc.                                                    | `ollama`                 |
 | `OPENAI_API_KEY`           | API key for OpenAI (required if using OpenAI)                                                         | `sk-xxx`                 |
-| `OPENAI_MODEL`             | OpenAI model to use (e.g., `gpt-3.5-turbo`, `gpt-4`)                                                  | `gpt-3.5-turbo`          |
+| `OPENAI_MODEL`             | OpenAI model to use (e.g., `gpt-3.5-turbo`, `gpt-4o-mini`)                                            | `gpt-4o-mini`            |
+| `OPENAI_TEMPERATURE`       | Temperature for OpenAI completions (0-1)                                                              | `0.3`                    |
+| `OPENAI_MAX_TOKENS`        | Max tokens per completion for OpenAI                                                                  | `512`                    |
 | `OLLAMA_ENDPOINT`          | Ollama endpoint (use container URL if running with Docker Compose)                                    | `http://ollama:11435`    |
 | `OLLAMA_MODEL`             | Ollama model to use (`llama3`, etc.)                                                                  | `llama3`                 |
 | `ANTHROPIC_API_KEY`        | API key for Anthropic (Claude)                                                                        |                          |
