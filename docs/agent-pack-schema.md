@@ -59,9 +59,12 @@ llm:
   provider: ${LLM_PROVIDER}
   model: ${OPENAI_MODEL}
   temperature: 0.3
+  maxTokens: 1000
   agentPrompt: |
     You are an AI agent called Karen...
 ```
+
+- `temperature` and `maxTokens` can also be provided via environment variables `OPENAI_TEMPERATURE` and `OPENAI_MAX_TOKENS`. Defaults (if neither pack nor env set them) are `0.3` and `512`, and the default model is `gpt-4o-mini`.
 
 ### rag
 
