@@ -21,7 +21,13 @@ chatbot:
     - name: LLM_PROVIDER
       value: 'openai'
     - name: OPENAI_MODEL
-      value: 'gpt-4'
+      value: 'gpt-4o-mini'
+    - name: OPENAI_TEMPERATURE
+      value: '0.3'
+    - name: OPENAI_MAX_TOKENS
+      value: '512'
+    - name: AGENT_PACK_PATH
+      value: '/app/agent-packs/custom-pack'
     - name: VECTOR_STORE
       value: 'redis'
     - name: VECTOR_INDEX_NAME
@@ -71,6 +77,21 @@ chatbot:
       value: 'http://example-stats:8700/stats/view'
     - name: STATISTICS_REQUIRE_AUTH
       value: 'true'
+  agentPack:
+    enabled: true
+    name: custom-pack
+    mountPath: ''
+    fileName: agent-pack.yaml
+    existingConfigMap: ''
+    content: |
+      metadata:
+        id: custom-pack
+        displayName: Custom Pack
+        defaultLanguage: en
+      languages:
+        en:
+          greetingMessage: "Welcome to your custom agent!"
+          systemPrompt: "You are a helpful agent."
   secret:
     OPENAI_API_KEY: 'sk-example-openai-api-key'
     POSTGRES_PASSWORD: 'example-db-password'

@@ -6,6 +6,7 @@ import { ConnectionEntity, EventsModule } from '@2060.io/vs-agent-nestjs-client'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { ChatbotModule } from 'src/chatbot/chatbot.module'
 import { MemoryModule } from 'src/memory/memory.module'
+import { AgentContentService } from './agent-content.service'
 
 @Global()
 @Module({
@@ -34,7 +35,7 @@ import { MemoryModule } from 'src/memory/memory.module'
     EventsModule,
   ],
   controllers: [],
-  providers: [CoreService],
-  exports: [TypeOrmModule, CoreService],
+  providers: [CoreService, AgentContentService],
+  exports: [TypeOrmModule, CoreService, AgentContentService],
 })
 export class CoreModule {}

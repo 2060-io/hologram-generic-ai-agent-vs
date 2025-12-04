@@ -17,14 +17,18 @@ services:
       - redis
       - artemis
     environment:
+      AGENT_PACK_PATH: ${AGENT_PACK_PATH}
       APP_PORT: ${APP_PORT}
       LOG_LEVEL: ${LOG_LEVEL}
       VECTOR_STORE: ${VECTOR_STORE}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_TEMPERATURE: ${OPENAI_TEMPERATURE}
+      OPENAI_MAX_TOKENS: ${OPENAI_MAX_TOKENS}
       AGENT_MEMORY_BACKEND: ${AGENT_MEMORY_BACKEND}
       REDIS_URL: ${REDIS_URL}
       AGENT_MEMORY_WINDOW: ${AGENT_MEMORY_WINDOW}
       LLM_PROVIDER: ${LLM_PROVIDER}
+      OPENAI_MODEL: ${OPENAI_MODEL}
       RAG_PROVIDER: ${RAG_PROVIDER}
       RAG_DOCS_PATH: ${RAG_DOCS_PATH}
       RAG_REMOTE_URLS: ${RAG_REMOTE_URLS}
@@ -46,10 +50,12 @@ services:
       VS_AGENT_STATS_PASSWORD: ${VS_AGENT_STATS_PASSWORD}
       STATISTICS_API_URL: ${STATISTICS_API_URL}
       STATISTICS_REQUIRE_AUTH: ${STATISTICS_REQUIRE_AUTH}
+      STATISTICS_TOOL_ENABLED: ${STATISTICS_TOOL_ENABLED}
     ports:
       - "${APP_PORT}:${APP_PORT}"
     volumes:
       - ./docs:/app/rag/docs
+      - ./agent-packs:/app/agent-packs
     networks:
       - chatbot
 

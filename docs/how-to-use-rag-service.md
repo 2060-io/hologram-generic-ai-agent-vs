@@ -2,17 +2,18 @@
 
 ## Overview
 
-The `RAG Service` is a modular Retrieval Augmented Generation (RAG) implementation, is designed to flexibly support multiple RAG providers and vector store backends, allowing easy switching between them via environment variables. This design enables seamless integration with different technologies without changing your application logic.
+The `RAG Service` is a modular Retrieval Augmented Generation (RAG) layer exposed to the agent as a LangChain tool (`rag_retriever`). It supports multiple providers/backends and is driven entirely by configuration (env vars or agent-pack), so you can switch storage or document sources without code changes.
 
 ---
 
 ## Key Features
 
-- **Provider-Agnostic:** Easily switch between different RAG providers (currently, vector-store and langchain).
-- **Pluggable Vector Stores:** In LangChain mode, supports both Pinecone and Redis as backends for vector search.
-- **Real Embeddings:** Uses production-ready embeddings (e.g., OpenAI) for all backends.
-- **Extensible:** Architecture allows adding new providers or vector stores with minimal changes.
-- **Automatic Document Loading:** On startup, automatically loads `.txt`, `.md`, `.pdf`, and `.csv` files from a configurable directory (`RAG_DOCS_PATH`). It can also download and cache remote files defined in `RAG_REMOTE_URLS`. If no documents are found, a test document is created.
+- **Provider-Agnostic:** Switch between `vectorstore` and `langchain` via config.
+- **Pluggable Vector Stores:** In LangChain mode, supports Pinecone or Redis.
+- **Real Embeddings:** Uses production-ready embeddings (OpenAI by default).
+- **Tool-first:** Exposed to the agent as the `rag_retriever` DynamicStructuredTool (built inside `LlmService`).
+- **Automatic Document Loading:** On startup, loads `.txt`, `.md`, `.pdf`, `.csv` from `RAG_DOCS_PATH` (or `rag.docsPath` in the agent-pack) and caches remote docs. If no docs are found, a test document is created.
+- **Configurable Chunking:** Defaults to `RAG_CHUNK_SIZE=1000`, `RAG_CHUNK_OVERLAP=200`, overridable by env or agent-pack.
 
 ---
 
@@ -38,13 +39,13 @@ RAG_PROVIDER=langchain           # or 'vector-store'
 OPENAI_API_KEY=sk-xxx            # Your OpenAI key (if using OpenAI embeddings)
 
 # Document loading & chunking
-RAG_DOCS_PATH=/app/rag/docs
+RAG_DOCS_PATH=/app/docs
 RAG_REMOTE_URLS='["https://example.com/file.pdf","https://example.com/data.csv"]'  # optional
 RAG_CHUNK_SIZE=1000
 RAG_CHUNK_OVERLAP=200
 ```
 
-- `RAG_DOCS_PATH` is the base folder for local documents and the cache root for remote downloads (`<RAG_DOCS_PATH>/docs`).
+- `RAG_DOCS_PATH` is the base folder for local documents and the cache root for remote downloads (`<RAG_DOCS_PATH>/docs`). Agent-pack `rag.docsPath` can override this.
 - `RAG_REMOTE_URLS` can be a comma-separated list or JSON array of remote files to fetch; supported extensions: `.txt`, `.md`, `.pdf`, `.csv`.
 - `RAG_CHUNK_SIZE` and `RAG_CHUNK_OVERLAP` control how documents are split prior to indexing and are honored by every backend.
 
@@ -88,18 +89,22 @@ VECTOR_STORE=custom              # Example value, handled by your custom code
 ### 1. Provider Selection
 
 - At startup, the service reads `RAG_PROVIDER`.
-  - If `vector-store`, it initializes your custom/document vector search logic.
-  - If `langchain`, it reads `VECTOR_STORE` to choose between Pinecone or Redis (both via LangChainJS).
+  - If `vectorstore`, it initializes the custom/document vector search logic.
+  - If `langchain`, it reads `VECTOR_STORE` to choose Pinecone or Redis (via LangChainJS).
 
 ### 2. Embeddings
 
-- Uses real embeddings (like OpenAI) for vectorization, regardless of backend.
-- Embeddings provider is chosen/configured via environment variable (e.g., `OPENAI_API_KEY`).
+- Uses OpenAI embeddings by default (requires `OPENAI_API_KEY`), regardless of backend.
 
 ### 3. Document Operations
 
-- **Automatic loading:** All `.txt` and `.pdf` files in `RAG_DOCS_PATH` are indexed on service startup.
+- **Automatic loading:** All `.txt/.md/.pdf/.csv` files in `RAG_DOCS_PATH` (or agent-pack `rag.docsPath`) are indexed on startup. Remote URLs are cached under the same root.
 - **Manual addition:** You can add documents to the vector store using `.addDocument(id, text)`.
+
+### 4. Agent Tool Exposure
+
+- The `rag_retriever` tool is created in `LlmService.buildTools()` via `createRagRetrieverTool(ragService)`.
+- Agents built with `createToolCallingAgent` can call this tool automatically when the prompt/model decides to retrieve context.
 
 ---
 
@@ -176,3 +181,4 @@ VECTOR_STORE=custom    # Any value your custom code recognizes
   - **Redis:** Fast and simple, great for dev and small scale.
   - **Pinecone:** Cloud-native, scalable for production workloads.
 - Separate configuration for each environment (dev, staging, prod) for flexibility.
+- Ensure your prompts/agent include the `rag_retriever` tool so the model can ground answers on documents instead of hallucinating.

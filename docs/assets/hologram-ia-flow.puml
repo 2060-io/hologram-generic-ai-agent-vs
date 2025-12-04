@@ -17,8 +17,8 @@ CS -> CS : sendContextualMenu()
 User -> CS : ProfileMessage
 CS -> CS : handleSession()
 CS -> CS : update lang
-CS -> CS : welcomeMessage()
-CS -> API : send(TextMessage with welcome)
+CS -> CS : sendGreetingMessage()
+CS -> API : send(TextMessage with greeting)
 
 == Menu Selection ==
 User -> CS : ContextualMenuSelectMessage

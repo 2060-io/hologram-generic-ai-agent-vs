@@ -10,6 +10,23 @@ stringData:
   {{- end }}
 
 ---
+{{- $pack := .Values.chatbot.agentPack }}
+{{- $packName := default "custom-pack" $pack.name }}
+{{- $packMountPath := default (printf "/app/agent-packs/%s" $packName) $pack.mountPath }}
+{{- $packFileName := default "agent-pack.yaml" $pack.fileName }}
+{{- $packConfigMap := default (printf "%s-agent-pack" (include "chatbot.fullname" .)) (tpl $pack.existingConfigMap $) }}
+{{- if and $pack.enabled (not $pack.existingConfigMap) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $packConfigMap }}
+  namespace: {{ .Release.Namespace }}
+data:
+  {{ $packFileName }}: |
+{{ tpl $pack.content $ | indent 4 }}
+
+---
+{{- end }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -85,6 +102,10 @@ spec:
             - name: {{ .name }}
               value: {{ tpl .value $ | quote }}
             {{- end }}
+            {{- if $pack.enabled }}
+            - name: AGENT_PACK_PATH
+              value: {{ $packMountPath | quote }}
+            {{- end }}
             {{- range $key, $val := .Values.chatbot.secret }}
             - name: {{ $key }}
               valueFrom:
@@ -95,6 +116,20 @@ spec:
           volumeMounts:
             - name: pvc-{{ include "chatbot.fullname" . }}-chatbot
               mountPath: /app/rag/docs
+            {{- if $pack.enabled }}
+            - name: agent-pack
+              mountPath: {{ $packMountPath }}
+              readOnly: true
+            {{- end }}
+      {{- if $pack.enabled }}
+      volumes:
+        - name: agent-pack
+          configMap:
+            name: {{ $packConfigMap }}
+            items:
+              - key: {{ $packFileName }}
+                path: {{ $packFileName }}
+      {{- end }}
   volumeClaimTemplates:
     - metadata:
         name: pvc-{{ include "chatbot.fullname" . }}-chatbot
