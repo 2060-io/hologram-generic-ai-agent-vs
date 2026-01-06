@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.0](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.8.1...v1.9.0) (2026-01-06)
+
+
+### Features
+
+* generic AI agent via configurable agent packs ([#40](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/40)) ([d9ea4c5](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/d9ea4c5cfd6d5e1eaf8611770305bb562955562f))
+* Update Generic AI Agent chart to use VS Agent 1.5.6 ([#50](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/50)) ([d730f80](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/d730f8046a51c7503ecd1dc09bb644600adb7f50))
+
 ## [1.8.1](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.8.0...v1.8.1) (2025-12-03)
 
 
