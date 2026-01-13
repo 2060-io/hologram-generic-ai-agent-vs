@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.9.1](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.9.0...v1.9.1) (2026-01-13)
+
+
+### Bug Fixes
+
+* bump to vs-agent 1.6.0-dev ([fd1f450](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/fd1f450682f937dc5806ec829267e31eed5acf7f))
+* bump vs-agent dependency to 1.5.7 ([#52](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/52)) ([028633f](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/028633f44e7b39e7608d651b33ceeac9434f2f5a))
+* bump vs-agent to 1.6.0 stable ([cf7b5e6](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/cf7b5e6d99e7d8d409c1ed7fcda1771661db290a))
+* bump vs-agent version ([65c0599](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/65c0599c13a9c2a7a287fdccddf8e5baee6aac96))
+
 ## [1.9.0](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.8.1...v1.9.0) (2026-01-06)
 
 
