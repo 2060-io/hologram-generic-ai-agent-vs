@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.9.1...v1.10.0) (2026-01-16)
+
+
+### Features
+
+* Add agentNameOverride support to agent custom naming ([#54](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/54)) ([1c79b7d](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/1c79b7dc5912321f032bc7752907ef3541e2644b))
+
 ## [1.9.1](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.9.0...v1.9.1) (2026-01-13)
 
 
