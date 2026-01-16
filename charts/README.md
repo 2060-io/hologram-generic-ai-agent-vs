@@ -10,6 +10,30 @@ This Helm chart deploys the `hologram-generic-ai-agent-vs` application and all r
 
 ---
 
+## Custom name
+
+Use `nameOverride` to set a fixed name/prefix for all components (avoids collisions across agents or deployments). If you leave it empty, the chart name is used. Example: to keep the prefix `hologram-welcome-ai-agent`, set it in `values.yaml` or via CLI:
+
+```yaml
+nameOverride: hologram-welcome-ai-agent
+```
+
+or
+
+```bash
+helm upgrade --install hologram-welcome ./charts --namespace <ns> --set nameOverride=hologram-welcome-ai-agent
+```
+
+With that setting, resources render as:
+
+- `hologram-welcome-ai-agent-chatbot-0` (app/chatbot)
+- `hologram-welcome-ai-agent-postgres-0`
+- `hologram-welcome-ai-agent-redis-0`
+- `hologram-welcome-ai-agent-stats-0`
+- `hologram-welcome` (VS Agent, from dependency)
+
+---
+
 ## Installation Guide
 
 ### 1. Lint the Chart
@@ -97,47 +121,47 @@ Below is a summary of the environment variables required by each component. All 
 
 ### 📦 Chatbot
 
-| Source | Key                      | Description                       |
-| ------ | ------------------------ | --------------------------------- |
-| Env    | APP_PORT                 | Port where the chatbot runs       |
-| Env    | LOG_LEVEL                | Logging level                     |
-| Env    | LLM_PROVIDER             | LLM provider name                 |
-| Env    | OPENAI_MODEL             | Model name for OpenAI             |
-| Env    | OPENAI_TEMPERATURE       | Temperature for OpenAI completions|
-| Env    | OPENAI_MAX_TOKENS        | Max tokens per OpenAI completion  |
-| Env    | VECTOR_STORE             | Vector DB to use                  |
-| Env    | VECTOR_INDEX_NAME        | Name of vector index              |
-| Env    | RAG_PROVIDER             | RAG implementation used           |
-| Env    | RAG_DOCS_PATH            | Base path for RAG docs & cache    |
-| Env    | RAG_CHUNK_SIZE           | Chunk size for document splitting |
-| Env    | RAG_CHUNK_OVERLAP        | Chunk overlap for splitting       |
-| Env    | RAG_REMOTE_URLS          | Remote document URLs (JSON list)  |
-| Env    | AGENT_MEMORY_BACKEND     | Memory backend                    |
-| Env    | AGENT_MEMORY_WINDOW      | Memory window size                |
-| Env    | AGENT_PACK_PATH          | Path to the mounted agent pack    |
-| Env    | VS_AGENT_STATS_ENABLED   | Enable stats fetching             |
-| Env    | VS_AGENT_STATS_HOST      | Stats broker host                 |
-| Env    | VS_AGENT_STATS_PORT      | Broker port                       |
-| Env    | VS_AGENT_STATS_QUEUE     | Broker queue name                 |
-| Env    | VS_AGENT_STATS_USER      | Broker user                       |
-| Env    | VS_AGENT_STATS_PASSWORD  | Broker password                   |
-| Env    | REDIS_URL                | Redis connection URL              |
-| Env    | AGENT_PROMPT             | Custom LLM agent prompt           |
-| Env    | VS_AGENT_ADMIN_URL       | VS Agent admin URL                |
-| Env    | CREDENTIAL_DEFINITION_ID | VC credential definition          |
-| Env    | POSTGRES_HOST            | Postgres host URL                 |
-| Env    | LLM_TOOLS_CONFIG         | LLM tools config (JSON)           |
-| Env    | STATISTICS_API_URL       | External statistics API endpoint  |
-| Env    | STATISTICS_REQUIRE_AUTH  | Require auth on stats             |
-| Env    | STATISTICS_TOOL_ENABLED  | Enable/disable bundled stats tool |
-| Env    | OLLAMA_ENDPOINT          | Ollama endpoint                   |
-| Env    | OLLAMA_MODEL             | Ollama model name                 |
-| Secret | OPENAI_API_KEY           | OpenAI API key                    |
-| Secret | ANTHROPIC_API_KEY        | Anthropic API key                 |
-| Secret | PINECONE_API_KEY         | Pinecone API key                  |
-| Secret | POSTGRES_USER            | DB user                           |
-| Secret | POSTGRES_PASSWORD        | DB password                       |
-| Secret | POSTGRES_DB_NAME         | DB name                           |
+| Source | Key                      | Description                        |
+| ------ | ------------------------ | ---------------------------------- |
+| Env    | APP_PORT                 | Port where the chatbot runs        |
+| Env    | LOG_LEVEL                | Logging level                      |
+| Env    | LLM_PROVIDER             | LLM provider name                  |
+| Env    | OPENAI_MODEL             | Model name for OpenAI              |
+| Env    | OPENAI_TEMPERATURE       | Temperature for OpenAI completions |
+| Env    | OPENAI_MAX_TOKENS        | Max tokens per OpenAI completion   |
+| Env    | VECTOR_STORE             | Vector DB to use                   |
+| Env    | VECTOR_INDEX_NAME        | Name of vector index               |
+| Env    | RAG_PROVIDER             | RAG implementation used            |
+| Env    | RAG_DOCS_PATH            | Base path for RAG docs & cache     |
+| Env    | RAG_CHUNK_SIZE           | Chunk size for document splitting  |
+| Env    | RAG_CHUNK_OVERLAP        | Chunk overlap for splitting        |
+| Env    | RAG_REMOTE_URLS          | Remote document URLs (JSON list)   |
+| Env    | AGENT_MEMORY_BACKEND     | Memory backend                     |
+| Env    | AGENT_MEMORY_WINDOW      | Memory window size                 |
+| Env    | AGENT_PACK_PATH          | Path to the mounted agent pack     |
+| Env    | VS_AGENT_STATS_ENABLED   | Enable stats fetching              |
+| Env    | VS_AGENT_STATS_HOST      | Stats broker host                  |
+| Env    | VS_AGENT_STATS_PORT      | Broker port                        |
+| Env    | VS_AGENT_STATS_QUEUE     | Broker queue name                  |
+| Env    | VS_AGENT_STATS_USER      | Broker user                        |
+| Env    | VS_AGENT_STATS_PASSWORD  | Broker password                    |
+| Env    | REDIS_URL                | Redis connection URL               |
+| Env    | AGENT_PROMPT             | Custom LLM agent prompt            |
+| Env    | VS_AGENT_ADMIN_URL       | VS Agent admin URL                 |
+| Env    | CREDENTIAL_DEFINITION_ID | VC credential definition           |
+| Env    | POSTGRES_HOST            | Postgres host URL                  |
+| Env    | LLM_TOOLS_CONFIG         | LLM tools config (JSON)            |
+| Env    | STATISTICS_API_URL       | External statistics API endpoint   |
+| Env    | STATISTICS_REQUIRE_AUTH  | Require auth on stats              |
+| Env    | STATISTICS_TOOL_ENABLED  | Enable/disable bundled stats tool  |
+| Env    | OLLAMA_ENDPOINT          | Ollama endpoint                    |
+| Env    | OLLAMA_MODEL             | Ollama model name                  |
+| Secret | OPENAI_API_KEY           | OpenAI API key                     |
+| Secret | ANTHROPIC_API_KEY        | Anthropic API key                  |
+| Secret | PINECONE_API_KEY         | Pinecone API key                   |
+| Secret | POSTGRES_USER            | DB user                            |
+| Secret | POSTGRES_PASSWORD        | DB password                        |
+| Secret | POSTGRES_DB_NAME         | DB name                            |
 
 ---
 
