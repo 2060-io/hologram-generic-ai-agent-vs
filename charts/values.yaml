@@ -2,7 +2,7 @@ global:
   domain: dev.2060.io
 
 # Example to match legacy naming from the reviewer:
-agentNameOverride: 'hologram-welcome-ai-agent'
+nameOverride: 'hologram-welcome-ai-agent'
 
 chatbot:
   name: chatbot

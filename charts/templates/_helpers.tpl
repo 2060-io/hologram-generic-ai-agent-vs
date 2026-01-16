@@ -1,10 +1,10 @@
 {{- define "chatbot.name" -}}
-{{- default .Chart.Name .Values.agentNameOverride | trunc 63 | trimSuffix "-" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{- define "chatbot.fullname" -}}
-{{- if .Values.agentNameOverride -}}
-{{- .Values.agentNameOverride | trunc 63 | trimSuffix "-" -}}
+{{- if .Values.nameOverride -}}
+{{- .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
 {{- printf "%s" .Chart.Name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}

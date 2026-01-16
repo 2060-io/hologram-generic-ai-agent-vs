@@ -12,16 +12,16 @@ This Helm chart deploys the `hologram-generic-ai-agent-vs` application and all r
 
 ## Custom name
 
-Use `agentNameOverride` to set a fixed name/prefix for all components (avoids collisions across agents or deployments). If you leave it empty, the chart name is used. Example: to keep the prefix `hologram-welcome-ai-agent`, set it in `values.yaml` or via CLI:
+Use `nameOverride` to set a fixed name/prefix for all components (avoids collisions across agents or deployments). If you leave it empty, the chart name is used. Example: to keep the prefix `hologram-welcome-ai-agent`, set it in `values.yaml` or via CLI:
 
 ```yaml
-agentNameOverride: hologram-welcome-ai-agent
+nameOverride: hologram-welcome-ai-agent
 ```
 
 or
 
 ```bash
-helm upgrade --install hologram-welcome ./charts --namespace <ns> --set agentNameOverride=hologram-welcome-ai-agent
+helm upgrade --install hologram-welcome ./charts --namespace <ns> --set nameOverride=hologram-welcome-ai-agent
 ```
 
 With that setting, resources render as:
