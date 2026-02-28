@@ -4,6 +4,11 @@ global:
 # Example to match legacy naming from the reviewer:
 nameOverride: 'hologram-welcome-ai-agent'
 
+image:
+  repository: ""
+  # Tag defaults to Chart.Version if not specified
+  tag: ""
+
 chatbot:
   name: chatbot
   replicas: 1
