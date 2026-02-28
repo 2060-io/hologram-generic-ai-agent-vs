@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.10.0](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.9.1...v1.10.0) (2026-02-28)
+
+
+### Features
+
+* Add agentNameOverride support to agent custom naming ([#54](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/54)) ([1c79b7d](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/1c79b7dc5912321f032bc7752907ef3541e2644b))
+* Update charts with vs-agent 1.7.0 ([#56](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/56)) ([811fa01](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/811fa0123936bbb79ddbadb668384f55c32facaf))
+
+
+### Bug Fixes
+
+* charts update vs agent image ([#57](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/57)) ([49ece1d](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/49ece1def09e4c8c10288f10cc91f350a4d2c5f0))
+
 ## [1.9.1](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.9.0...v1.9.1) (2026-01-13)
 
 
