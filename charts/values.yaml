@@ -193,15 +193,15 @@ postgres:
       value: 'example-db-user'
     - name: POSTGRES_DB
       value: 'example-db-name'
-  password:
-    # Value used when no existingSecret.name is provided (chart creates its own Secret).
-    value: 'example-db-password'
-    existingSecret:
-      # Name of an existing secret containing the postgres password.
-      # If set, the chart will NOT create a local Secret and will use this one instead.
-      name: 'example-secret'
-      # Key within the secret that holds the password.
-      key: 'POSTGRES_PASSWORD'
+    - name: POSTGRES_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: postgres-secret
+          key: POSTGRES_PASSWORD
+  # secret: local dev only — chart creates and manages this Secret.
+  # secret:
+  #   POSTGRES_PASSWORD: 'example-db-password'
+  secret: {}
   resources:
     requests:
       cpu: '200m'
