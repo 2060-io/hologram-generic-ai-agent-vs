@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ include "chatbot.fullname" . }}-postgres-secret
+  name: postgres-secret
   namespace: {{ .Release.Namespace }}
 type: Opaque
 stringData:
@@ -64,7 +64,7 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ if .Values.postgres.password.existingSecret.name }}{{ .Values.postgres.password.existingSecret.name }}{{ else }}{{ include "chatbot.fullname" . }}-postgres-secret{{ end }}
+                  name: {{ if .Values.postgres.password.existingSecret.name }}{{ .Values.postgres.password.existingSecret.name }}{{ else }}postgres-secret{{ end }}
                   key: {{ .Values.postgres.password.existingSecret.key }}
           volumeMounts:
             - name: pvc-{{ include "chatbot.fullname" . }}-postgres
