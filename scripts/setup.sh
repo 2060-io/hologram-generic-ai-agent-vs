@@ -26,8 +26,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# shellcheck source=../common/common.sh
-source "${PROJECT_DIR}/common/common.sh"
+# shellcheck source=common.sh
+source "${SCRIPT_DIR}/common.sh"
 
 # ---------------------------------------------------------------------------
 # Configuration — override via environment or config.env

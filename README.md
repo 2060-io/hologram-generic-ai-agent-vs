@@ -36,14 +36,12 @@ src/
   └── main.ts         # Application bootstrap
 
 scripts/
+  ├── common.sh       # Shared shell helpers (logging, network config, credential helpers)
   ├── setup.sh        # Full local setup: VS Agent + ngrok + veranad + credentials
   └── start.sh        # Start chatbot in dev mode (hot-reload)
 
 docker/
   └── docker-compose.yml   # Infrastructure services (VS Agent, Redis, PostgreSQL)
-
-common/
-  └── common.sh       # Shared shell helpers (logging, network config, credential helpers)
 
 agent-packs/
   ├── hologram-welcome/    # Default welcome agent pack
