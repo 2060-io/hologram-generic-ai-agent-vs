@@ -14,7 +14,7 @@ The agent is designed to be **container-generic**: a single Docker image that ca
 ┌──────────────────────────────────────────────────────┐
 │  Hologram User (Mobile Wallet)                       │
 │  - DIDComm messaging                                 │
-│  - AnonCred credential presentation                  │
+│  - AnonCreds credential presentation                  │
 │  - Media file sharing                                │
 └───────────────┬──────────────────────────────────────┘
                 │ DIDComm / Hologram Protocol
