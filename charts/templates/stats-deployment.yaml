@@ -1,3 +1,4 @@
+{{- if .Values.stats.enabled }}
 {{- if .Values.stats.secret }}
 apiVersion: v1
 kind: Secret
@@ -98,3 +99,4 @@ spec:
                   name: stats-secret
                   key: {{ $key }}
             {{- end }}
+{{- end }}
