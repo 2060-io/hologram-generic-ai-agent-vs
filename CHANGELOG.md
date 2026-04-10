@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.2](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.11.1...v1.11.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* proactively connect user-controlled MCP servers before LLM runs ([#66](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/66)) ([904d775](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/904d775c46cc1f906557af97494e7513dbad6c92))
+
 ## [1.11.1](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.11.0...v1.11.1) (2026-04-10)
 
 
