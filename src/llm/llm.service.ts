@@ -46,6 +46,12 @@ export class LlmService implements OnModuleInit {
   private baseTools: DynamicStructuredTool[] = []
   /** Last known McpService.toolsVersion — used to detect lazy tool discoveries */
   private lastToolsVersion = -1
+  /** Raw MCP tool metadata — retained for per-user RBAC filtering */
+  private allMcpToolInfos: { serverName: string; name: string; description?: string; inputSchema: Record<string, unknown>; isPublic: boolean }[] = []
+  /** Wrapped MCP tools indexed by "serverName/toolName" for efficient per-role reuse */
+  private mcpToolMap = new Map<string, DynamicStructuredTool>()
+  /** Cached RBAC-filtered agents keyed by sorted role-set string */
+  private rbacAgentCache = new Map<string, { agent: Runnable | null; tools: DynamicStructuredTool[] }>()
   /** The agent's system prompt (loaded from environment) */
   private readonly agentPrompt: string
   /** LLM provider name */
@@ -123,6 +129,9 @@ export class LlmService implements OnModuleInit {
         this.logger.log(`MCP tools refreshed: ${allMcpTools.length} total (${pubNames.length} public, ${adminOnlyNames.length} admin-only). toolsVersion=${currentVersion}`)
       }
 
+      // Clear RBAC agent cache since tools have changed
+      this.rbacAgentCache.clear()
+
       // Rebuild agents with updated tool sets
       if ((this.provider === 'openai' || this.provider === 'anthropic') && this.publicTools.length > 0) {
         const { publicAgent, adminAgent } = await this.setupToolAgent(this.publicTools, this.adminTools)
@@ -167,8 +176,21 @@ export class LlmService implements OnModuleInit {
       // Check if MCP tools have been lazily discovered since last call
       await this.refreshMcpTools()
 
-      const agent = isAdmin ? this.adminAgent : this.publicAgent
-      const tools = isAdmin ? this.adminTools : this.publicTools
+      // Select agent and tools based on admin status and RBAC roles
+      let agent: Runnable | null
+      let tools: DynamicStructuredTool[]
+
+      if (isAdmin) {
+        agent = this.adminAgent
+        tools = this.adminTools
+      } else if (this.rbacService.isRbacActive() && session?.userRoles?.length) {
+        const rbac = await this.getOrCreateRbacAgent(session.userRoles)
+        agent = rbac.agent
+        tools = rbac.tools
+      } else {
+        agent = this.publicAgent
+        tools = this.publicTools
+      }
 
       if (agent && tools.length && session?.connectionId) {
         this.logger.debug('Using tool-enabled agent with LangChain Memory.')
@@ -420,8 +442,15 @@ export class LlmService implements OnModuleInit {
       })
     }
 
-    const allMcpTools = allInfos.map(wrapTool)
-    const publicMcpTools = allInfos.filter((i) => i.isPublic).map(wrapTool)
+    // Store metadata and build reusable tool map for per-role filtering
+    this.allMcpToolInfos = allInfos
+    this.mcpToolMap.clear()
+    for (const info of allInfos) {
+      this.mcpToolMap.set(`${info.serverName}/${info.name}`, wrapTool(info))
+    }
+
+    const allMcpTools = allInfos.map((i) => this.mcpToolMap.get(`${i.serverName}/${i.name}`)!)
+    const publicMcpTools = allInfos.filter((i) => i.isPublic).map((i) => this.mcpToolMap.get(`${i.serverName}/${i.name}`)!)
 
     return { publicMcpTools, allMcpTools }
   }
@@ -467,6 +496,47 @@ export class LlmService implements OnModuleInit {
   }
 
   /**
+   * Get or create a cached RBAC-filtered agent for the given role set.
+   * Filters MCP tools to only those the user's roles can access (ALLOW or APPROVAL).
+   * Admin users should NOT go through this path (handled separately in generate()).
+   */
+  private async getOrCreateRbacAgent(
+    userRoles: string[],
+  ): Promise<{ agent: Runnable | null; tools: DynamicStructuredTool[] }> {
+    const cacheKey = [...userRoles].sort().join(',') || '__no_roles__'
+
+    const cached = this.rbacAgentCache.get(cacheKey)
+    if (cached) return cached
+
+    // Filter MCP tools: keep ALLOW and APPROVAL, exclude DENY
+    // Pass empty identity to skip admin bypass (admins don't use this path)
+    const filteredMcpTools: DynamicStructuredTool[] = []
+    for (const info of this.allMcpToolInfos) {
+      const decision = this.rbacService.checkAccess(userRoles, '', info.serverName, info.name)
+      if (decision !== 'DENY') {
+        const tool = this.mcpToolMap.get(`${info.serverName}/${info.name}`)
+        if (tool) filteredMcpTools.push(tool)
+      }
+    }
+
+    const tools = [...this.baseTools, ...filteredMcpTools]
+    this.logger.log(
+      `[RBAC] Building agent for roles [${cacheKey}]: ${filteredMcpTools.length} MCP tools accessible (${this.allMcpToolInfos.length} total), ${tools.length} tools overall`,
+    )
+
+    if (tools.length === 0 || (this.provider !== 'openai' && this.provider !== 'anthropic')) {
+      const entry = { agent: null, tools }
+      this.rbacAgentCache.set(cacheKey, entry)
+      return entry
+    }
+
+    const { publicAgent } = await this.setupToolAgent(tools)
+    const entry = { agent: publicAgent as Runnable | null, tools }
+    this.rbacAgentCache.set(cacheKey, entry)
+    return entry
+  }
+
+  /**
    * Sets up the tool-enabled agent using LangChain's agent API.
    * This enables dynamic tool-calling with prompt injection and logging.
    *
@@ -476,7 +546,10 @@ export class LlmService implements OnModuleInit {
     publicTools: DynamicStructuredTool[],
     adminToolsOverride?: DynamicStructuredTool[],
   ): Promise<{ publicAgent: Runnable; adminAgent: Runnable }> {
-    const systemPrompt = `Today's date is: {today}.\n${this.agentPrompt}`
+    const rbacPromptAddition = this.rbacService.isRbacActive()
+      ? `\n\nIMPORTANT — Tool access is role-based. The tools you see are already filtered for the current user's role and permissions. When the user asks what tools, capabilities, or actions are available to them, or what they can do on a particular MCP server, list every tool you have access to, grouped by MCP server (the server name appears after "mcp_" in the tool name, before the next "_"). For each tool, state its original name and what it does. Some tool calls may require managerial approval before execution — if the system responds that approval is pending, inform the user that their request has been submitted for approval and they will be notified of the outcome.`
+      : ''
+    const systemPrompt = `Today's date is: {today}.\n${this.agentPrompt}${rbacPromptAddition}`
 
     this.logger.debug(`***Agent prompt: ${systemPrompt}***`)
 
