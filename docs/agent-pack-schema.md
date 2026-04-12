@@ -1,97 +1,197 @@
 # Agent Pack Schema
 
-This document describes the proposed format for _agent packs_. Agent packs make the AI agent chatbot fully configurable so the same binary can be reused for other conversational agents.
+Agent packs make the AI agent chatbot fully configurable so the same binary can be reused for different conversational agents.
 
 ## Goals
 
-- **Single source of truth:** prompts, welcome messages, flows, tools, RAG/memory settings, and integrations live inside one manifest.
-- **Backward compatibility:** if `AGENT_PACK_PATH` is not defined or the manifest is invalid, the application falls back to the legacy environment variables.
-- **Environment overrides:** any string value can reference `${VAR_NAME}` so deployments can still override critical values at runtime.
+- **Single source of truth:** prompts, welcome messages, flows, tools, MCP servers, RAG/memory settings, and integrations live inside one manifest.
+- **Backward compatibility:** if `AGENT_PACK_PATH` is not defined or the manifest is invalid, the application falls back to legacy environment variables.
+- **Environment overrides:** any string value can reference `${VAR_NAME}` so deployments can override values at runtime.
 - **Early validation:** the loader rejects malformed manifests during startup and surfaces warnings.
 
 ## Location and structure
 
-```bash
+```text
 agent-packs/
   <agent-id>/
-    agent-pack.yaml
+    agent-pack.yaml    # or agent-pack.yml / agent-pack.json
 ```
 
-The service reads the directory provided via `AGENT_PACK_PATH`. If it is not set, it defaults to `agent-packs/Agent-welcome`.
+The service reads the path provided via `AGENT_PACK_PATH`. If not set, it defaults to `agent-packs/` in the current working directory. Accepted filenames: `agent-pack.yaml`, `agent-pack.yml`, `agent-pack.json`.
 
 ## Manifest fields (`agent-pack.yaml`)
 
-| Field          | Type   | Description                                                 |
-| -------------- | ------ | ----------------------------------------------------------- |
-| `metadata`     | object | Agent identifiers and descriptive data.                     |
-| `languages`    | map    | Per-language prompts/messages (`en`, `es`, etc.).           |
-| `llm`          | object | Model/provider parameters.                                  |
-| `rag`          | object | RAG and vector store settings.                              |
-| `memory`       | object | Memory backend/window config.                               |
-| `flows`        | object | Flags for welcome/auth/menu behavior.                       |
-| `tools`        | object | Dynamic tool JSON and bundled tool settings.                |
-| `integrations` | object | External service configuration (VS Agent, stats, DB, etc.). |
+| Field          | Type   | Required | Description                                                 |
+| -------------- | ------ | -------- | ----------------------------------------------------------- |
+| `metadata`     | object | no       | Agent identifiers and descriptive data.                     |
+| `languages`    | map    | no       | Per-language prompts/messages (`en`, `es`, etc.).           |
+| `llm`          | object | no       | LLM provider and model parameters.                          |
+| `rag`          | object | no       | RAG and vector store settings.                              |
+| `memory`       | object | no       | Memory backend and session window config.                   |
+| `flows`        | object | no       | Welcome, authentication, and menu behavior.                 |
+| `tools`        | object | no       | Dynamic tool JSON and bundled tool settings.                |
+| `mcp`          | object | no       | MCP (Model Context Protocol) server connections.            |
+| `integrations` | object | no       | External service configuration (VS Agent, DB, etc.).        |
+
+All top-level fields are optional.
+
+---
 
 ### metadata
 
 ```yaml
 metadata:
-  id: Agent-welcome
-  displayName: Agent Welcome Agent
+  id: my-agent
+  displayName: My Agent
   description: >-
-    Multilingual welcome agent for the Agent.
+    A conversational agent for managing Wise accounts.
   defaultLanguage: en
-  tags: [welcome, Agent]
+  tags: [wise, finance]
 ```
+
+| Field             | Type     | Default | Description                        |
+| ----------------- | -------- | ------- | ---------------------------------- |
+| `id`              | string   | —       | Unique agent identifier.           |
+| `displayName`     | string   | —       | Human-readable agent name.         |
+| `description`     | string   | —       | Optional description.              |
+| `defaultLanguage` | string   | `en`    | Default language code.             |
+| `tags`            | string[] | —       | Optional tags for categorization.  |
+
+---
 
 ### languages
 
-Each entry can define:
+A map keyed by language code (e.g., `en`, `es`, `fr`). Each entry can define:
 
-- `greetingMessage`: short greeting sent on connection (supports `{userName}` placeholders).
-- `systemPrompt`: persona/instructions for this language.
-- `strings`: dictionary of localized literals (menu labels, auth messages, etc.).
+| Field             | Type              | Description                                                       |
+| ----------------- | ----------------- | ----------------------------------------------------------------- |
+| `greetingMessage` | string            | Short greeting sent on connection. Supports `{userName}` placeholder. |
+| `welcomeMessage`  | string            | Alias for `greetingMessage` (deprecated, use `greetingMessage`).  |
+| `systemPrompt`    | string            | LLM system prompt / persona for this language.                    |
+| `strings`         | map<string, string> | Localized literals (menu labels, auth messages, etc.).           |
+
+```yaml
+languages:
+  en:
+    greetingMessage: "Hello {userName}! How can I help you today?"
+    systemPrompt: |
+      You are a helpful financial assistant...
+    strings:
+      CREDENTIAL: "Authenticate"
+      LOGOUT: "Logout"
+  es:
+    greetingMessage: "¡Hola {userName}! ¿En qué puedo ayudarte?"
+    systemPrompt: |
+      Eres un asistente financiero...
+    strings:
+      CREDENTIAL: "Autenticarse"
+      LOGOUT: "Cerrar sesión"
+```
+
+---
 
 ### llm
 
+| Field          | Type           | Env override          | Default      | Description                          |
+| -------------- | -------------- | --------------------- | ------------ | ------------------------------------ |
+| `provider`     | string         | `LLM_PROVIDER`        | `openai`     | LLM provider (`openai`, `ollama`, `anthropic`). |
+| `model`        | string         | `OPENAI_MODEL`        | `gpt-4o-mini`| Model name.                          |
+| `temperature`  | number/string  | `OPENAI_TEMPERATURE`  | `0.3`        | Sampling temperature (0–1).          |
+| `maxTokens`    | number/string  | `OPENAI_MAX_TOKENS`   | `512`        | Max tokens per completion.           |
+| `agentPrompt`  | string         | `AGENT_PROMPT`        | —            | Default agent prompt / persona.      |
+| `verbose`      | boolean/string | —                     | —            | Enable verbose LLM logging.          |
+
 ```yaml
 llm:
-  provider: ${LLM_PROVIDER}
-  model: ${OPENAI_MODEL}
+  provider: openai
+  model: gpt-4o-mini
   temperature: 0.3
   maxTokens: 1000
   agentPrompt: |
-    You are an AI agent called Karen...
+    You are an AI financial assistant...
 ```
 
-- `temperature` and `maxTokens` can also be provided via environment variables `OPENAI_TEMPERATURE` and `OPENAI_MAX_TOKENS`. Defaults (if neither pack nor env set them) are `0.3` and `512`, and the default model is `gpt-4o-mini`.
+---
 
 ### rag
 
-Same knobs as the current env vars:
+| Field                  | Type           | Env override         | Default        | Description                              |
+| ---------------------- | -------------- | -------------------- | -------------- | ---------------------------------------- |
+| `provider`             | string         | `RAG_PROVIDER`       | `vectorstore`  | RAG provider (`vectorstore`, `langchain`). |
+| `docsPath`             | string         | `RAG_DOCS_PATH`      | `./docs`       | Local directory for RAG documents.       |
+| `remoteUrls`           | string[]       | `RAG_REMOTE_URLS`    | `[]`           | Remote document URLs (.txt, .md, .pdf, .csv). |
+| `chunkSize`            | number/string  | `RAG_CHUNK_SIZE`     | `1000`         | Document chunk size (characters).        |
+| `chunkOverlap`         | number/string  | `RAG_CHUNK_OVERLAP`  | `200`          | Overlap between chunks (characters).     |
+| `vectorStore.type`     | string         | `VECTOR_STORE`       | `redis`        | Vector store provider (`redis`, `pinecone`). |
+| `vectorStore.indexName` | string        | `VECTOR_INDEX_NAME`  | `agent-ia`     | Index name for the vector store.         |
+| `pinecone.apiKey`      | string         | `PINECONE_API_KEY`   | —              | Pinecone API key (if using Pinecone).    |
 
 ```yaml
 rag:
-  provider: vectorstore
+  provider: langchain
   docsPath: ./docs
-  remoteUrls: []
+  remoteUrls:
+    - https://example.com/docs/guide.md
   chunkSize: 1000
   chunkOverlap: 200
   vectorStore:
     type: redis
-    indexName: Agent-ia
+    indexName: my-agent
+  pinecone:
+    apiKey: ${PINECONE_API_KEY}
 ```
 
+---
+
 ### memory
+
+| Field      | Type          | Env override            | Default                  | Description                     |
+| ---------- | ------------- | ----------------------- | ------------------------ | ------------------------------- |
+| `backend`  | string        | `AGENT_MEMORY_BACKEND`  | `memory`                 | `memory` (in-memory) or `redis`. |
+| `window`   | number/string | `AGENT_MEMORY_WINDOW`   | `8`                      | Session memory window size.     |
+| `redisUrl`  | string       | `REDIS_URL`             | `redis://localhost:6379` | Redis URL for persistent storage. |
 
 ```yaml
 memory:
   backend: redis
-  window: 8
-  redisUrl: ${REDIS_URL}
+  window: 20
+  redisUrl: redis://redis:6379
 ```
 
+---
+
 ### flows
+
+#### flows.welcome
+
+| Field           | Type           | Description                                            |
+| --------------- | -------------- | ------------------------------------------------------ |
+| `enabled`       | boolean/string | Enable the welcome flow.                               |
+| `sendOnProfile` | boolean/string | Send greeting when user profile is received.           |
+| `templateKey`   | string         | Key in `languages.<lang>` to use as greeting template. |
+
+#### flows.authentication
+
+| Field                    | Type     | Description                                               |
+| ------------------------ | -------- | --------------------------------------------------------- |
+| `enabled`                | boolean/string | Enable credential-based authentication.              |
+| `credentialDefinitionId` | string   | Verifiable credential definition ID for authentication.   |
+| `adminAvatars`           | string[] | Avatar names that have admin privileges. Env override: `ADMIN_AVATARS` (comma-separated). |
+
+#### flows.menu
+
+| Field   | Type   | Description              |
+| ------- | ------ | ------------------------ |
+| `items` | array  | List of menu item objects. |
+
+Each menu item:
+
+| Field         | Type   | Description                                                        |
+| ------------- | ------ | ------------------------------------------------------------------ |
+| `id`          | string | Unique menu item identifier.                                       |
+| `labelKey`    | string | Key into `languages.<lang>.strings` for the display label.         |
+| `action`      | string | Action to trigger (e.g., `authenticate`, `logout`, `mcp-config`, `abort-config`). |
+| `visibleWhen` | enum   | `always`, `authenticated`, `unauthenticated`, `configuring`, `notConfiguring`. |
 
 ```yaml
 flows:
@@ -102,6 +202,9 @@ flows:
   authentication:
     enabled: true
     credentialDefinitionId: ${CREDENTIAL_DEFINITION_ID}
+    adminAvatars:
+      - mj
+      - admin
   menu:
     items:
       - id: authenticate
@@ -112,14 +215,34 @@ flows:
         labelKey: LOGOUT
         action: logout
         visibleWhen: authenticated
+      - id: mcp-config
+        labelKey: MCP_CONFIG_MENU
+        action: mcp-config
+        visibleWhen: notConfiguring
+      - id: abort-config
+        labelKey: MCP_CONFIG_ABORT
+        action: abort-config
+        visibleWhen: configuring
 ```
 
-`visibleWhen` accepts `always`, `authenticated`, or `unauthenticated`.
+---
 
 ### tools
 
-- `dynamicConfig`: JSON string (or literal object) equivalent to `LLM_TOOLS_CONFIG`.
-- `bundled`: settings for built-in tools such as the statistics fetcher.
+| Field           | Type   | Env override       | Description                                         |
+| --------------- | ------ | ------------------ | --------------------------------------------------- |
+| `dynamicConfig` | any    | `LLM_TOOLS_CONFIG` | JSON string or object defining external LLM tools.  |
+| `bundled`       | map    | —                  | Settings for built-in tools (keyed by tool name).   |
+
+#### bundled.statisticsFetcher
+
+| Field              | Type     | Env override              | Default          | Description                       |
+| ------------------ | -------- | ------------------------- | ---------------- | --------------------------------- |
+| `enabled`          | boolean  | `STATISTICS_TOOL_ENABLED` | `true`           | Enable the statistics tool.       |
+| `endpoint`         | string   | `STATISTICS_API_URL`      | —                | Statistics API endpoint URL.      |
+| `requiresAuth`     | boolean  | `STATISTICS_REQUIRE_AUTH` | `false`          | Require authentication for stats. |
+| `defaultStatClass` | string   | —                         | `USER_CONNECTED` | Default statistics class.         |
+| `defaultStatEnums` | array    | —                         | —                | Default enum values for stats.    |
 
 ```yaml
 tools:
@@ -128,16 +251,109 @@ tools:
     statisticsFetcher:
       enabled: true
       endpoint: ${STATISTICS_API_URL}
-      requiresAuth: ${STATISTICS_REQUIRE_AUTH}
+      requiresAuth: false
       defaultStatClass: USER_CONNECTED
-      defaultStatEnums:
-        - index: 0
-          label: default
-          value: default
-          description: default fallback value
 ```
 
-### integrations VS_AGENT
+---
+
+### mcp
+
+MCP (Model Context Protocol) server configuration. Env override: `MCP_SERVERS_CONFIG` (JSON array string).
+
+```yaml
+mcp:
+  servers:
+    - name: wise
+      transport: streamable-http
+      url: ${WISE_MCP_URL}
+      ...
+```
+
+Each server entry:
+
+| Field        | Type                          | Description                                                          |
+| ------------ | ----------------------------- | -------------------------------------------------------------------- |
+| `name`       | string                        | Unique server name.                                                  |
+| `transport`  | enum                          | `stdio`, `sse`, or `streamable-http`.                                |
+| `url`        | string                        | Server URL (required for `sse` and `streamable-http`).               |
+| `command`    | string                        | Executable command (required for `stdio`).                           |
+| `args`       | string[] or string            | Command arguments (for `stdio`).                                     |
+| `env`        | map<string, string>           | Environment variables passed to the stdio process.                   |
+| `headers`    | map<string, string>           | HTTP headers sent with every request (for `sse`/`streamable-http`). |
+| `reconnect`  | boolean/string                | Auto-reconnect on disconnect.                                        |
+| `accessMode` | enum                          | `admin-controlled` (default) or `user-controlled`.                   |
+| `userConfig` | object                        | User-facing configuration (only when `accessMode: user-controlled`). |
+| `toolAccess` | object                        | Tool-level access control.                                           |
+
+#### mcp.servers[].userConfig
+
+When `accessMode` is `user-controlled`, each user is prompted to provide configuration values (e.g., API tokens) through the chat interface.
+
+| Field    | Type  | Description                   |
+| -------- | ----- | ----------------------------- |
+| `fields` | array | List of user config fields.   |
+
+Each field:
+
+| Field            | Type                     | Description                                                        |
+| ---------------- | ------------------------ | ------------------------------------------------------------------ |
+| `name`           | string                   | Internal field name (e.g., `token`).                               |
+| `type`           | enum                     | `secret` (masked, never logged) or `text`.                         |
+| `label`          | string or map<string, string> | Localized prompt label. A map keyed by language code, or a plain string. |
+| `headerTemplate` | string                   | Maps the value into a header. e.g., `"Bearer {value}"`.           |
+| `headerName`     | string                   | HTTP header name to set. Defaults to `Authorization` if omitted.  |
+
+#### mcp.servers[].toolAccess
+
+| Field     | Type     | Description                                                              |
+| --------- | -------- | ------------------------------------------------------------------------ |
+| `default` | enum     | `public` (all tools available to all users) or `admin` (admin-only by default). |
+| `public`  | string[] | Tools explicitly available to all users (when `default: admin`).         |
+
+#### Example: End-user mode (each user provides their own token)
+
+```yaml
+mcp:
+  servers:
+    - name: wise
+      transport: streamable-http
+      url: ${WISE_MCP_URL}
+      accessMode: user-controlled
+      userConfig:
+        fields:
+          - name: token
+            type: secret
+            label:
+              en: "Please enter your Wise API Token:"
+              es: "Por favor, ingresa tu Token de API de Wise:"
+            headerTemplate: "Bearer {value}"
+      toolAccess:
+        default: public
+```
+
+#### Example: Corporate mode (shared token from environment)
+
+When `accessMode` is omitted, it defaults to `admin-controlled`: a shared connection is established at startup using the global `headers`, and all users share it.
+
+```yaml
+mcp:
+  servers:
+    - name: wise
+      transport: streamable-http
+      url: ${WISE_MCP_URL}
+      accessMode: admin-controlled
+      headers:
+        Authorization: "Bearer ${WISE_API_TOKEN}"
+      toolAccess:
+        default: public
+```
+
+---
+
+### integrations
+
+Free-form configuration for external services. The schema accepts any structure under `vsAgent` and `postgres`.
 
 ```yaml
 integrations:
@@ -157,15 +373,16 @@ integrations:
     dbName: ${POSTGRES_DB_NAME}
 ```
 
+---
+
 ## Value resolution order
 
-1. Load `agent-pack.yaml`.
+1. Load `agent-pack.yaml` (or `.yml` / `.json`).
 2. Replace `${VAR}` placeholders with `process.env.VAR` when available.
-3. Allow explicit environment variables (e.g., `AGENT_PROMPT`, `LLM_TOOLS_CONFIG`) to override the resulting values.
+3. Explicit environment variables (e.g., `AGENT_PROMPT`, `LLM_TOOLS_CONFIG`, `MCP_SERVERS_CONFIG`) override the resolved pack values.
 4. Fall back to hard-coded defaults when neither pack nor env provides a value.
 
 ## Compatibility
 
-- The default pack under `agent-packs/Agent-welcome` mirrors the previous Agent Welcome behavior.
 - If `AGENT_PACK_PATH` is missing or invalid, a warning is logged and the app continues with legacy env-only configuration.
 - Packs can be swapped by mounting a different directory and pointing `AGENT_PACK_PATH` to it (Docker, Kubernetes, etc.).
