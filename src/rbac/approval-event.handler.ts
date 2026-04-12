@@ -4,13 +4,15 @@ import { OnEvent } from '@nestjs/event-emitter'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { ApiClient, TextMessage } from '@2060.io/vs-agent-nestjs-client'
+import { ConfigService } from '@nestjs/config'
+import { ApiClient, ApiVersion, TextMessage } from '@2060.io/vs-agent-nestjs-client'
 import { ApprovalRequestEntity, ApprovalStatus } from './approval-request.entity'
 import { SessionEntity } from '../core/models'
 
 @Injectable()
 export class ApprovalEventHandler {
   private readonly logger = new Logger(ApprovalEventHandler.name)
+  private readonly apiClient: ApiClient
   private mcpService: any
 
   constructor(
@@ -18,8 +20,11 @@ export class ApprovalEventHandler {
     private readonly sessionRepo: Repository<SessionEntity>,
     private readonly eventEmitter: EventEmitter2,
     private readonly moduleRef: ModuleRef,
-    private readonly apiClient: ApiClient,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const baseUrl = this.configService.get<string>('appConfig.vsAgentAdminUrl') || 'http://localhost:3001'
+    this.apiClient = new ApiClient(baseUrl, ApiVersion.V1)
+  }
 
   /**
    * Lazily resolve McpService to avoid circular dependency.

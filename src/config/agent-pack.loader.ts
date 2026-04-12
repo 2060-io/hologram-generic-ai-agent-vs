@@ -95,9 +95,19 @@ const AgentPackSchema = z
               .array(
                 z.object({
                   id: z.string(),
-                  labelKey: z.string(),
+                  labelKey: z.string().optional(),
+                  label: z.string().optional(),
                   action: z.string().optional(),
-                  visibleWhen: z.enum(['always', 'authenticated', 'unauthenticated', 'configuring', 'notConfiguring']).optional(),
+                  visibleWhen: z.enum([
+                    'always',
+                    'authenticated',
+                    'unauthenticated',
+                    'configuring',
+                    'notConfiguring',
+                    'hasApprovalRequests',
+                    'hasPendingApprovals',
+                  ]).optional(),
+                  badge: z.string().optional(),
                 }),
               )
               .optional(),
