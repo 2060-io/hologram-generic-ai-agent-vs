@@ -172,11 +172,16 @@ memory:
 
 #### flows.authentication
 
-| Field                    | Type     | Description                                               |
-| ------------------------ | -------- | --------------------------------------------------------- |
-| `enabled`                | boolean/string | Enable credential-based authentication.              |
-| `credentialDefinitionId` | string   | Verifiable credential definition ID for authentication.   |
-| `adminAvatars`           | string[] | Avatar names that have admin privileges. Env override: `ADMIN_AVATARS` (comma-separated). |
+| Field                    | Type           | Env override                | Description                                                                 |
+| ------------------------ | -------------- | --------------------------- | --------------------------------------------------------------------------- |
+| `enabled`                | boolean/string | —                           | Enable credential-based authentication.                                     |
+| `required`               | boolean/string | `AUTH_REQUIRED`             | Block guest (unauthenticated) users from chatting.                          |
+| `credentialDefinitionId` | string         | `CREDENTIAL_DEFINITION_ID`  | Verifiable credential definition ID for authentication.                     |
+| `userIdentityAttribute`  | string         | `USER_IDENTITY_ATTRIBUTE`   | Credential attribute used as unique user identity (e.g., `email`, `login`). Default: `name`. |
+| `rolesAttribute`         | string         | `ROLES_ATTRIBUTE`           | Credential attribute containing user roles (string, CSV, or JSON array).    |
+| `defaultRole`            | string         | `DEFAULT_ROLE`              | Fallback role when credential lacks the roles attribute. Default: `user`.   |
+| `adminUsers`             | string[]       | `ADMIN_USERS` (CSV)         | User identities that bypass all RBAC checks. Replaces legacy `adminAvatars`. |
+| `adminAvatars`           | string[]       | `ADMIN_AVATARS` (CSV)       | (Legacy) Avatar names with admin privileges. Use `adminUsers` instead.      |
 
 #### flows.menu
 
@@ -189,9 +194,11 @@ Each menu item:
 | Field         | Type   | Description                                                        |
 | ------------- | ------ | ------------------------------------------------------------------ |
 | `id`          | string | Unique menu item identifier.                                       |
-| `labelKey`    | string | Key into `languages.<lang>.strings` for the display label.         |
-| `action`      | string | Action to trigger (e.g., `authenticate`, `logout`, `mcp-config`, `abort-config`). |
-| `visibleWhen` | enum   | `always`, `authenticated`, `unauthenticated`, `configuring`, `notConfiguring`. |
+| `labelKey`    | string | (Optional) Key into `languages.<lang>.strings` for the display label. |
+| `label`       | string | (Optional) Static label text. Used if `labelKey` is not set.       |
+| `action`      | string | Action to trigger (e.g., `authenticate`, `logout`, `mcp-config`, `abort-config`, `my-approval-requests`, `pending-approvals`). |
+| `visibleWhen` | enum   | `always`, `authenticated`, `unauthenticated`, `configuring`, `notConfiguring`, `hasApprovalRequests`, `hasPendingApprovals`. |
+| `badge`       | string | (Optional) Dynamic badge key. The agent resolves this to a count shown next to the label. Values: `approvalRequestCount`, `pendingApprovalCount`. |
 
 ```yaml
 flows:
@@ -201,10 +208,15 @@ flows:
     templateKey: greetingMessage
   authentication:
     enabled: true
+    required: true
     credentialDefinitionId: ${CREDENTIAL_DEFINITION_ID}
-    adminAvatars:
-      - mj
-      - admin
+    userIdentityAttribute: employeeLogin
+    rolesAttribute: roles
+    defaultRole: employee
+    adminUsers:
+      - alice@acme.corp
+    adminAvatars:          # legacy — prefer adminUsers
+      - bob
   menu:
     items:
       - id: authenticate
@@ -223,6 +235,16 @@ flows:
         labelKey: MCP_CONFIG_ABORT
         action: abort-config
         visibleWhen: configuring
+      - id: my-approval-requests
+        labelKey: MY_APPROVAL_REQUESTS
+        action: my-approval-requests
+        visibleWhen: hasApprovalRequests
+        badge: approvalRequestCount
+      - id: pending-approvals
+        labelKey: PENDING_APPROVALS
+        action: pending-approvals
+        visibleWhen: hasPendingApprovals
+        badge: pendingApprovalCount
 ```
 
 ---
@@ -306,10 +328,53 @@ Each field:
 
 #### mcp.servers[].toolAccess
 
+Two models are supported. When `roles` is defined, the RBAC model is active; otherwise the legacy model applies.
+
+**Legacy model:**
+
 | Field     | Type     | Description                                                              |
 | --------- | -------- | ------------------------------------------------------------------------ |
 | `default` | enum     | `public` (all tools available to all users) or `admin` (admin-only by default). |
 | `public`  | string[] | Tools explicitly available to all users (when `default: admin`).         |
+
+**RBAC model:**
+
+| Field      | Type                | Description                                                              |
+| ---------- | ------------------- | ------------------------------------------------------------------------ |
+| `default`  | enum                | `none` (deny unlisted tools), `all` (allow unlisted tools), or legacy values. |
+| `roles`    | map<string, string[]> | Maps role names to lists of tool names accessible by that role.        |
+| `approval` | array               | List of approval policies (see below).                                   |
+
+Each approval policy:
+
+| Field            | Type     | Description                                              |
+| ---------------- | -------- | -------------------------------------------------------- |
+| `tools`          | string[] | Tool names that require approval.                        |
+| `approvers`      | string[] | Role names that can approve requests for these tools.    |
+| `timeoutMinutes` | number   | Minutes before a pending request expires. Default: `60`. |
+
+```yaml
+toolAccess:
+  default: none
+  roles:
+    guest: [get_exchange_rate]
+    employee: [list_profiles, get_balances, list_transfers]
+    finance: [send_money, create_invoice, list_recipients]
+  approval:
+    - tools: [send_money]
+      approvers: [finance-manager, cfo]
+      timeoutMinutes: 60
+    - tools: [create_invoice]
+      approvers: [finance-manager]
+      timeoutMinutes: 120
+```
+
+When RBAC is active:
+
+- Tools are **filtered per user** — the LLM only sees tools the user's roles can access
+- `adminUsers` bypass all RBAC checks and see all tools
+- Users holding both a tool role and an approver role get **self-approval** (immediate execution)
+- Stale approval requests are automatically expired via a periodic task
 
 #### Example: End-user mode (each user provides their own token)
 
@@ -332,9 +397,32 @@ mcp:
         default: public
 ```
 
-#### Example: Corporate mode (shared token from environment)
+#### Example: Corporate mode with RBAC (shared token, role-based access)
 
 When `accessMode` is omitted, it defaults to `admin-controlled`: a shared connection is established at startup using the global `headers`, and all users share it.
+
+```yaml
+mcp:
+  servers:
+    - name: wise
+      transport: streamable-http
+      url: ${WISE_MCP_URL}
+      accessMode: admin-controlled
+      headers:
+        Authorization: "Bearer ${WISE_API_TOKEN}"
+      toolAccess:
+        default: none
+        roles:
+          guest: [get_exchange_rate]
+          employee: [list_profiles, get_balances]
+          finance: [send_money, create_invoice]
+        approval:
+          - tools: [send_money]
+            approvers: [finance-manager]
+            timeoutMinutes: 60
+```
+
+#### Example: Corporate mode without RBAC (legacy)
 
 ```yaml
 mcp:

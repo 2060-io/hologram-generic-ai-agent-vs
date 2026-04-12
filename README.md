@@ -13,6 +13,8 @@ A modular, multi-language AI agent built with NestJS for the Hologram + Verana e
 - **Per-user MCP credentials** — users configure their own tokens via an in-chat flow; stored with AES-256-GCM encryption
 - **Lazy tool discovery** — MCP servers that require user tokens connect on-demand, not at startup
 - **Verifiable credential authentication** — DIDComm-based auth with contextual menus
+- **Role-based access control (RBAC)** — per-role tool access driven by verified credential claims
+- **Approval workflow** — tools can require managerial approval before execution, with notifications and contextual menu badges
 - **Session memory** — in-memory or Redis-backed conversation context
 - **Multi-language** — English, Spanish, French, Portuguese out-of-the-box
 - **Agent Packs** — all configuration in one `agent-pack.yaml` manifest with `${ENV_VAR}` placeholders
@@ -30,6 +32,7 @@ src/
   ├── mcp/            # MCP client (connections, lazy discovery, per-user config, tool cache)
   ├── rag/            # RAG services (vector store, document ingestion, context retrieval)
   ├── memory/         # Memory service (in-memory / Redis backends)
+  ├── rbac/           # RBAC service, approval workflow, tool-call interceptor
   ├── config/         # Agent-pack loader + Zod schema validation
   ├── integrations/   # VS Agent, stats, PostgreSQL integrations
   ├── common/         # Utilities, language detection
@@ -237,8 +240,36 @@ mcp:
 
 ### Tool access control
 
-- **`default: admin`** — only admin avatars (listed in `flows.authentication.adminAvatars`) see all tools
-- **`public: [...]`** — non-admin users only see the listed tools
+Two models are supported:
+
+**Legacy (binary) model:**
+
+- **`default: admin`** — only admin users see all tools; non-admin users see only tools listed in `public`
+- **`default: public`** — all tools are available to all users
+
+**RBAC (role-based) model:**
+
+When `toolAccess.roles` is defined, role-based access control is active. Each role maps to a list of tools:
+
+```yaml
+toolAccess:
+  default: none
+  roles:
+    guest: [get_exchange_rate]
+    employee: [list_profiles, get_balances]
+    finance: [send_money, create_invoice]
+  approval:
+    - tools: [send_money]
+      approvers: [finance-manager, cfo]
+      timeoutMinutes: 60
+```
+
+- Tools are **filtered per user** — the LLM only sees tools the user's roles grant access to
+- Tools with an `approval` policy require managerial approval before execution
+- Users who hold both the tool role and an approver role get **self-approval** (immediate execution)
+- Admin users (listed in `flows.authentication.adminUsers`) bypass all RBAC checks
+
+See [RBAC & Approval Workflow](#-rbac--approval-workflow) for details.
 
 ### Per-user MCP configuration flow
 
@@ -265,7 +296,93 @@ If no admin token is configured for a user-controlled server, the shared connect
 
 ---
 
-## 🚦 Environment Variables
+## � RBAC & Approval Workflow
+
+When `toolAccess.roles` is configured on any MCP server, the agent activates role-based access control. User roles are extracted from verified credential attributes after authentication.
+
+### How it works
+
+1. **Authentication** — user presents a verifiable credential (DIDComm identity proof)
+2. **Role resolution** — the agent extracts roles from the credential attribute named in `rolesAttribute` (supports single string, comma-separated list, or JSON array). Falls back to `defaultRole` if absent.
+3. **Tool filtering** — the LLM agent is built with only the tools the user's roles can access (ALLOW + APPROVAL). Denied tools are not exposed to the LLM at all.
+4. **Tool execution** — when the LLM calls a tool:
+   - **ALLOW** → executes immediately
+   - **DENY** → returns "tool not available for your role"
+   - **APPROVAL** → if the user holds an approver role, self-approves; otherwise queues a request
+5. **Approval flow** — pending requests notify approvers via message + contextual menu badge. Approvers approve/reject from the menu. Results are delivered as messages.
+
+### Configuration
+
+```yaml
+flows:
+  authentication:
+    required: true
+    credentialDefinitionId: did:webvh:...:corp-badge
+    userIdentityAttribute: employeeLogin
+    rolesAttribute: roles
+    defaultRole: employee
+    adminUsers: [alice@acme.corp]
+  menu:
+    items:
+      - id: authenticate
+        labelKey: CREDENTIAL
+        action: authenticate
+        visibleWhen: unauthenticated
+      - id: logout
+        labelKey: LOGOUT
+        action: logout
+        visibleWhen: authenticated
+      - id: my-approval-requests
+        labelKey: MY_APPROVAL_REQUESTS
+        action: my-approval-requests
+        visibleWhen: hasApprovalRequests
+        badge: approvalRequestCount
+      - id: pending-approvals
+        labelKey: PENDING_APPROVALS
+        action: pending-approvals
+        visibleWhen: hasPendingApprovals
+        badge: pendingApprovalCount
+
+mcp:
+  servers:
+    - name: wise
+      transport: streamable-http
+      url: ${WISE_MCP_URL}
+      accessMode: admin-controlled
+      headers:
+        Authorization: "Bearer ${WISE_API_TOKEN}"
+      toolAccess:
+        default: none
+        roles:
+          guest: [get_exchange_rate]
+          employee: [list_profiles, get_balances, list_transfers]
+          finance: [send_money, create_invoice]
+        approval:
+          - tools: [send_money]
+            approvers: [finance-manager, cfo]
+            timeoutMinutes: 60
+```
+
+### Verifying tool access
+
+Users can ask the agent *"What tools can I use?"* and the LLM will list all available tools grouped by MCP server, based on the user's current role. This provides direct evidence that RBAC filtering is working correctly.
+
+### i18n keys for approval workflow
+
+Add these to `languages.<lang>.strings` in the agent pack:
+
+| Key | Description |
+|-----|-------------|
+| `MY_APPROVAL_REQUESTS` | Label for the "my approval requests" menu item |
+| `PENDING_APPROVALS` | Label for the "pending approvals" menu item |
+
+Defaults are provided in English, Spanish, and French.
+
+Full design specification: [`docs/rbac-approval-spec.md`](./docs/rbac-approval-spec.md)
+
+---
+
+## �� Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -296,6 +413,12 @@ If no admin token is configured for a user-controlled server, the shared connect
 | `POSTGRES_PASSWORD` | PostgreSQL password | `2060demo` |
 | `POSTGRES_DB_NAME` | PostgreSQL database name | `test-service-agent` |
 | `CREDENTIAL_DEFINITION_ID` | VC definition ID (omit to hide auth menu) | |
+| `AUTH_REQUIRED` | Require authentication before chat (blocks guests) | `false` |
+| `USER_IDENTITY_ATTRIBUTE` | Credential attribute for user identity | `name` |
+| `ROLES_ATTRIBUTE` | Credential attribute containing user roles | |
+| `DEFAULT_ROLE` | Fallback role when credential lacks roles | `user` |
+| `ADMIN_USERS` | Comma-separated list of admin user identities | |
+| `ADMIN_AVATARS` | (Legacy) Comma-separated admin avatar names | |
 | `VS_AGENT_ADMIN_URL` | VS Agent admin API URL | |
 | `LLM_TOOLS_CONFIG` | External HTTP tools (JSON array) | `[]` |
 | `STATISTICS_API_URL` | Statistics API URL | |
@@ -339,6 +462,7 @@ The chatbot itself runs via `pnpm start:dev` or `./scripts/start.sh`.
 ## 📚 Additional Documentation
 
 - [Agent Pack Schema](./docs/agent-pack-schema.md) — full manifest reference
+- [RBAC & Approval Spec](./docs/rbac-approval-spec.md) — role-based access control and approval workflow design
 - [RAG Service](./docs/how-to-use-rag-service.md) — vector store and RAG provider setup
 - [Memory Module](./docs/how-to-use-memory-service.md) — in-memory and Redis backends
 - [Ollama Setup](./docs/how-to-use-ollama.md) — local LLM with Ollama + Llama3
