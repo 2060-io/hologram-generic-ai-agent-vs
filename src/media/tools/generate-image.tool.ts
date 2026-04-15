@@ -52,10 +52,9 @@ export function createGenerateImageTool(
           status: 'ok',
           images: results.map((r) => ({
             refId: r.refId,
-            previewUrl: r.previewUrl,
           })),
-          message: `Generated ${results.length} image(s). Preview images have been sent to the user. ` +
-            `Use upload_media_to_mcp with the refId to upload an approved image to an external service.`,
+          message: `Done. ${results.length} image(s) have already been delivered to the user — do NOT call generate_image again for this request. ` +
+            `If the user wants to upload an image to an external service, use upload_media_to_mcp with the refId.`,
         }
 
         return JSON.stringify(response)

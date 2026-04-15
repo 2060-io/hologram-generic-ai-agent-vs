@@ -1,13 +1,14 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { EventEmitter2 } from '@nestjs/event-emitter'
 import { AsyncLocalStorage } from 'async_hooks'
 import { randomUUID } from 'crypto'
+import { ApiClient, ApiVersion } from '@2060.io/vs-agent-nestjs-client'
 import type { ImageProvider, ImageProviderConfig } from './providers/image-provider.interface'
 import { createImageProvider } from './providers/image-provider.factory'
 import { ImageConverterService, ConversionOptions } from './image-converter.service'
 import { MediaStoreService } from './media-store.service'
 import { ImageRefStore } from './image-ref.store'
+import { encryptBuffer, CipheringInfo } from './media-cipher.util'
 
 export interface GenerateImageRequest {
   provider: string
@@ -34,13 +35,17 @@ export class ImageGenerationService implements OnModuleInit {
   /** Carries the current caller's connectionId through tool invocations */
   private readonly callerCtx = new AsyncLocalStorage<{ connectionId: string }>()
 
+  private readonly apiClient: ApiClient
+
   constructor(
     private readonly config: ConfigService,
-    private readonly eventEmitter: EventEmitter2,
     private readonly converter: ImageConverterService,
     private readonly mediaStore: MediaStoreService,
     private readonly refStore: ImageRefStore,
-  ) {}
+  ) {
+    const baseUrl = config.get<string>('appConfig.vsAgentAdminUrl') || 'http://localhost:3001'
+    this.apiClient = new ApiClient(baseUrl, ApiVersion.V1)
+  }
 
   async onModuleInit() {
     this.providerConfigs = this.config.get<ImageProviderConfig[]>('appConfig.imageGenerationProviders') ?? []
@@ -107,17 +112,19 @@ export class ImageGenerationService implements OnModuleInit {
       width: number
       height: number
       preview: string
+      ciphering: CipheringInfo
     }[] = []
 
     for (const raw of rawImages) {
       const converted = await this.converter.convert(raw.buffer, conversionOptions)
 
-      // Step 3: Generate thumbnail for Hologram preview (128x128, 50% JPEG)
+      // Step 3: Generate thumbnail for Hologram preview (64x64, 50% JPEG)
       const thumbnail = await this.converter.generateThumbnail(converted.buffer)
 
-      // Step 4: Upload converted image to MinIO
+      // Step 4: Encrypt and upload converted image to MinIO
+      const { encrypted, ciphering } = encryptBuffer(converted.buffer)
       const objectName = `generated/${randomUUID()}.${request.targetFormat ?? 'jpeg'}`
-      const previewUrl = await this.mediaStore.upload(objectName, converted.buffer, converted.mimeType)
+      const previewUrl = await this.mediaStore.upload(objectName, encrypted, converted.mimeType)
 
       // Step 5: Store ref for later retrieval by bridge tool
       const refId = this.refStore.add(converted.buffer, converted.mimeType, previewUrl)
@@ -129,18 +136,39 @@ export class ImageGenerationService implements OnModuleInit {
         width: converted.width,
         height: converted.height,
         preview: thumbnail.base64,
+        ciphering,
       })
     }
 
     this.logger.log(`Generated and stored ${results.length} image(s): ${results.map((r) => r.refId).join(', ')}`)
 
-    // Emit event so CoreService can send MediaMessage to the user
+    // Send MediaMessage directly to the user (avoids event triple-fire)
     const ctx = this.callerCtx.getStore()
     if (ctx?.connectionId) {
-      this.eventEmitter.emit('media.send', {
-        connectionId: ctx.connectionId,
-        images: eventImages,
-      })
+      try {
+        const { MediaItem } = await import('@2060.io/vs-agent-nestjs-client')
+        const { MediaMessage } = await import('@2060.io/vs-agent-model')
+        const items = eventImages.map(
+          (img) =>
+            new MediaItem({
+              uri: img.url,
+              mimeType: img.mimeType,
+              ...(img.width ? { width: img.width } : {}),
+              ...(img.height ? { height: img.height } : {}),
+              ...(img.preview ? { preview: img.preview } : {}),
+              ...(img.ciphering ? { ciphering: img.ciphering } : {}),
+            }),
+        )
+        await this.apiClient.messages.send(
+          new MediaMessage({
+            connectionId: ctx.connectionId,
+            items,
+          }),
+        )
+        this.logger.log(`Sent MediaMessage to ${ctx.connectionId}: ${items.length} item(s)`)
+      } catch (err) {
+        this.logger.error(`Failed to send MediaMessage: ${err}`)
+      }
     } else {
       this.logger.warn('No connectionId in caller context — MediaMessage will not be sent to user.')
     }

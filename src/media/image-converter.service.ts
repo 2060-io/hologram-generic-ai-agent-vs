@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
-import sharp from 'sharp'
+import * as sharp from 'sharp'
 
 export interface ConversionOptions {
   /** Target format: 'jpeg' | 'png' | 'webp'. Default: 'jpeg' */
@@ -82,13 +82,13 @@ export class ImageConverterService {
 
   /**
    * Generate a base64-encoded thumbnail for MediaMessage preview.
-   * Uses 128x128 at 50% JPEG quality (Hologram convention).
+   * Uses 64x64 at 50% JPEG quality (Hologram convention).
    */
   async generateThumbnail(
     input: Buffer,
     options: { size?: number; quality?: number } = {},
   ): Promise<{ base64: string; mimeType: string }> {
-    const size = options.size ?? 128
+    const size = options.size ?? 64
     const quality = options.quality ?? 50
 
     const buf = await sharp(input)
@@ -97,7 +97,7 @@ export class ImageConverterService {
       .toBuffer()
 
     return {
-      base64: buf.toString('base64'),
+      base64: `data:image/jpeg;base64,${buf.toString('base64')}`,
       mimeType: 'image/jpeg',
     }
   }

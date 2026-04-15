@@ -115,6 +115,11 @@ export default registerAs('appConfig', () => ({
   // RAG (Retrieval Augmented Generation) Settings
 
   /**
+   * Whether RAG is enabled. Automatically true when rag section is present in agent-pack.
+   */
+  ragEnabled: !!agentPack?.rag,
+
+  /**
    * Directory path from which RAG loads .txt and .pdf documents for context retrieval.
    */
   ragDocsPath: pickString('RAG_DOCS_PATH', agentPack?.rag?.docsPath, './docs'),
