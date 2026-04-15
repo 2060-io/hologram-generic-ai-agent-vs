@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.12.0](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.11.2...v1.12.0) (2026-04-15)
+
+
+### Features
+
+* implement RBAC and approval workflow ([#70](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/70)) ([93dcce6](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/93dcce68bd833ac95be8523f8ab7ab33071794fd))
+* support OpenAI-compatible API providers via OPENAI_BASE_URL ([#74](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/74)) ([4d3a2ec](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/4d3a2ec45f0397b07917ca157b95fcd8310fe73e))
+
+
+### Bug Fixes
+
+* rebuild agents when only admin-only MCP tools exist ([#75](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/75)) ([7efae51](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/7efae513a990a5c5b0075b4a167bb886cb91356d))
+* remove unused variables flagged by eslint ([#73](https://github.com/2060-io/hologram-generic-ai-agent-vs/issues/73)) ([e4c981a](https://github.com/2060-io/hologram-generic-ai-agent-vs/commit/e4c981a7b03e8d64f57d6f9a97c4f73a612eb939))
+
 ## [1.11.2](https://github.com/2060-io/hologram-generic-ai-agent-vs/compare/v1.11.1...v1.11.2) (2026-04-10)
 
 
