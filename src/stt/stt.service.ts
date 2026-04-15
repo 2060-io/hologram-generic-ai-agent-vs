@@ -1,7 +1,13 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { createDecipheriv } from 'crypto'
 import type { SttProvider, SttProviderConfig, TranscriptionResult } from './providers/stt-provider.interface'
 import { createSttProvider } from './providers/stt-provider.factory'
+
+export interface AudioCiphering {
+  algorithm: string
+  parameters?: Record<string, unknown>
+}
 
 const AUDIO_MIME_PREFIXES = ['audio/']
 
@@ -57,7 +63,7 @@ export class SttService implements OnModuleInit {
   /**
    * Download audio from a URL and transcribe it.
    */
-  async transcribeFromUrl(url: string, mimeType: string): Promise<TranscriptionResult> {
+  async transcribeFromUrl(url: string, mimeType: string, ciphering?: AudioCiphering): Promise<TranscriptionResult> {
     if (!this.provider) {
       throw new Error('STT provider is not configured.')
     }
@@ -70,7 +76,12 @@ export class SttService implements OnModuleInit {
     }
 
     const arrayBuffer = await response.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    let buffer: Buffer = Buffer.from(new Uint8Array(arrayBuffer))
+
+    if (ciphering) {
+      buffer = this.decrypt(buffer, ciphering)
+      this.logger.log(`Decrypted audio (${ciphering.algorithm}): ${Math.round(buffer.length / 1024)}KB`)
+    }
 
     this.logger.log(`Downloaded ${Math.round(buffer.length / 1024)}KB audio. Transcribing...`)
 
@@ -82,5 +93,21 @@ export class SttService implements OnModuleInit {
     )
 
     return result
+  }
+
+  private decrypt(encrypted: Buffer, ciphering: AudioCiphering): Buffer {
+    const key = ciphering.parameters?.['key'] as string | undefined
+    const iv = ciphering.parameters?.['iv'] as string | undefined
+
+    if (!key || !iv) {
+      throw new Error(`Missing key or iv in ciphering parameters`)
+    }
+
+    const decipher = createDecipheriv(
+      ciphering.algorithm,
+      Buffer.from(key, 'hex'),
+      Buffer.from(iv, 'hex'),
+    )
+    return Buffer.from(Buffer.concat([decipher.update(encrypted), decipher.final()]))
   }
 }
