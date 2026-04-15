@@ -143,7 +143,7 @@ export class CoreService implements EventHandler, OnModuleInit {
           break
         }
         case MediaMessage.type: {
-          const mediaMsg = JsonTransformer.fromJSON(message, MediaMessage) as unknown as MediaMessage
+          const mediaMsg = JsonTransformer.fromJSON(message, MediaMessage)
           const audioItem = mediaMsg.items?.find((item) => this.sttService.isAudioMimeType(item.mimeType))
           if (audioItem && this.sttService.isEnabled) {
             if (!this.sttService.isAllowed(session.isAuthenticated ?? false)) {

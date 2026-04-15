@@ -64,14 +64,14 @@ export class OpenAiWhisperProvider implements SttProvider {
     const response = await this.client.audio.transcriptions.create({
       model: this.model,
       file,
-      ...(this.language ? { language: this.language } : {}),
+      language: this.language,
       response_format: 'verbose_json',
     })
 
     return {
       text: response.text,
-      language: (response as any).language ?? undefined,
-      duration: (response as any).duration ?? undefined,
+      language: response.language ?? undefined,
+      duration: response.duration ?? undefined,
     }
   }
 }
